@@ -1,0 +1,48 @@
+{
+  "name": "basketpal",
+  "version": "1.0.0",
+  "description": "nba tv companion reboot",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack-dev-server --config webpack/webpack.dev.js",
+    "build": "webpack -p --config webpack/webpack.prod.js",
+    "clean": "rimraf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nmodi/basketpal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nmodi/basketpal/issues"
+  },
+  "homepage": "https://github.com/nmodi/basketpal#readme",
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-react": "^7.0.0",
+    "babel-cli": "^6.26.0",
+    "babel-loader": "^8.0.6",
+    "babel-polyfill": "^6.26.0",
+    "css-loader": "^3.1.0",
+    "file-loader": "^4.1.0",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "js-yaml-loader": "^1.2.2",
+    "open-browser-webpack-plugin": "0.0.5",
+    "rimraf": "^2.6.2",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.37.0",
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.7.2",
+    "webpack-merge": "^4.1.2"
+  },
+  "dependencies": {
+    "dayjs": "^1.8.17",
+    "react": "^16.10.1",
+    "react-dom": "^16.10.1",
+    "styled-components": "^4.4.0"
+  }
+}

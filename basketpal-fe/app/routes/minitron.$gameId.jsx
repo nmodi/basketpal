@@ -11,7 +11,7 @@ import GamePreview from '../components/GamePreview';
 
 export const loader = async ({ params }) => {
     const gameId = params.gameId;
-    const scoreboardResponse = await fetch('http://127.0.0.1:8000/games');
+    const scoreboardResponse = await fetch('https://basketpal-be.onrender.com/games');
     const scoreboard = await scoreboardResponse.json();
     const gameScoreboard = scoreboard.filter((s) => s.gameId === gameId)[0];
 

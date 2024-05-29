@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/basketpal-backend.iml" filepath="$PROJECT_DIR$/.idea/basketpal-backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../nba_analysis/.idea/nba_analysis.iml" filepath="$PROJECT_DIR$/../../nba_analysis/.idea/nba_analysis.iml" />
     </modules>
   </component>
 </project>

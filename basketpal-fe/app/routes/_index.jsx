@@ -11,7 +11,7 @@ export const meta = () => {
 };
 
 export const loader = async () => {
-    const response = await fetch("http://127.0.0.1:8000/games");
+    const response = await fetch("https://basketpal-be.onrender.com/games");
     const games = await response.json();
     return json(games);
 };

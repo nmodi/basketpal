@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: remix-app
+    env: node
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+    build:
+      context: ./basketpal-fe

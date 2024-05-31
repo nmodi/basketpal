@@ -138,6 +138,8 @@ const Minitron = () => {
                                 <option value={30000}>30s</option>
                                 <option value={45000}>45s</option>
                                 <option value={60000}>60s</option>
+                                <option value={90000}>90s</option>
+                                <option value={120000}>120s</option>
                             </Select>
                         </HStack>
                     )}

@@ -1,6 +1,5 @@
 import {
     Flex,
-    Box,
     Table,
     Thead,
     Tbody,
@@ -13,6 +12,8 @@ import {
     Tooltip,
     HStack,
 } from '@chakra-ui/react';
+
+import {hasTripleDouble, tripleDoubleWatch, calculateGameScore, getTrueShootingPercentage} from '../util/statFunctions';
 
 export default function OnCourtPlayers({ gameData, isHome }) {
 
@@ -133,6 +134,7 @@ export default function OnCourtPlayers({ gameData, isHome }) {
                                     {player.statistics.reboundsTotal}
                                 </Td>
                                 <Td isNumeric>{player.statistics.assists}</Td>
+                                {/* <Td isNumeric>gameScore: {calculateGameScore(player.statistics)}</Td> */}
                             </Tr>
                         ))}
                     </Tbody>
@@ -140,47 +142,5 @@ export default function OnCourtPlayers({ gameData, isHome }) {
             </TableContainer>
         </Flex>
     );
-}
-
-const hasTripleDouble = (stats) => {
-
-    const { points, reboundsTotal, assists, steals, blocks } = stats;
-
-    let doubleDigitCount = 0;
-  
-    if (points >= 10) doubleDigitCount++;
-    if (reboundsTotal >= 10) doubleDigitCount++;
-    if (assists >= 10) doubleDigitCount++;
-    if (steals >= 10) doubleDigitCount++;
-    if (blocks >= 10) doubleDigitCount++;
-  
-    return doubleDigitCount >= 3;
-}
-
-
-const tripleDoubleWatch = (stats) => {
-    const { points, reboundsTotal, assists, steals, blocks } = stats;
-  
-    let almostDoubleCount = 0;
-  
-    if (points >= 8) almostDoubleCount++;
-    if (reboundsTotal >= 8) almostDoubleCount++;
-    if (assists >= 8) almostDoubleCount++;
-    if (steals >= 8) almostDoubleCount++;
-    if (blocks >= 8) almostDoubleCount++;
-  
-    return almostDoubleCount >= 3;
-}
-
-const getTrueShootingPercentage = (stats) => {
-
-    const {fieldGoalsAttempted, freeThrowsAttempted, points} = stats; 
-
-    if (fieldGoalsAttempted === 0 && freeThrowsAttempted === 0) {
-        return 0;
-    }
-
-    const tsPercentage = points / (2 * (fieldGoalsAttempted + 0.44 * freeThrowsAttempted));
-    return tsPercentage;
 }
 

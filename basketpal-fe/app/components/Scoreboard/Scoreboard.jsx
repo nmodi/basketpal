@@ -10,11 +10,15 @@ export default function Scoreboard({ gameData }) {
     const { homeTeam, awayTeam } = gameData;
 
     return (
-        <Flex mb="4" width="100%">
+        <Flex mb="2" width="100%">
             <TeamScore isHome gameData={gameData} />
 
-            <Flex direction="column" align="center" mt="12">
-                <Heading>{gameData.gameStatusText}</Heading>
+            <Flex 
+                direction="column" 
+                align="center" 
+                mt="3"
+            >
+                <Heading fontSize="2xl">{gameData.gameStatusText}</Heading>
                 <ScoreBreakdown gameData={gameData} />
             </Flex>
 

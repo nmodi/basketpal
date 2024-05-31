@@ -1,13 +1,14 @@
 import { Flex, HStack, Select, Text, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
-import { useLoaderData, useRevalidator, useParams } from '@remix-run/react';
+import { useLoaderData, useParams } from '@remix-run/react';
 import { json } from '@remix-run/node';
 import { useEffect, useState, useRef } from 'react';
-import { getMainColor, getSecondaryColor } from 'nba-color';
+// import { getMainColor, getSecondaryColor } from 'nba-color';
 
 import OnCourtPlayers from '../components/OnCourtPlayers';
-import Scoreboard from '../components/Scoreboard';
+import Scoreboard from '../components/Scoreboard/Scoreboard';
 import TeamStatsComparison from '../components/TeamStatsComparison';
 import GamePreview from '../components/GamePreview';
+import Postgame from '../components/Postgame';
 
 export const loader = async ({ params }) => {
     const gameId = params.gameId;
@@ -53,20 +54,12 @@ const Minitron = () => {
 
             if (!isGameOver) {
                 const newData = await response.json();
-                console.log('data fetched');
-
-
 
                 if (isGameInProgress) {
                     queueRef.current.push(newData);
-                    
-                    console.log(queueRef.current.length);
-
                     const queueLength = (uiDelay / fetchInterval) - 1; 
 
                     if (queueRef.current.length > queueLength) {
-                        console.log('gamestate updated');
-
                         const nextData = queueRef.current.shift();
                         setGameData(nextData);
                     }
@@ -91,9 +84,7 @@ const Minitron = () => {
             color="white"
             fontFamily="tt-autonomous-mono"
         >
-                <>
                     <Scoreboard gameData={gameData} />
-
                     <Tabs 
                         align="center" 
                         size="md" 
@@ -102,7 +93,7 @@ const Minitron = () => {
                     >
                         <TabList  w="100%">
                             {!isGameStarted && <Tab>Game Preview</Tab>}
-                            {isGameOver && <Tab>Postgame Wrapup</Tab>}
+                            {isGameOver && <Tab>Postgame Report</Tab>}
                             {isGameStarted && <Tab>On Court</Tab>}
                             {isGameStarted && <Tab>Team Comparison</Tab>}
                         </TabList>
@@ -116,7 +107,7 @@ const Minitron = () => {
 
                             {isGameOver && (
                                 <TabPanel>
-
+                                    <Postgame gameData={gameData} />
                                 </TabPanel>
                             )}
 
@@ -150,8 +141,6 @@ const Minitron = () => {
                             </Select>
                         </HStack>
                     )}
-                </>
-            {!isGameStarted && <></>}
         </Flex>
     );
 };

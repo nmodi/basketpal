@@ -14,7 +14,7 @@ export default function Microtron({game, selectGame}) {
             m="2" 
             w="40%"
             p="4" 
-            onClick={() => navigate(`/minitron/${game.gameId}`)}
+            onClick={() => navigate(`/g/${game.gameId}`)}
             fontSize="3xl"
         >
             <Text>{game.gameStatusText}</Text>

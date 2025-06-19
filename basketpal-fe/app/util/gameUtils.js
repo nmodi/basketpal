@@ -1,0 +1,99 @@
+import { calculateGameScore, calculatePIE, getTrueShootingPercentage } from '../util/statFunctions';
+
+export const getGameResult = (gameData) => {
+
+    if (gameData.homeTeam.score > gameData.awayTeam.score) {
+        return {winningTeam: gameData.homeTeam, losingTeam: gameData.awayTeam}
+    }
+
+    return {winningTeam: gameData.awayTeam, losingTeam: gameData.homeTeam}
+}
+
+
+export const getTopPlayers = (team, N) => {
+    return team.players
+        .map(p => (
+            {...p, 
+                teamId: team.teamId, 
+                gameScore: calculateGameScore(p.statistics), 
+                teamStats: team.statistics,
+                pie: calculatePIE(p, team.statistics)
+            }))
+        // .map(p => ({...p, pie: calculatePIE(p)}))
+        .sort((a, b) => b.pie - a.pie)
+        .slice(0, N);
+}
+
+export const evaluateKeysToTheWin = (winningTeam, losingTeam, N = 3) => {
+
+    const winningTeamStats = winningTeam.statistics;
+    const losingTeamStats = losingTeam.statistics;
+
+    // Define the stats to compare along with their weights
+    const keyStats = {
+        'assists': 1,
+        'benchPoints': 0.5,
+        'reboundsOffensive': 2,
+        'reboundsTotal': 2,
+        'steals': 1,
+        'blocks': 0.5,
+        'fieldGoalsPercentage': 2,
+        'freeThrowsAttempted': 0.5,
+        'fastBreakPointsMade': 1,
+        'freeThrowsPercentage': 1,
+        'threePointersPercentage': 1.5,
+        'threePointersMade': 1,
+        'turnoversTotal': -2
+    };
+
+    // Calculate the weighted percentage difference for each stat
+    let statDiffs = [];
+
+    Object.keys(keyStats).forEach(stat => {
+        if (winningTeamStats.hasOwnProperty(stat) && losingTeamStats.hasOwnProperty(stat)) {
+
+            // Calculate percentage difference
+            let difference = winningTeamStats[stat] - losingTeamStats[stat];
+            let average = (winningTeamStats[stat] + losingTeamStats[stat]) / 2;
+            let percentageDifference = (difference / average) * 100;
+
+            // Apply weight to the percentage difference
+            let percentageDiff = percentageDifference * keyStats[stat];
+
+            statDiffs.push({ 
+                name: stat, 
+                percentageDiff,
+                winningTeamValue: winningTeamStats[stat], 
+                losingTeamValue: losingTeamStats[stat]
+            });
+        }
+    });
+
+    // Sort the differences, giving priority to positive differences in the winning team's favor
+    statDiffs.sort((a, b) => {
+        if (a.percentageDiff > 0 && b.percentageDiff < 0) return -1;
+        if (a.percentageDiff < 0 && b.percentageDiff > 0) return 1;
+        return Math.abs(b.percentageDiff) - Math.abs(a.percentageDiff);
+    });
+
+    // Get the top N most uneven stats
+    const topStats = statDiffs.slice(0, N);
+
+    console.log('topStats', topStats);
+
+    // Construct objects for the winning team and losing team
+    const winningTeamTopStats = {};
+    const losingTeamTopStats = {};
+
+    topStats.forEach(stat => {
+        if (stat.percentageDiff > 0) {
+            winningTeamTopStats[stat.name] = stat.winningTeamValue;
+            losingTeamTopStats[stat.name] = stat.losingTeamValue;
+        }
+    });
+
+    return { 
+        winningTeamTopStats, 
+        losingTeamTopStats 
+    };
+}

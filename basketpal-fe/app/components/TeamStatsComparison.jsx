@@ -9,109 +9,218 @@ import {
     HStack,
 } from '@chakra-ui/react';
 
+export default function TeamStatsComparison({
+    leftTeam,
+    rightTeam,
+    leftTeamStats = leftTeam.statistics,
+    rightTeamStats = rightTeam.statistics
+}) {
 
-export default function TeamStatsComparison({gameData}) {
+    const gameStatRows = [
+        {
+            title: "Offensive Rebounds",
+            statKeys: ['reboundsOffensive'],
+            statFunction: (stats) => ({
+                formatted: stats.reboundsOffensive,
+                value: stats.reboundsOffensive
+            })
+        },
+        {
+            title: "Rebounds",
+            statKeys: ['reboundsTotal'],
+            statFunction: (stats) => ({
+                formatted: stats.reboundsTotal,
+                value: stats.reboundsTotal
+            })
+        },
+        {
+            title: "Assists",
+            statKeys: ['assists'],
+            statFunction: (stats) => ({
+                formatted: stats.assists,
+                value: stats.assists
+            })
+        },
+        {
+            title: "Blocks",
+            statKeys: ['blocks'],
+            statFunction: (stats) => ({
+                formatted: stats.blocks,
+                value: stats.blocks
+            })
+        },
+        {
+            title: "Steals",
+            statKeys: ['steals'],
+            statFunction: (stats) => ({
+                formatted: stats.steals,
+                value: stats.steals
+            })
+        },
+        {
+            title: "Turnovers",
+            statKeys: ['turnovers'],
+            isPositiveStat: false,
+            statFunction: (stats) => ({
+                formatted: stats.turnovers,
+                value: stats.turnovers
+            })
+        },
+        {
+            title: "Shooting",
+            statKeys: ['fieldGoalsMade', 'fieldGoalsAttempted'],
+            statFunction: (stats) => {
+                const made = stats.fieldGoalsMade;
+                const attempted = stats.fieldGoalsAttempted;
+                const percentage = ((made / attempted) * 100).toFixed(1);
 
-    const {awayTeam, homeTeam} = gameData;
+                return {
+                    formatted: `${made} / ${attempted} (${percentage}%)`,
+                    value: parseFloat(percentage)
+                };
+            }
+        },
+        {
+            title: "Free Throws",
+            statKeys: ['freeThrowsMade', 'freeThrowsAttempted'],
+            statFunction: (stats) => {
+                const made = stats.freeThrowsMade;
+                const attempted = stats.freeThrowsAttempted;
+                const percentage = ((made / attempted) * 100).toFixed(1);
 
-    const homeStats = homeTeam.statistics; 
-    const awayStats = awayTeam.statistics; 
+                return {
+                    formatted: `${made} / ${attempted} (${percentage}%)`,
+                    value: parseFloat(percentage)
+                };
+            }
+        },
+        {
+            title: "3PT Shooting",
+            statKeys: ['threePointersMade', 'threePointersAttempted'],
+            statFunction: (stats) => {
+                const made = stats.threePointersMade;
+                const attempted = stats.threePointersAttempted;
+                const percentage = ((made / attempted) * 100).toFixed(1);
+
+                return {
+                    formatted: `${made} / ${attempted} (${percentage}%)`,
+                    value: parseFloat(percentage)
+                };
+            }
+        },
+        {
+            title: "Bench Points",
+            statKeys: ['benchPoints'],
+            statFunction: (stats) => ({
+                value: stats.benchPoints,
+                formatted: stats.benchPoints
+            })
+        },
+        {
+            title: "Biggest Lead",
+            statKeys: ['biggestLead'],
+            statFunction: (stats) => ({
+                value: stats.biggestLead,
+                formatted: stats.biggestLead
+            })
+        },
+        {
+            title: "Points in the Paint",
+            statKeys: ['pointsInThePaint'],
+            statFunction: (stats) => ({
+                value: stats.pointsInThePaint,
+                formatted: stats.pointsInThePaint
+            })
+        },
+        {
+            title: "Fast Break Points",
+            statKeys: ['fastBreakPointsMade'],
+            statFunction: (stats) => ({
+                value: stats.fastBreakPointsMade,
+                formatted: stats.fastBreakPointsMade
+            })
+        }
+    ];
+
+    const filteredGameStatRows = gameStatRows.filter(
+        row => row.statKeys.every(key => leftTeamStats.hasOwnProperty(key) && rightTeamStats.hasOwnProperty(key))
+    );
 
     return (
-        <TableContainer w="40%" fontSize="large">
+        <TableContainer fontSize="large">
             <Table>
                 <Tbody>
                     <Tr>
                         <Th></Th>
-                        <Td>                            
+                        <Td>
                             <HStack>
                                 <Image
-                                    src={`https://cdn.nba.com/logos/nba/${homeTeam.teamId}/primary/L/logo.svg`}
+                                    src={`https://cdn.nba.com/logos/nba/${leftTeam.teamId}/primary/L/logo.svg`}
                                     w="32px"
                                 />
-                                <span>{homeTeam.teamTricode}</span>
-                            </HStack>   
+                                <span>{leftTeam.teamTricode}</span>
+                            </HStack>
                         </Td>
                         <Td>
                             <HStack>
                                 <Image
-                                    src={`https://cdn.nba.com/logos/nba/${awayTeam.teamId}/primary/L/logo.svg`}
+                                    src={`https://cdn.nba.com/logos/nba/${rightTeam.teamId}/primary/L/logo.svg`}
                                     w="32px"
                                 />
-                                <span>{awayTeam.teamTricode}</span>
-                            </HStack>   
+                                <span>{rightTeam.teamTricode}</span>
+                            </HStack>
                         </Td>
                     </Tr>
-                    <Tr>
-                        <Th>Offensive Rebounds</Th>
-                        <Td>{homeStats.reboundsOffensive}</Td>
-                        <Td>{awayStats.reboundsOffensive}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Rebounds</Th>
-                        <Td>{homeStats.reboundsTotal}</Td>
-                        <Td>{awayStats.reboundsTotal}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Assists</Th>
-                        <Td>{homeStats.assists}</Td>
-                        <Td>{awayStats.assists}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Blocks</Th>
-                        <Td>{homeStats.blocks}</Td>
-                        <Td>{awayStats.blocks}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Steals</Th>
-                        <Td>{homeStats.steals}</Td>
-                        <Td>{awayStats.steals}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Turnovers</Th>
-                        <Td>{homeStats.turnovers}</Td>
-                        <Td>{awayStats.turnovers}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Shooting</Th>
-                        <Td>{homeStats.fieldGoalsMade} / {homeStats.fieldGoalsAttempted} ({Math.round(homeStats.fieldGoalsPercentage * 100)}%) </Td>
-                        
-                        <Td>{awayStats.fieldGoalsMade} / {awayStats.fieldGoalsAttempted} ({Math.round(awayStats.fieldGoalsPercentage * 100)}%) </Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Free Throws</Th>
-                        <Td>{homeStats.freeThrowsMade} / {homeStats.freeThrowsAttempted} ({Math.round(homeStats.freeThrowsPercentage * 100)}%) </Td>
-                        
-                        <Td>{awayStats.freeThrowsMade} / {awayStats.freeThrowsAttempted} ({Math.round(awayStats.freeThrowsPercentage * 100)}%) </Td>
-                    </Tr>
-                    <Tr>
-                        <Th>3PT Shooting</Th>
-                        <Td>{homeStats.threePointersMade} / {homeStats.threePointersAttempted} ({Math.round(homeStats.threePointersPercentage * 100)}%) </Td>
-                        
-                        <Td>{awayStats.threePointersMade} / {awayStats.threePointersAttempted} ({Math.round(awayStats.threePointersPercentage * 100)}%) </Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Bench Points</Th>
-                        <Td>{homeStats.benchPoints}</Td>
-                        <Td>{awayStats.benchPoints}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Biggest Lead</Th>
-                        <Td>{homeStats.biggestLead}</Td>
-                        <Td>{awayStats.biggestLead}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Bench Points</Th>
-                        <Td>{homeStats.benchPoints}</Td>
-                        <Td>{awayStats.benchPoints}</Td>
-                    </Tr>
-                    <Tr>
-                        <Th>Points in the Paint</Th>
-                        <Td>{homeStats.pointsInThePaint}</Td>
-                        <Td>{awayStats.pointsInThePaint}</Td>
-                    </Tr>
+                    {filteredGameStatRows.map((row, index) => (
+                        <GameStatRow
+                            key={index}
+                            title={row.title}
+                            leftTeamStats={leftTeamStats}
+                            rightTeamStats={rightTeamStats}
+                            statFunction={row.statFunction}
+                            isPositiveStat={row.isPositiveStat ?? true}
+                        />
+                    ))}
                 </Tbody>
             </Table>
         </TableContainer>
-    ); 
+    );
 }
+
+const GameStatRow = ({ title, leftTeamStats, rightTeamStats, statFunction, isPositiveStat = true }) => {
+    const homeStat = statFunction(leftTeamStats);
+    const awayStat = statFunction(rightTeamStats);
+
+    const isStatBetter = (selfStat, otherStat) => {
+        if (isPositiveStat) {
+            return selfStat.value > otherStat.value;
+        }
+        return otherStat.value > selfStat.value;
+    }
+
+    const getColor = (selfStat, otherStat) => {
+        return isStatBetter(selfStat, otherStat) ? 'yellow.400' : '';
+    }
+
+    const getBold = (selfStat, otherStat) => {
+        return isStatBetter(selfStat, otherStat) ? 'bold' : '';
+    }
+
+    return (
+        <Tr>
+            <Th>{title}</Th>
+            <Td
+                color={getColor(homeStat, awayStat)}
+                fontWeight={getBold(homeStat, awayStat)}
+            >
+                {homeStat.formatted}
+            </Td>
+            <Td
+                color={getColor(awayStat, homeStat)}
+                fontWeight={getBold(awayStat, homeStat)}
+            >
+                {awayStat.formatted}
+            </Td>
+        </Tr>
+    );
+};

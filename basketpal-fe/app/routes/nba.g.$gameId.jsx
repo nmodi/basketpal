@@ -9,28 +9,35 @@ import Scoreboard from '../components/Scoreboard/Scoreboard';
 import TeamStatsComparison from '../components/TeamStatsComparison';
 import GamePreview from '../components/GamePreview';
 import Postgame from '../components/Postgame';
+import axios from '../util/axios';
 
 export const loader = async ({ params }) => {
     const gameId = params.gameId;
-    const scoreboardResponse = await fetch('https://basketpal-be.onrender.com/games');
-    const scoreboard = await scoreboardResponse.json();
-    const gameScoreboard = scoreboard.filter((s) => s.gameId === gameId)[0];
+    const scoreboardResponse = await axios.get(`/games/${gameId}`);
+    const scoreboard = scoreboardResponse.data;
 
-    if (gameScoreboard && gameScoreboard.gameStatus === 1) {
-        return json(gameScoreboard);
+    if (scoreboard && scoreboard.gameStatus === 1) {
+        return json({
+            boxscore: scoreboard
+        });
     }
 
-    const response = await fetch(
-        `https://basketpal-be.onrender.com/games/${gameId}/boxscore`
-    );
-    const games = await response.json();
-    return json(games);
+    const [boxscore, summary] = await Promise.all([
+        axios.get(`/games/${gameId}/boxscore`),
+        axios.get(`/games/${gameId}/summary`),
+    ]);
+
+    return json({
+        boxscore: boxscore.data,
+        summary: summary.data
+    });
 };
 
 const Minitron = () => {
-    const initialData = useLoaderData();
-    const [gameData, setGameData] = useState(initialData);
-    const queueRef = useRef([initialData]);
+    const {boxscore, summary} = useLoaderData();
+
+    const [gameData, setGameData] = useState(boxscore);
+    const queueRef = useRef([boxscore]);
     const params = useParams();
     const [uiDelay, setUiDelay] = useState(0);
 
@@ -47,9 +54,11 @@ const Minitron = () => {
             let response; 
 
             if (!isGameStarted) {
-                response = await fetch('https://basketpal-be.onrender.com/games');
+                // response = await fetch('https://basketpal-be.onrender.com/games');
+                response = await fetch('http://127.0.0.1:8000/games');
             } else {
-                response = await fetch(`https://basketpal-be.onrender.com/games/${params.gameId}/boxscore`)
+                // response = await fetch(`https://basketpal-be.onrender.com/games/${params.gameId}/boxscore`)
+                response = await fetch(`http://127.0.0.1:8000/games/${params.gameId}/boxscore`)
             }
 
             if (!isGameOver) {
@@ -107,7 +116,7 @@ const Minitron = () => {
 
                             {isGameOver && (
                                 <TabPanel>
-                                    <Postgame gameData={gameData} />
+                                    <Postgame gameData={gameData} summary={summary} />
                                 </TabPanel>
                             )}
 
@@ -122,7 +131,9 @@ const Minitron = () => {
 
                             {isGameStarted && (
                                 <TabPanel>
-                                    <TeamStatsComparison gameData={gameData} />
+                                    <TeamStatsComparison 
+                                        leftTeam={gameData.homeTeam} 
+                                        rightTeam={gameData.awayTeam} />
                                 </TabPanel>
                             )}
 

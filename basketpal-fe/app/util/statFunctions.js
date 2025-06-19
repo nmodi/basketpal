@@ -70,3 +70,114 @@ export const calculateGameScore = (stats) => {
 
     return gameScore;
 }
+
+export const calculatePIE = (player, teamStats = player.teamStats) => {
+    // Destructure player stats
+    const {
+        points,
+        fieldGoalsMade,
+        freeThrowsMade,
+        fieldGoalsAttempted,
+        freeThrowsAttempted,
+        reboundsOffensive,
+        reboundsDefensive,
+        assists,
+        steals,
+        blocks,
+        turnovers
+    } = player.statistics;
+
+    // Destructure game stats
+    const {
+        points: totalPoints,
+        fieldGoalsMade: totalFieldGoalsMade,
+        freeThrowsMade: totalFreeThrowsMade,
+        fieldGoalsAttempted: totalFieldGoalsAttempted,
+        freeThrowsAttempted: totalFreeThrowsAttempted,
+        reboundsOffensive: totalReboundsOffensive,
+        reboundsDefensive: totalReboundsDefensive,
+        assists: totalAssists,
+        steals: totalSteals,
+        blocks: totalBlocks,
+        turnovers: totalTurnovers
+    } = teamStats;
+
+    // Calculate missed field goals and free throws
+    const fieldGoalsMissed = fieldGoalsAttempted - fieldGoalsMade;
+    const freeThrowsMissed = freeThrowsAttempted - freeThrowsMade;
+
+    // Calculate player's total contribution
+    const playerContribution = points + fieldGoalsMade + freeThrowsMade - fieldGoalsMissed - freeThrowsMissed +
+        reboundsOffensive + reboundsDefensive + assists + steals + blocks - turnovers;
+
+    // Calculate game's total contribution
+    const gameContribution = totalPoints + totalFieldGoalsMade + totalFreeThrowsMade -
+        (totalFieldGoalsAttempted - totalFieldGoalsMade) - (totalFreeThrowsAttempted - totalFreeThrowsMade) +
+        totalReboundsOffensive + totalReboundsDefensive + totalAssists +
+        totalSteals + totalBlocks - totalTurnovers;
+
+    // Calculate PIE
+    const PIE = playerContribution / gameContribution;
+
+    return PIE;
+}
+
+export const getBestStats = (stats, N) => {
+
+    stats = {...stats, atr: calculateAssistToTurnoverRatio(stats)}
+
+    const statWeights = {
+        points: 5,
+        assists: 4,
+        reboundsTotal: 4,
+        steals: 3,
+        blocks: 3,
+        fieldGoalsPercentage: 5,
+        threePointersPercentage: 5,
+        threePointersMade: 3,
+        turnovers: -2
+        // atr: 2,
+    };
+
+    const statNames = {
+        points: 'PTS',
+        assists: 'AST',
+        reboundsTotal: 'REB',
+        steals: 'STL',
+        blocks: 'BLK',
+        fieldGoalsPercentage: 'FG%',
+        threePointersPercentage: '3P%',
+        threePointersMade: '3PT',
+        turnovers: 'TO',
+        atr: 'A:TO'
+    }
+
+    console.log(stats);
+
+    // Calculate impressiveness score for each stat
+    let scores = [];
+
+    for (let stat in stats) {
+        if (statWeights.hasOwnProperty(stat) && statNames.hasOwnProperty(stat)) {
+            let score = stats[stat] * statWeights[stat];
+            scores.push({ name: statNames[stat], score: score, value: stats[stat] });
+        }
+    }
+
+    // Sort the stats by impressiveness score in descending order
+    scores.sort((a, b) => b.score - a.score);
+
+    // Return the top 3 most impressive stats
+    return scores.slice(0, N);
+}
+
+
+function calculateAssistToTurnoverRatio({assists, turnovers}) {
+    // Check if turnovers are zero to avoid division by zero
+    if (turnovers === 0) {
+        // If there are no turnovers, the ratio is infinite
+        return assists > 0 ? assists : 0;
+    }
+    // Calculate the assist-to-turnover ratio
+    return assists / turnovers;
+}

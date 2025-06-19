@@ -16,8 +16,8 @@ import {
 export default function ScoreBreakdown({ gameData }) {
     const { homeTeam, awayTeam } = gameData;
 
-    const homeTeamScores = homeTeam.periods.map((p) => p.score);
-    const awayTeamScores = awayTeam.periods.map((p) => p.score);
+    const homeTeamScores = homeTeam.periods?.map((p) => p.score);
+    const awayTeamScores = awayTeam.periods?.map((p) => p.score);
 
     return (
         <TableContainer m="4">
@@ -43,7 +43,7 @@ export default function ScoreBreakdown({ gameData }) {
                                 <span>{homeTeam.teamTricode}</span>
                             </HStack>
                         </Td>
-                        {homeTeamScores.map((s, i) => (
+                        {homeTeamScores?.map((s, i) => (
                             <Td key={i}>{s}</Td>
                         ))}
                         <Td>{homeTeam.score}</Td>
@@ -58,7 +58,7 @@ export default function ScoreBreakdown({ gameData }) {
                                 <span>{awayTeam.teamTricode}</span>
                             </HStack>    
                         </Td>
-                        {awayTeamScores.map((s, i) => (
+                        {awayTeamScores?.map((s, i) => (
                             <Td key={i}>{s}</Td>
                         ))}
                         <Td>{awayTeam.score}</Td>

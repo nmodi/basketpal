@@ -3,7 +3,7 @@ from fastapi import FastAPI
 import uvicorn
 import os
 
-from .api import games, game_details
+from app.api import games, game_details
 
 app = FastAPI()
 

@@ -152,7 +152,7 @@ export const getBestStats = (stats, N) => {
         atr: 'A:TO'
     }
 
-    console.log(stats);
+    // console.log(stats);
 
     // Calculate impressiveness score for each stat
     let scores = [];

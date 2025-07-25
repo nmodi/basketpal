@@ -2,9 +2,9 @@ import { extendTheme } from '@chakra-ui/react';
 
 const customTheme = {
     components: {
-        Button: {
+        Heading: {
             baseStyle: {
-                fontFamily: 'txc-pearl, sans-serif',
+                fontFamily: 'monte-stella, sans-serif',
             }
         },
     },

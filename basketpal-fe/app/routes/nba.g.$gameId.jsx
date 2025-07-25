@@ -55,14 +55,15 @@ const Minitron = () => {
 
             if (!isGameStarted) {
                 // response = await fetch('https://basketpal-be.onrender.com/games');
-                response = await fetch('http://127.0.0.1:8000/games');
+                // response = await fetch('http://127.0.0.1:8000/games');
+                response = await axios.get("/games");
             } else {
                 // response = await fetch(`https://basketpal-be.onrender.com/games/${params.gameId}/boxscore`)
-                response = await fetch(`http://127.0.0.1:8000/games/${params.gameId}/boxscore`)
+                response = await axios.get(`/games/${params.gameId}/boxscore`)
             }
 
             if (!isGameOver) {
-                const newData = await response.json();
+                const newData = response.data;
 
                 if (isGameInProgress) {
                     queueRef.current.push(newData);

@@ -5,7 +5,8 @@ import {
     Box,
     HStack,
     VStack,
-    Heading,
+    SimpleGrid,
+    Heading
 } from '@chakra-ui/react';
 import { getGameResult, getTopPlayers, evaluateKeysToTheWin } from '../util/gameUtils';
 import { getBestStats } from '../util/statFunctions';
@@ -18,69 +19,84 @@ export default function Scoreboard({ gameData, summary }) {
 
     const keysToTheWin = evaluateKeysToTheWin(gameResult.winningTeam, gameResult.losingTeam, 10);
 
-    // console.log('keysToTheWin', keysToTheWin);
-
-    console.log("summary", summary);
-
-    
-
-    // const topPlayers = getTopPlayers(homeTeam, 2).concat(getTopPlayers(awayTeam, 2))
-    //     .sort((a, b) => b.gameScore - a.gameScore);
+    const story = summary;
 
     return (
-        <Flex direction="row" justify="center">
-            <Box bg="gray.800" mx="4" p="4" borderRadius="15px">
-                <Text
-                    // fontFamily="monte-stella"
-                    fontSize="3xl"
-                    textTransform="uppercase"
-                >
-                    Player of the Game
-                </Text>
-                <VStack>
-                    <Image
-                        src={`https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${potg.personId}.png`}
-                        w="250px"
-                        // m="0 auto"
-                        objectFit="contain"
-                    />
-                    <Text
-                        textTransform="uppercase"
-                        fontSize="4xl"
-                    >
-                        {potg.name}
-                    </Text>
-                    <HStack>
-                        {getBestStats(potg.statistics, 4).map(stat => (
-                            <VStack px="4">
-                                <Text fontSize="2xl" mb="-3">{stat.value}</Text>
-                                <Text>{stat.name}</Text>
-                            </VStack>
-                        ))}
-                    </HStack>
+        <SimpleGrid templateColumns="2fr 3fr" gap="20px" width="80%">
+
+            {/** left column */}
+            <Box>
+                <VStack spacing="20px">
+                    {/** potg **/}
+                    <Box bg="gray.800" p="4" borderRadius="15px" alignSelf="start" width="100%">
+                        <Text
+                            fontSize="3xl"
+                            textTransform="uppercase"
+                            fontWeight="bold"
+                        >
+                            Player of the Game
+                        </Text>
+                        <VStack>
+                            <Image
+                                src={`https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${potg.personId}.png`}
+                                w="250px"
+                                // m="0 auto"
+                                objectFit="contain"
+                            />
+                            <Text
+                                textTransform="uppercase"
+                                fontSize="4xl"
+                            >
+                                {potg.name}
+                            </Text>
+                            <HStack>
+                                {getBestStats(potg.statistics, 4).map(stat => (
+                                    <VStack px="4">
+                                        <Text fontSize="2xl" mb="-3">{stat.value}</Text>
+                                        <Text>{stat.name}</Text>
+                                    </VStack>
+                                ))}
+                            </HStack>
+                        </VStack>
+                    </Box>
+
+                    {/** stats */}
+                    <Box bg="gray.800" p="4" borderRadius="15px" alignSelf="start" width="100%">
+                        <TeamStatsComparison 
+                            leftTeam={gameResult.winningTeam}
+                            rightTeam={gameResult.losingTeam} 
+                            leftTeamStats={keysToTheWin.winningTeamTopStats}
+                            rightTeamStats={keysToTheWin.losingTeamTopStats}
+                        />
+                    </Box>
                 </VStack>
+
             </Box>
 
-            <Box bg="gray.800" mx="4" p="4" borderRadius="15px">
-                    <Text
-                        textTransform="uppercase"
-                        fontSize="4xl"
-                    >
-                        Postgame Report
-                    </Text>
-                    <Text>
-                        {summary.output[0].content[0].text}
-                    </Text>
+            {/** right column */}
+            <Box>
+                {/** story */}
+                <Box bg="gray.800" p="4" borderRadius="15px">
+                        <Text
+                            textTransform="uppercase"
+                            fontSize="3xl"
+                            mb="2"
+                            fontWeight="bold"
+                        >
+                            Game Story
+                        </Text>
+
+                        <Flex direction="column" gap="2" fontFamily="soleil">
+                            {story.split("\n").map((p, i) => (
+                                <Text whiteSpace="pre-line" align="left" textIndent="2em" key={i}>
+                                    {p}
+                                </Text>
+                            ))}
+                        </Flex>
+                </Box>
             </Box>
-            
-            <Box bg="gray.800" p="4" borderRadius="15px">
-                <TeamStatsComparison 
-                    leftTeam={gameResult.winningTeam}
-                    rightTeam={gameResult.losingTeam} 
-                    leftTeamStats={keysToTheWin.winningTeamTopStats}
-                    rightTeamStats={keysToTheWin.losingTeamTopStats}
-                />
-            </Box>
-        </Flex>
+
+
+        </SimpleGrid>
     ); 
 }

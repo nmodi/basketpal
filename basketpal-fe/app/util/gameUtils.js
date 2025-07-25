@@ -79,7 +79,7 @@ export const evaluateKeysToTheWin = (winningTeam, losingTeam, N = 3) => {
     // Get the top N most uneven stats
     const topStats = statDiffs.slice(0, N);
 
-    console.log('topStats', topStats);
+    // console.log('topStats', topStats);
 
     // Construct objects for the winning team and losing team
     const winningTeamTopStats = {};

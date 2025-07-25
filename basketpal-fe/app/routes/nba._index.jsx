@@ -22,8 +22,6 @@ export const loader = async () => {
 export default function Index() {
     const data = useLoaderData();
 
-    console.log(data);
-
     return (
         <Flex
             direction="column"

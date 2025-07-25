@@ -5,17 +5,18 @@ from datetime import datetime, date
 
 import requests
 
+from src.entities.game import GameSnapshot
+from src.entities.leagues import League
 
-def fetch_games(start_dt, end_dt, limit):
-    # today = date.today()
-    # scores = scoreboardv2.ScoreboardV2(league_id=LeagueID.nba, day_offset=0, game_date=today).get_normalized_dict()
-    # season schedule ^
-    # season is the year the season started (ex. 2021-22 would be 2021)
-    # date is formatted like m/d/yyyy
-    # url = "https://stats.nba.com/stats/internationalbroadcasterschedule?LeagueID=00&Season=2022&RegionID=1&Date=11/4/2022&EST=Y"
-    # return scoreboard.ScoreBoard().games.get_dict()
 
-    url = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json"
+# Only works for current season
+def fetch_games_dt_range(start_dt, end_dt, league: League):
+
+    url = {
+        League.NBA: "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json",
+        League.WNBA: "https://cdn.wnba.com/static/json/staticData/scheduleLeagueV2_1.json"
+    }.get(league)
+
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()["leagueSchedule"]
@@ -34,14 +35,25 @@ def fetch_games(start_dt, end_dt, limit):
             if end_dt and entry_date > end_dt:
                 continue
 
+            games_on_date = []
+            for game_json in entry["games"]:
+                game = GameSnapshot.from_api(game_json)
+                games_on_date.append(game.dict(exclude_none=True))
+
             filtered.append({
                 "gameDate": entry_date,
-                "games": entry["games"]
+                "games": games_on_date
             })
 
         return filtered
 
 
+def fetch_todays_games(league: League):
+    games_by_date = fetch_games_dt_range(date.today(), date.today(), league)
+    return games_by_date[0]["games"]
+
+
+# Only works in current season
 def fetch_game_by_id(game_id: str):
     url = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json"
     response = requests.get(url)
@@ -58,9 +70,12 @@ def fetch_game_by_id(game_id: str):
     return None  # if not found
 
 
-def fetch_boxscore(game_id):
-    game = boxscore.BoxScore(game_id=game_id).game.get_dict()
-    return game
+# Only works for games that have started / finished
+def fetch_live_boxscore(game_id):
+    game_dict = boxscore.BoxScore(game_id=game_id).game.get_dict()
+
+    game = GameSnapshot.from_api(game_dict)
+    return game.dict(exclude_none=True)
 
 
 def fetch_playbyplay(game_id):

@@ -17,5 +17,5 @@ class NBAStatsProvider(Protocol):
     def get_playbyplay(self, game_id: str) -> dict:
         ...
 
-    def get_roster(self, team_id: str) -> dict:
+    def get_roster(self, team_id: int) -> dict:
         ...

@@ -79,7 +79,4 @@ class NBAAPIStatsProvider(NBAStatsProvider):
         return playbyplayv2.PlayByPlayV2(game_id=game_id).get_normalized_dict().get("PlayByPlay")
 
     def get_roster(self, team_id):
-        response = commonteamroster.CommonTeamRoster(team_id=team_id)
-        response_dict = response.get_normalized_dict()
-
-        return response_dict.get("CommonTeamRoster")
+        return commonteamroster.CommonTeamRoster(team_id=team_id).get_normalized_dict().get("CommonTeamRoster")

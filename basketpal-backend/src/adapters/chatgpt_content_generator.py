@@ -42,19 +42,14 @@ class ChatGPTContentProvider(ContentProvider):
         pbp = self.nba_stats_provider.get_playbyplay(game_id)
         game = self.nba_stats_provider.get_boxscore(game_id)
 
-        print(game)
-
         home_team_id = game.homeTeam.teamId
         visitor_team_id = game.awayTeam.teamId
 
-        try:
-            home_roster = self.nba_stats_provider.get_roster(home_team_id)
-            away_roster = self.nba_stats_provider.get_roster(visitor_team_id)
+        home_roster = self.nba_stats_provider.get_roster(home_team_id)
+        away_roster = self.nba_stats_provider.get_roster(visitor_team_id)
 
-            cleaned_home_roster = format_team_roster(home_roster)
-            cleaned_visitor_roster = format_team_roster(away_roster)
-        except:
-            logger.error("Error fetching rosters")
+        cleaned_home_roster = format_team_roster(home_roster)
+        cleaned_visitor_roster = format_team_roster(away_roster)
 
         cleaned_pbp = format_pbp(pbp)
 
@@ -71,12 +66,13 @@ class ChatGPTContentProvider(ContentProvider):
         return f"Summarize this game in the style of an ESPN sportswriter:"\
                f"Do not add descriptions of players (ex. rookie or college) unless you are 100% sure and "\
                f"it's not something that could change over time"\
-               f"Use only players mentioned in rosters below and the final score below:"\
+               f"Use only players mentioned in rosters below and the final score below:" \
+               f"{home_team} roster: {cleaned_home_roster}"\
+               f"{away_team} roster: {cleaned_visitor_roster}"\
                f"The final score was: {home_team}: {home_team_score} to {away_team}: {away_team_score}"\
                f"play by play: {cleaned_pbp}"
 
-# f"{home_team} roster: {cleaned_home_roster}"\
-# f"{away_team} roster: {cleaned_visitor_roster}"\
+
 
 
 

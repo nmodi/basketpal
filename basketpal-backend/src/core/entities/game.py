@@ -41,6 +41,8 @@ class Player(BaseModel):
 class TeamSummary(BaseModel):
     teamId: int
     teamTricode: str
+    teamCity: str
+    teamName: str
     periodScores: List[int] = Field(default_factory=list)
     timeoutsRemaining: int = None
     inBonus: bool = None
@@ -49,10 +51,8 @@ class TeamSummary(BaseModel):
     @classmethod
     def from_api(cls, data: dict):
         data = data.copy()
-        periods = data.pop("periods")
-        players = data.pop("players")
-
-        print(players)
+        periods = data.pop("periods", [])
+        players = data.pop("players", [])
 
         return cls(
             **data,

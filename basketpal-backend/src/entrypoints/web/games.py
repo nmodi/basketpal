@@ -1,10 +1,9 @@
 
-from datetime import timedelta
-from fastapi import APIRouter, Query, HTTPException
-from typing import Optional
+from datetime import timedelta, date
+from fastapi import APIRouter, HTTPException
 
-from src.entities.leagues import League
-from src.service.nba_service import *
+from src.core.entities.leagues import League
+from src.dependencies import nba_stats_provider
 
 router = APIRouter(prefix="/games", tags=["Games"])
 
@@ -33,19 +32,20 @@ async def get_upcoming_games(league: str = None):
     start_dt = date.today()
     end_dt = start_dt + timedelta(days=5)
 
-    return fetch_games_dt_range(start_dt, end_dt, league_value)
+    return nba_stats_provider.get_games_dt_range(start_dt, end_dt, league_value)
 
 
-@router.get("/{game_id}")
-async def get_game_by_id(game_id: str):
-    return fetch_game_by_id(game_id)
-
-
-@router.get("/{game_id}/boxscore")
-async def get_boxscore(game_id: str):
-    return fetch_live_boxscore(game_id)
-
-
-@router.get("/{game_id}/playbyplay")
-async def get_playbyplay(game_id: str):
-    return fetch_playbyplay(game_id)
+# @router.get("/{game_id}")
+# async def get_game_by_id(game_id: str):
+#     print("hit endpoint in /games")
+#     return nba_stats_provider.get_boxscore(game_id)
+# #
+#
+# @router.get("/{game_id}/boxscore")
+# async def get_boxscore(game_id: str):
+#     return nba_stats_provider.get_boxscore(game_id)
+#
+#
+# @router.get("/{game_id}/playbyplay")
+# async def get_playbyplay(game_id: str):
+#     return nba_stats_provider.get_playbyplay(game_id)

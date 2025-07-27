@@ -1,11 +1,11 @@
 import asyncio
-import json
 import time
-from datetime import datetime, date
+from datetime import datetime
 
-from src.entities.game import GameStatus
-from src.service import nba_service
-from src.storage.redis_client import get_redis_client
+from src.core.entities.game import GameStatus
+from src.adapters import nba_api_adapter
+# from src.adapters.redis_client import get_redis_client
+from src.dependencies import storage_client
 
 # Tracks when we last polled each game
 last_polled = {}
@@ -38,7 +38,7 @@ def should_poll(game_id, game_status, start_time):
 
 
 async def poll_game(game_id):
-    key = f"game:{game_id}:states"
+    # key = f"game:{game_id}:states"
 
     game_data = nba_service.fetch_game_by_id(game_id)
     now = int(time.time())
@@ -49,7 +49,8 @@ async def poll_game(game_id):
 
     if game_status == GameStatus.IN_PROGRESS.value:
         game_data = nba_service.fetch_live_boxscore(game_id)
-        get_redis_client().zadd(key, {json.dumps(game_data): now})
+        # get_redis_client().zadd(key, {json.dumps(game_data): now})
+        storage_client.save_snapshot(game_id, game_data)
 
         print(f"polled game - {game_id}")
 

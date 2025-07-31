@@ -55,13 +55,11 @@ class LeaguePoller:
             await self.poll_game(game)
 
     async def poll_game(self, game: GameSnapshot):
-
-        logger.debug(f"Checking game: {game.gameId}")
-
         if self._should_poll_game(game.gameId, game.gameStatus):
-            # game = self._stats_service.get_boxscore(game.gameId)
-            game = self._stats_service.get_boxscore("0042400403")
 
+            logger.debug(f"Polling game: {game.gameId}")
+
+            game = self._stats_service.get_boxscore(game.gameId)
             self._last_polled[game.gameId] = time.time()
 
             if game.gameStatus is GameStatus.IN_PROGRESS:
@@ -72,6 +70,8 @@ class LeaguePoller:
         last = self._last_polled.get(game_id, 0)
 
         time_since_last_poll = now - last
+
+        logger.debug(f"Checking if should poll game {game_id} with status {game_status}. Last polled at {last} ({time_since_last_poll} s ago)")
 
         match game_status:
             case GameStatus.SCHEDULED:

@@ -41,7 +41,7 @@ class NBAAPIStatsProvider(NBAStatsProvider):
                 games_on_date = []
                 for game_json in entry["games"]:
                     game = GameSnapshot.from_api(game_json)
-                    games_on_date.append(game.dict(exclude_none=True))
+                    games_on_date.append(game)
 
                 filtered.append({
                     "gameDate": entry_date,

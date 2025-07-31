@@ -6,6 +6,7 @@ from typing import Any
 import redis
 from dotenv import load_dotenv
 
+from src.core.entities.game import GameSnapshot
 from src.core.ports.storage_client import StorageClient
 
 
@@ -15,13 +16,13 @@ class RedisClient(StorageClient):
         redis_url = os.environ.get("REDIS_URL")
         self.redis = redis.from_url(redis_url)
 
-    def save_snapshot(self, game_id: str, data: dict) -> None:
-        key = f"game:{game_id}:states"
+    def save_snapshot(self, game: GameSnapshot) -> None:
+        key = f"game:{game.gameId}:states"
         now = int(time.time())
 
-        self.redis.zadd(key, {json.dumps(data): now})
+        self.redis.zadd(key, {json.dumps(game): now})
 
-    def get_snapshot(self, game_id: str) -> dict:
+    def get_snapshot(self, game_id: str) -> GameSnapshot:
         result = self.redis.get(game_id)
         if result is None:
             return {}

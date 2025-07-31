@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 
 # from src.adapters.chatgpt_content_generator import generate_summary
-from src.dependencies import content_provider, nba_stats_provider
+from src.config.dependencies import content_provider, nba_stats_provider
 
 router = APIRouter(prefix="/games/{game_id}", tags=["Game Details"])
 

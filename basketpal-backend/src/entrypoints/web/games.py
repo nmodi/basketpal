@@ -3,7 +3,7 @@ from datetime import timedelta, date
 from fastapi import APIRouter, HTTPException
 
 from src.core.entities.leagues import League
-from src.dependencies import nba_stats_provider
+from src.config.dependencies import nba_stats_provider
 
 router = APIRouter(prefix="/games", tags=["Games"])
 

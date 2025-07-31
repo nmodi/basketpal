@@ -9,7 +9,7 @@ class GameStatus(Enum):
     FINAL = 3
 
 
-class PlayerStats(BaseModel):
+class BBallIndivStats(BaseModel):
     points: int
     assists: int
     rebDef: int
@@ -29,13 +29,13 @@ class PlayerStats(BaseModel):
     to: int
 
 
-class Player(BaseModel):
+class BBallPlayer(BaseModel):
     playerId: int = None
     jerseyNum: str = None
     position: str = None
     name: str = None
     nameAbbr: str = None
-    stats: PlayerStats = None
+    stats: BBallIndivStats = None
 
 
 class TeamSummary(BaseModel):
@@ -46,7 +46,7 @@ class TeamSummary(BaseModel):
     periodScores: List[int] = Field(default_factory=list)
     timeoutsRemaining: int = None
     inBonus: bool = None
-    onCourtPlayers: List[Player] = Field(default_factory=list)
+    onCourtPlayers: List[BBallPlayer] = Field(default_factory=list)
 
     @classmethod
     def from_api(cls, data: dict):
@@ -62,6 +62,7 @@ class TeamSummary(BaseModel):
 
 
 class GameSnapshot(BaseModel):
+    snapshotTime: str = None
     gameId: str
     gameStatus: GameStatus
     gameTimeUTC: str

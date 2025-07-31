@@ -3,9 +3,8 @@ import time
 from datetime import datetime
 
 from src.core.entities.game import GameStatus
-from src.adapters import nba_api_adapter
 # from src.adapters.redis_client import get_redis_client
-from src.dependencies import storage_client
+from src.config.dependencies import storage_client
 
 # Tracks when we last polled each game
 last_polled = {}
@@ -55,7 +54,7 @@ async def poll_game(game_id):
         print(f"polled game - {game_id}")
 
 
-async def polling_loop():
+async def poll_league():
     while True:
 
         all_games = nba_service.fetch_todays_games()

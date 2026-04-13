@@ -1,8 +1,9 @@
-import { Flex, Heading } from '@chakra-ui/react';
+import { Box, Flex, Text } from '@chakra-ui/react';
 import Microtron from '../components/Microtron';
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import axios from "../util/axios";
+import dayjs from 'dayjs';
 
 export const meta = () => {
     return [
@@ -12,12 +13,19 @@ export const meta = () => {
 };
 
 export const loader = async () => {
-    // const response = await fetch("https://basketpal-be.onrender.com/games");
-    // const response = await fetch("http://127.0.0.1:8000/games/upcoming");
     const response = await axios.get("/games/upcoming");
     const gameDates = await response.data;
     return json(gameDates);
 };
+
+function formatDateLabel(dateStr) {
+    const d = dayjs(dateStr);
+    const today = dayjs().startOf('day');
+    const diff = d.startOf('day').diff(today, 'day');
+    if (diff === 0) return 'TODAY';
+    if (diff === 1) return 'TOMORROW';
+    return d.format('dddd, MMM D').toUpperCase();
+}
 
 export default function Index() {
     const data = useLoaderData();
@@ -25,18 +33,29 @@ export default function Index() {
     return (
         <Flex
             direction="column"
-            justify="flex-start"
             align="center"
             w="100%"
-            h="calc(100vh)"
+            minH="100vh"
+            bg="#060e1a"
+            pb="12"
         >
-            {data.map(({gameDate, games}) => (
-                <>
-                    <Heading>{gameDate}</Heading>
+            {data.map(({ gameDate, games }) => (
+                <Box key={gameDate} w="100%" maxW="480px" mt="8">
+                    <Text
+                        fontSize="xs"
+                        fontWeight="bold"
+                        color="whiteAlpha.400"
+                        letterSpacing="widest"
+                        textTransform="uppercase"
+                        px="2"
+                        mb="3"
+                    >
+                        {formatDateLabel(gameDate)}
+                    </Text>
                     {games.map(g => (
                         <Microtron key={g.gameId} game={g} />
                     ))}
-                </>
+                </Box>
             ))}
         </Flex>
     );

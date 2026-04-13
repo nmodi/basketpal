@@ -11,7 +11,7 @@ const customTheme = {
     styles: {
         global: {
             'html, body': {
-                backgroundColor: 'gray.900',
+                backgroundColor: '#060e1a',
             },
         },
     },

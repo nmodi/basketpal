@@ -123,6 +123,11 @@ class GameSnapshot(BaseModel):
     def from_api(cls, data: dict):
 
         data = data.copy()
+        # Schedule API splits date/time into separate fields; gameDateTimeUTC is the full ISO datetime.
+        # Live boxscore API already provides gameTimeUTC as a full ISO datetime.
+        if 'gameDateTimeUTC' in data:
+            data['gameTimeUTC'] = data.pop('gameDateTimeUTC')
+
         home_team_data = data.pop("homeTeam")
         away_team_data = data.pop("awayTeam")
 

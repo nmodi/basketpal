@@ -1,5 +1,5 @@
-import { Flex, HStack, Select, Text, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
-import { useLoaderData, useParams } from '@remix-run/react';
+import { Flex, HStack, Select, Text, Tabs, TabList, TabPanels, Tab, TabPanel, IconButton } from '@chakra-ui/react';
+import { useLoaderData, useParams, useNavigate } from '@remix-run/react';
 import { json } from '@remix-run/node';
 import { useEffect, useState, useRef } from 'react';
 // import { getMainColor, getSecondaryColor } from 'nba-color';
@@ -82,6 +82,8 @@ const Minitron = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const navigate = useNavigate();
+
     // const { homeTeam, awayTeam } = gameData;
     // const homeMainColor = getMainColor(homeTeam.teamTricode).hex;
     // const awayMainColor = getMainColor(awayTeam.teamTricode).hex;
@@ -94,6 +96,18 @@ const Minitron = () => {
             color="white"
             fontFamily="tt-autonomous-mono"
         >
+            <IconButton
+                aria-label="Back to schedule"
+                icon={<Text fontSize="lg">←</Text>}
+                position="fixed"
+                top="4"
+                left="4"
+                size="sm"
+                variant="ghost"
+                color="whiteAlpha.600"
+                _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
+                onClick={() => navigate('/nba')}
+            />
                     <Scoreboard gameData={gameData} />
                     <Tabs 
                         align="center" 

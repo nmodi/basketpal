@@ -38,7 +38,7 @@ export default function Scoreboard({ gameData, summary }) {
                         </Text>
                         <VStack>
                             <Image
-                                src={`https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${potg.personId}.png`}
+                                src={`https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${potg.playerId}.png`}
                                 w="250px"
                                 // m="0 auto"
                                 objectFit="contain"
@@ -50,7 +50,7 @@ export default function Scoreboard({ gameData, summary }) {
                                 {potg.name}
                             </Text>
                             <HStack>
-                                {getBestStats(potg.statistics, 4).map(stat => (
+                                {getBestStats(potg.stats, 4).map(stat => (
                                     <VStack px="4">
                                         <Text fontSize="2xl" mb="-3">{stat.value}</Text>
                                         <Text>{stat.name}</Text>

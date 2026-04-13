@@ -7,7 +7,7 @@ class StorageClient(Protocol):
     def save_snapshot(self, game: GameSnapshot) -> None:
         ...
 
-    def get_snapshot(self, game_id: str) -> GameSnapshot:
+    def get_snapshot(self, game_id: str, delay: int) -> GameSnapshot:
         ...
 
     def save(self, key: str, data: any) -> None:

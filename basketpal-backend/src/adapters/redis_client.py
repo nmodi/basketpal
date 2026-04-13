@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import time
+import time
 from typing import Any
 
 import redis
@@ -17,16 +17,23 @@ class RedisClient(StorageClient):
         self.redis = redis.from_url(redis_url)
 
     def save_snapshot(self, game: GameSnapshot) -> None:
-        key = f"game:{game.gameId}:states"
+        key = f"game:{game.gameId}:snapshots"
         now = int(time.time())
 
-        self.redis.zadd(key, {json.dumps(game): now})
+        self.redis.zadd(key, {game.model_dump_json(exclude_none=False): now})
 
-    def get_snapshot(self, game_id: str) -> GameSnapshot:
-        result = self.redis.get(game_id)
+    def get_snapshot(self, game_id: str, delay: int = 20) -> GameSnapshot | None:
+
+        key = f"game:{game_id}:snapshots"
+        cutoff = int(time.time()) - delay
+
+        result = self.redis.zrevrangebyscore(key, cutoff, 0, start=0, num=1)
+
         if result is None:
-            return {}
-        return json.loads(result)
+            return None
+
+        json_game = result[0]
+        return GameSnapshot.model_validate_json(json_game)
 
     def save(self, key: str, data: any) -> None:
         self.redis.set(key, json.dumps(data), ex=86400)

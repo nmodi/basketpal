@@ -27,12 +27,12 @@ class ChatGPTContentProvider(ContentProvider):
             return cached
 
         prompt = self.generate_prompt(game_id)
-        response = self.client.responses.create(
-            model="gpt-4.1-mini",
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
             temperature=0.5,
-            input=prompt
+            messages=[{"role": "user", "content": prompt}]
         )
-        summary = response.output_text
+        summary = response.choices[0].message.content
 
         self.storage_client.save(key, summary)
 

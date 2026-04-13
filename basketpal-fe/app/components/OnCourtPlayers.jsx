@@ -14,15 +14,21 @@ import {
 } from '@chakra-ui/react';
 
 import {hasTripleDouble, tripleDoubleWatch, calculateGameScore, getTrueShootingPercentage} from '../util/statFunctions';
+import {getLeague} from '../util/league';
+import PlayerImage from './common/PlayerImage';
 
 export default function OnCourtPlayers({ gameData, isHome }) {
+
+    const league = getLeague(gameData.gameId);
 
     const team = isHome ? gameData.homeTeam : gameData.awayTeam;
     const otherTeam = isHome ? gameData.awayTeam : gameData.homeTeam;
 
-    const onCourtPlayers = team.players
-        ? team.players.filter((player) => player.oncourt === '1')
-        : [];
+    // const onCourtPlayers = team.players
+    //     ? team.players.filter((player) => player.oncourt === '1')
+    //     : [];
+
+    const onCourtPlayers = team.onCourtPlayers;
 
 
     const getEmojiWithTooltip = (emoji, tooltip) => (
@@ -111,11 +117,7 @@ export default function OnCourtPlayers({ gameData, isHome }) {
                         {onCourtPlayers.map((player) => (
                             <Tr key={player.personId} height="77px">
                                 <Td w="100px" p="0">
-                                    <Image
-                                        src={`https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${player.personId}.png`}
-                                        // w="100px"
-                                        m="0 auto"
-                                    />
+                                    <PlayerImage league={league} playerId={player.playerId} />
                                 </Td>
                                 <Td>
                                     <Text
@@ -126,14 +128,14 @@ export default function OnCourtPlayers({ gameData, isHome }) {
                                         {player.name}
                                     </Text>
                                     <HStack mt="1">
-                                        {getEmojisForStats(player.statistics)}
+                                        {getEmojisForStats(player.stats)}
                                     </HStack>
                                 </Td>
-                                <Td isNumeric>{player.statistics.points}</Td>
+                                <Td isNumeric>{player.stats.points}</Td>
                                 <Td isNumeric>
-                                    {player.statistics.reboundsTotal}
+                                    {player.stats.reboundsTotal}
                                 </Td>
-                                <Td isNumeric>{player.statistics.assists}</Td>
+                                <Td isNumeric>{player.stats.assists}</Td>
                                 {/* <Td isNumeric>gameScore: {calculateGameScore(player.statistics)}</Td> */}
                             </Tr>
                         ))}

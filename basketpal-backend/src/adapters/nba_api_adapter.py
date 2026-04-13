@@ -1,10 +1,14 @@
+import logging
+
 from nba_api.live.nba.endpoints import boxscore as boxscore
-from nba_api.live.wnba.endpoints import boxscore as wnba_boxscore
+# from nba_api.live.wnba.endpoints import boxscore as wnba_boxscore  # TODO: pending nba_api PR
 
 from nba_api.stats.endpoints import playbyplayv2, commonteamroster
 from datetime import datetime, date
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 from src.core.entities.game import GameSnapshot, GameStatus
 from src.core.entities.leagues import League
@@ -52,12 +56,12 @@ class NBAAPIStatsProvider(NBAStatsProvider):
 
         game = _get_boxscore_from_schedule(game_id)
 
-        if game.gameStatus != GameStatus.SCHEDULED or game is None:
+        if game is None or game.gameStatus != GameStatus.SCHEDULED:
             league = League.NBA if game_id.startswith("00") else League.WNBA
             if league is League.NBA:
                 game_dict = boxscore.BoxScore(game_id=game_id).game.get_dict()
             else:
-                game_dict = wnba_boxscore.BoxScore(game_id=game_id).game.get_dict()
+                pass  # TODO: wnba_boxscore.BoxScore(game_id=game_id).game.get_dict() — pending nba_api PR
 
             game = GameSnapshot.from_api(game_dict)
             return game
@@ -65,7 +69,11 @@ class NBAAPIStatsProvider(NBAStatsProvider):
         return game
 
     def get_playbyplay(self, game_id):
-        return playbyplayv2.PlayByPlayV2(game_id=game_id).get_normalized_dict().get("PlayByPlay")
+        try:
+            return playbyplayv2.PlayByPlayV2(game_id=game_id).get_normalized_dict().get("PlayByPlay") or []
+        except KeyError:
+            logger.warning(f"Play-by-play data unavailable for game {game_id}")
+            return []
 
     def get_roster(self, team_id):
         return commonteamroster.CommonTeamRoster(team_id=team_id).get_normalized_dict().get("CommonTeamRoster")

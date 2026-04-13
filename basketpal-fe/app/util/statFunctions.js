@@ -85,7 +85,7 @@ export const calculatePIE = (player, teamStats = player.teamStats) => {
         steals,
         blocks,
         turnovers
-    } = player.statistics;
+    } = player.stats;
 
     // Destructure game stats
     const {

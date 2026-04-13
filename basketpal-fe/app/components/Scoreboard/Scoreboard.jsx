@@ -7,7 +7,6 @@ import ScoreBreakdown from './ScoreBreakdown';
 import TeamScore from './TeamScore';
 
 export default function Scoreboard({ gameData }) {
-    const { homeTeam, awayTeam } = gameData;
 
     return (
         <Flex mb="2" width="100%">

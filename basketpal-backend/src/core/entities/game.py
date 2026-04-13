@@ -9,33 +9,57 @@ class GameStatus(Enum):
     FINAL = 3
 
 
+class TeamStats(BaseModel):
+    reboundsOffensive: int
+    reboundsTotal: int
+    assists: int
+    blocks: int
+    steals: int
+    turnovers: int
+    fieldGoalsMade: int
+    fieldGoalsAttempted: int
+    freeThrowsMade: int
+    freeThrowsAttempted: int
+    threePointersMade: int
+    threePointersAttempted: int
+    benchPoints: int
+    biggestLead: int
+    pointsInThePaint: int
+    fastBreakPointsMade: int
+
+
 class BBallIndivStats(BaseModel):
     points: int
     assists: int
-    rebDef: int
-    rebOff: int
+    reboundsDefensive: int
+    reboundsOffensive: int
+    reboundsTotal: int
     steals: int
     blocks: int
-    fouls: int
-    fgAtt: int
-    fgMd: int
-    threePtAtt: int
-    threePtMd: int
-    freeThrAtt: int
-    freeThrMd: int
-    plusMinus: int
-    min: str
-    ptsInPnt: int
-    to: int
+    foulsPersonal: int
+    foulsTechnical: int
+    fieldGoalsAttempted: int
+    fieldGoalsMade: int
+    fieldGoalsPercentage: Optional[float] = None
+    threePointersAttempted: int
+    threePointersMade: int
+    threePointersPercentage: Optional[float] = None
+    freeThrowsAttempted: int
+    freeThrowsMade: int
+    freeThrowsPercentage: Optional[float] = None
+    plusMinusPoints: int
+    minutes: str
+    pointsInThePaint: int
+    turnovers: int
 
 
 class BBallPlayer(BaseModel):
-    playerId: int = None
+    playerId: int | None = None
     jerseyNum: str = None
-    position: str = None
+    position: str | None = None
     name: str = None
-    nameAbbr: str = None
-    stats: BBallIndivStats = None
+    nameAbbr: str | None = None
+    stats: BBallIndivStats | None  = None
 
 
 class TeamSummary(BaseModel):
@@ -43,21 +67,44 @@ class TeamSummary(BaseModel):
     teamTricode: str
     teamCity: str
     teamName: str
+    score: Optional[int] = None
     periodScores: List[int] = Field(default_factory=list)
     timeoutsRemaining: int = None
     inBonus: bool = None
+    statistics: Optional[TeamStats] = None
     onCourtPlayers: List[BBallPlayer] = Field(default_factory=list)
+    players: List[BBallPlayer] = Field(default_factory=list)
 
     @classmethod
     def from_api(cls, data: dict):
         data = data.copy()
         periods = data.pop("periods", [])
-        players = data.pop("players", [])
+        raw_players = data.pop("players", [])
+        raw_statistics = data.pop("statistics", None)
+
+        on_court = []
+        all_players = []
+        for player in raw_players:
+            bball_player = BBallPlayer(
+                playerId=int(player["personId"]) if player.get("personId") else None,
+                jerseyNum=player.get("jerseyNum"),
+                position=player.get("position"),
+                name=player.get("name"),
+                nameAbbr=player.get("nameI"),
+                stats=BBallIndivStats(**player["statistics"]) if player.get("statistics") else None
+            )
+            all_players.append(bball_player)
+            if player.get("oncourt") == "1":
+                on_court.append(bball_player)
+
+        statistics = TeamStats(**raw_statistics) if raw_statistics else None
 
         return cls(
             **data,
+            statistics=statistics,
             periodScores=[item["score"] for item in periods],
-            onCourtPlayers=[player for player in players if player["oncourt"] == "1"]
+            onCourtPlayers=on_court,
+            players=all_players
         )
 
 

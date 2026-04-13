@@ -13,11 +13,16 @@ import {
     HStack,
 } from '@chakra-ui/react';
 
+import { getLeague } from "../../util/league"
+import TeamIcon from '../common/TeamIcon';
+
 export default function ScoreBreakdown({ gameData }) {
     const { homeTeam, awayTeam } = gameData;
 
-    const homeTeamScores = homeTeam.periods?.map((p) => p.score);
-    const awayTeamScores = awayTeam.periods?.map((p) => p.score);
+    const homeTeamScores = homeTeam.periodScores;
+    const awayTeamScores = awayTeam.periodScores;
+
+    const league = getLeague(gameData.gameId);
 
     return (
         <TableContainer m="4">
@@ -36,32 +41,26 @@ export default function ScoreBreakdown({ gameData }) {
                     <Tr>
                         <Td>
                             <HStack>
-                                <Image
-                                    src={`https://cdn.nba.com/logos/nba/${homeTeam.teamId}/primary/L/logo.svg`}
-                                    w="16px"
-                                />
+                                <TeamIcon teamId={homeTeam.teamId} league={league} />
                                 <span>{homeTeam.teamTricode}</span>
                             </HStack>
                         </Td>
                         {homeTeamScores?.map((s, i) => (
                             <Td key={i}>{s}</Td>
                         ))}
-                        <Td>{homeTeam.score}</Td>
+                        <Td>{homeTeamScores.reduce((acc, curr) => acc + curr, 0)}</Td>
                     </Tr>
                     <Tr>
                         <Td>
                             <HStack>
-                                <Image
-                                    src={`https://cdn.nba.com/logos/nba/${awayTeam.teamId}/primary/L/logo.svg`}
-                                    w="16px"
-                                />
+                            <TeamIcon teamId={awayTeam.teamId} league={league} />
                                 <span>{awayTeam.teamTricode}</span>
                             </HStack>    
                         </Td>
                         {awayTeamScores?.map((s, i) => (
                             <Td key={i}>{s}</Td>
                         ))}
-                        <Td>{awayTeam.score}</Td>
+                        <Td>{awayTeamScores.reduce((acc, curr) => acc + curr, 0)}</Td>
                     </Tr>
                 </Tbody>
             </Table>

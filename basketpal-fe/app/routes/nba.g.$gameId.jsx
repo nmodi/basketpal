@@ -132,8 +132,8 @@ const Minitron = () => {
 
                             {isGameStarted && (
                                 <TabPanel>
-                                    <TeamStatsComparison 
-                                        leftTeam={gameData.homeTeam} 
+                                    <TeamStatsComparison
+                                        leftTeam={gameData.homeTeam}
                                         rightTeam={gameData.awayTeam} />
                                 </TabPanel>
                             )}

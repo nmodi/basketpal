@@ -1,5 +1,7 @@
 import { calculateGameScore, calculatePIE, getTrueShootingPercentage } from '../util/statFunctions';
 
+import { League } from './league';
+
 export const getGameResult = (gameData) => {
 
     if (gameData.homeTeam.score > gameData.awayTeam.score) {
@@ -15,7 +17,7 @@ export const getTopPlayers = (team, N) => {
         .map(p => (
             {...p, 
                 teamId: team.teamId, 
-                gameScore: calculateGameScore(p.statistics), 
+                gameScore: calculateGameScore(p.stats),
                 teamStats: team.statistics,
                 pie: calculatePIE(p, team.statistics)
             }))

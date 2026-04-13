@@ -6,8 +6,8 @@ export default function TeamScore({ gameData, isHome }) {
     const team = isHome ? gameData.homeTeam : gameData.awayTeam;
     const otherTeam = !isHome ? gameData.homeTeam : gameData.awayTeam;
 
-    const mainColor = getMainColor(team.teamTricode).hex;
-    const secondaryColor = getSecondaryColor(team.teamTricode).hex;
+    const mainColor = getMainColor(team.teamTricode)?.hex;
+    const secondaryColor = getSecondaryColor(team.teamTricode)?.hex;
 
     const isGameInProgress = gameData.gameStatus === 2;
     const isGameOver = gameData.gameStatus === 3;
@@ -18,6 +18,9 @@ export default function TeamScore({ gameData, isHome }) {
         gameData.gameStatus === 3 && team.score > otherTeam.score;
 
     const timeoutIndicators = '⏱️'.repeat(team.timeoutsRemaining);
+
+
+    const score = team.periodScores.reduce((acc, curr) => acc + curr, 0);
 
     return (
         <Flex
@@ -53,7 +56,7 @@ export default function TeamScore({ gameData, isHome }) {
                     fontSize="5xl"
                     fontFamily="tt-autonomous-mono"
                 >
-                    {String(team.score).padStart(3, 0)}
+                    {String(score).padStart(3, 0)}
                 </Heading>
 
 

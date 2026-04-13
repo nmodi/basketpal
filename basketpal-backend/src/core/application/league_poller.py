@@ -1,6 +1,6 @@
 import asyncio
 import time
-from datetime import date
+from datetime import date, datetime, timezone
 
 from src.config.logger import get_logger
 from src.core.application.nba_stats_service import NBAStatsService
@@ -24,14 +24,11 @@ class LeaguePoller:
 
         self._interval_seconds = interval_seconds
         self._last_polled = {}
-        self._todays_date = None
         self._todays_games = []
         self._running = False
 
     async def start(self):
         self._running = True
-        self._todays_games = self._stats_service.get_todays_games(self._league)
-        self._todays_date = date.today()
 
         while self._running:
             try:
@@ -45,9 +42,7 @@ class LeaguePoller:
         self._running = False
 
     async def poll_league(self):
-        if date.today() != self._todays_date:
-            self._todays_games = self._stats_service.get_todays_games(self._league)
-            self._todays_date = date.today()
+        self._todays_games = self._stats_service.get_todays_games(self._league)
 
         logger.debug("Polling league")
 
@@ -55,7 +50,7 @@ class LeaguePoller:
             await self.poll_game(game)
 
     async def poll_game(self, game: GameSnapshot):
-        if self._should_poll_game(game.gameId, game.gameStatus):
+        if self._should_poll_game(game):
 
             logger.debug(f"Polling game: {game.gameId}")
 
@@ -63,19 +58,28 @@ class LeaguePoller:
             self._last_polled[game.gameId] = time.time()
 
             if game.gameStatus is GameStatus.IN_PROGRESS:
+                game.snapshotTime = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
                 self._storage_client.save_snapshot(game)
 
-    def _should_poll_game(self, game_id, game_status: GameStatus):
-        now = time.time()
-        last = self._last_polled.get(game_id, 0)
+    def _is_near_tipoff(self, game: GameSnapshot, window_seconds: int = 300) -> bool:
+        try:
+            tipoff = datetime.fromisoformat(game.gameTimeUTC.replace("Z", "+00:00"))
+            now = datetime.now(timezone.utc)
+            return 0 <= (tipoff - now).total_seconds() <= window_seconds
+        except Exception:
+            return False
 
+    def _should_poll_game(self, game: GameSnapshot):
+        now = time.time()
+        last = self._last_polled.get(game.gameId, 0)
         time_since_last_poll = now - last
 
-        logger.debug(f"Checking if should poll game {game_id} with status {game_status}. Last polled at {last} ({time_since_last_poll} s ago)")
+        logger.debug(f"Checking if should poll game {game.gameId} with status {game.gameStatus}. "
+                     f"Last polled at {last} ({time_since_last_poll} s ago)")
 
-        match game_status:
+        match game.gameStatus:
             case GameStatus.SCHEDULED:
-                return time_since_last_poll >= 60
+                return self._is_near_tipoff(game)
 
             case GameStatus.IN_PROGRESS:
                 return time_since_last_poll >= 10

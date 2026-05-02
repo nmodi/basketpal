@@ -106,7 +106,7 @@ const Minitron = () => {
                 variant="ghost"
                 color="whiteAlpha.600"
                 _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
-                onClick={() => navigate('/nba')}
+                onClick={() => navigate('/')}
             />
                     <Scoreboard gameData={gameData} />
                     <Tabs 

@@ -9,12 +9,23 @@ from dotenv import load_dotenv
 from src.core.entities.game import GameSnapshot
 from src.core.ports.storage_client import StorageClient
 
+DEFAULT_REDIS_URL = "redis://localhost:6379"
+
 
 class RedisClient(StorageClient):
     def __init__(self):
         load_dotenv()
-        redis_url = os.environ.get("REDIS_URL")
-        self.redis = redis.from_url(redis_url)
+        redis_url = os.environ.get("REDIS_URL") or DEFAULT_REDIS_URL
+
+        try:
+            self.redis = redis.from_url(redis_url)
+            # Fail fast during app startup so misconfigured deploys are obvious.
+            self.redis.ping()
+        except (ValueError, redis.exceptions.RedisError) as exc:
+            raise RuntimeError(
+                "Redis connection failed. Set REDIS_URL to a valid Redis endpoint. "
+                f"Current value: {redis_url}"
+            ) from exc
 
     def save_snapshot(self, game: GameSnapshot) -> None:
         key = f"game:{game.gameId}:snapshots"

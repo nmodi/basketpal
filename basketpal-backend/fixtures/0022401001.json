@@ -1,0 +1,22 @@
+{
+  "gameId": "0022401001",
+  "gameStatus": 1,
+  "gameTimeUTC": "2026-05-03T01:30:00Z",
+  "gameCode": "20260503/GSWLAL",
+  "homeTeam": {
+    "teamId": 1610612747,
+    "teamTricode": "LAL",
+    "teamCity": "Los Angeles",
+    "teamName": "Lakers",
+    "onCourtPlayers": [],
+    "players": []
+  },
+  "awayTeam": {
+    "teamId": 1610612744,
+    "teamTricode": "GSW",
+    "teamCity": "Golden State",
+    "teamName": "Warriors",
+    "onCourtPlayers": [],
+    "players": []
+  }
+}

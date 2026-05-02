@@ -1,0 +1,522 @@
+{
+  "gameId": "0022401002",
+  "gameStatus": 2,
+  "gameTimeUTC": "2026-05-02T00:00:00Z",
+  "gameCode": "20260502/MIABOS",
+  "period": 3,
+  "gameClock": "PT08M32.00S",
+  "homeTeam": {
+    "teamId": 1610612738,
+    "teamTricode": "BOS",
+    "teamCity": "Boston",
+    "teamName": "Celtics",
+    "score": 89,
+    "periodScores": [28, 26, 35],
+    "timeoutsRemaining": 4,
+    "inBonus": false,
+    "statistics": {
+      "reboundsOffensive": 6,
+      "reboundsTotal": 37,
+      "assists": 21,
+      "blocks": 5,
+      "steals": 6,
+      "turnovers": 7,
+      "fieldGoalsMade": 32,
+      "fieldGoalsAttempted": 72,
+      "freeThrowsMade": 14,
+      "freeThrowsAttempted": 19,
+      "threePointersMade": 11,
+      "threePointersAttempted": 30,
+      "benchPoints": 18,
+      "biggestLead": 17,
+      "pointsInThePaint": 36,
+      "fastBreakPointsMade": 8
+    },
+    "onCourtPlayers": [
+      {
+        "playerId": 237,
+        "jerseyNum": "0",
+        "position": "F",
+        "name": "Jayson Tatum",
+        "nameAbbr": "J. Tatum",
+        "stats": {
+          "points": 24, "assists": 4, "reboundsDefensive": 6, "reboundsOffensive": 2, "reboundsTotal": 8,
+          "steals": 2, "blocks": 1, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 18, "fieldGoalsMade": 9, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 6, "freeThrowsMade": 4, "freeThrowsPercentage": 0.667,
+          "plusMinusPoints": 11, "minutes": "PT32M14.00S", "pointsInThePaint": 8, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1628384,
+        "jerseyNum": "7",
+        "position": "G",
+        "name": "Jaylen Brown",
+        "nameAbbr": "J. Brown",
+        "stats": {
+          "points": 18, "assists": 3, "reboundsDefensive": 4, "reboundsOffensive": 1, "reboundsTotal": 5,
+          "steals": 1, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 15, "fieldGoalsMade": 7, "fieldGoalsPercentage": 0.467,
+          "threePointersAttempted": 4, "threePointersMade": 1, "threePointersPercentage": 0.25,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": 8, "minutes": "PT30M22.00S", "pointsInThePaint": 10, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 204001,
+        "jerseyNum": "8",
+        "position": "C",
+        "name": "Kristaps Porzingis",
+        "nameAbbr": "K. Porzingis",
+        "stats": {
+          "points": 12, "assists": 1, "reboundsDefensive": 5, "reboundsOffensive": 1, "reboundsTotal": 6,
+          "steals": 0, "blocks": 2, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 4, "fieldGoalsPercentage": 0.444,
+          "threePointersAttempted": 3, "threePointersMade": 1, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": 6, "minutes": "PT24M08.00S", "pointsInThePaint": 8, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 203200,
+        "jerseyNum": "4",
+        "position": "G",
+        "name": "Jrue Holiday",
+        "nameAbbr": "J. Holiday",
+        "stats": {
+          "points": 8, "assists": 6, "reboundsDefensive": 4, "reboundsOffensive": 0, "reboundsTotal": 4,
+          "steals": 2, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 8, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.375,
+          "threePointersAttempted": 2, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 2, "freeThrowsPercentage": 1.0,
+          "plusMinusPoints": 9, "minutes": "PT28M44.00S", "pointsInThePaint": 4, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1629684,
+        "jerseyNum": "9",
+        "position": "G",
+        "name": "Derrick White",
+        "nameAbbr": "D. White",
+        "stats": {
+          "points": 9, "assists": 2, "reboundsDefensive": 3, "reboundsOffensive": 0, "reboundsTotal": 3,
+          "steals": 1, "blocks": 1, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 7, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.429,
+          "threePointersAttempted": 4, "threePointersMade": 2, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 1, "freeThrowsPercentage": 0.5,
+          "plusMinusPoints": 5, "minutes": "PT26M35.00S", "pointsInThePaint": 2, "turnovers": 0
+        }
+      }
+    ],
+    "players": [
+      {
+        "playerId": 237,
+        "jerseyNum": "0",
+        "position": "F",
+        "name": "Jayson Tatum",
+        "nameAbbr": "J. Tatum",
+        "stats": {
+          "points": 24, "assists": 4, "reboundsDefensive": 6, "reboundsOffensive": 2, "reboundsTotal": 8,
+          "steals": 2, "blocks": 1, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 18, "fieldGoalsMade": 9, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 6, "freeThrowsMade": 4, "freeThrowsPercentage": 0.667,
+          "plusMinusPoints": 11, "minutes": "PT32M14.00S", "pointsInThePaint": 8, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1628384,
+        "jerseyNum": "7",
+        "position": "G",
+        "name": "Jaylen Brown",
+        "nameAbbr": "J. Brown",
+        "stats": {
+          "points": 18, "assists": 3, "reboundsDefensive": 4, "reboundsOffensive": 1, "reboundsTotal": 5,
+          "steals": 1, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 15, "fieldGoalsMade": 7, "fieldGoalsPercentage": 0.467,
+          "threePointersAttempted": 4, "threePointersMade": 1, "threePointersPercentage": 0.25,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": 8, "minutes": "PT30M22.00S", "pointsInThePaint": 10, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 204001,
+        "jerseyNum": "8",
+        "position": "C",
+        "name": "Kristaps Porzingis",
+        "nameAbbr": "K. Porzingis",
+        "stats": {
+          "points": 12, "assists": 1, "reboundsDefensive": 5, "reboundsOffensive": 1, "reboundsTotal": 6,
+          "steals": 0, "blocks": 2, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 4, "fieldGoalsPercentage": 0.444,
+          "threePointersAttempted": 3, "threePointersMade": 1, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": 6, "minutes": "PT24M08.00S", "pointsInThePaint": 8, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 203200,
+        "jerseyNum": "4",
+        "position": "G",
+        "name": "Jrue Holiday",
+        "nameAbbr": "J. Holiday",
+        "stats": {
+          "points": 8, "assists": 6, "reboundsDefensive": 4, "reboundsOffensive": 0, "reboundsTotal": 4,
+          "steals": 2, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 8, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.375,
+          "threePointersAttempted": 2, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 2, "freeThrowsPercentage": 1.0,
+          "plusMinusPoints": 9, "minutes": "PT28M44.00S", "pointsInThePaint": 4, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1629684,
+        "jerseyNum": "9",
+        "position": "G",
+        "name": "Derrick White",
+        "nameAbbr": "D. White",
+        "stats": {
+          "points": 9, "assists": 2, "reboundsDefensive": 3, "reboundsOffensive": 0, "reboundsTotal": 3,
+          "steals": 1, "blocks": 1, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 7, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.429,
+          "threePointersAttempted": 4, "threePointersMade": 2, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 1, "freeThrowsPercentage": 0.5,
+          "plusMinusPoints": 5, "minutes": "PT26M35.00S", "pointsInThePaint": 2, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 201143,
+        "jerseyNum": "42",
+        "position": "F-C",
+        "name": "Al Horford",
+        "nameAbbr": "A. Horford",
+        "stats": {
+          "points": 6, "assists": 2, "reboundsDefensive": 4, "reboundsOffensive": 1, "reboundsTotal": 5,
+          "steals": 0, "blocks": 1, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 5, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.4,
+          "threePointersAttempted": 2, "threePointersMade": 1, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 1, "freeThrowsMade": 1, "freeThrowsPercentage": 1.0,
+          "plusMinusPoints": 4, "minutes": "PT18M12.00S", "pointsInThePaint": 4, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 1630202,
+        "jerseyNum": "11",
+        "position": "G",
+        "name": "Payton Pritchard",
+        "nameAbbr": "P. Pritchard",
+        "stats": {
+          "points": 9, "assists": 3, "reboundsDefensive": 2, "reboundsOffensive": 0, "reboundsTotal": 2,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 6, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 5, "threePointersMade": 3, "threePointersPercentage": 0.6,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 2, "minutes": "PT16M48.00S", "pointsInThePaint": 0, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1630570,
+        "jerseyNum": "30",
+        "position": "F",
+        "name": "Sam Hauser",
+        "nameAbbr": "S. Hauser",
+        "stats": {
+          "points": 3, "assists": 0, "reboundsDefensive": 1, "reboundsOffensive": 0, "reboundsTotal": 1,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 3, "fieldGoalsMade": 1, "fieldGoalsPercentage": 0.333,
+          "threePointersAttempted": 3, "threePointersMade": 1, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT10M05.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 1628463,
+        "jerseyNum": "2",
+        "position": "C",
+        "name": "Luke Kornet",
+        "nameAbbr": "L. Kornet",
+        "stats": {
+          "points": 0, "assists": 0, "reboundsDefensive": 1, "reboundsOffensive": 1, "reboundsTotal": 2,
+          "steals": 0, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 0, "fieldGoalsMade": 0, "fieldGoalsPercentage": null,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -2, "minutes": "PT08M02.00S", "pointsInThePaint": 0, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1641724,
+        "jerseyNum": "27",
+        "position": "F",
+        "name": "Jordan Walsh",
+        "nameAbbr": "J. Walsh",
+        "stats": {
+          "points": 0, "assists": 0, "reboundsDefensive": 1, "reboundsOffensive": 0, "reboundsTotal": 1,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 1, "fieldGoalsMade": 0, "fieldGoalsPercentage": 0.0,
+          "threePointersAttempted": 1, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -1, "minutes": "PT05M00.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      }
+    ]
+  },
+  "awayTeam": {
+    "teamId": 1610612748,
+    "teamTricode": "MIA",
+    "teamCity": "Miami",
+    "teamName": "Heat",
+    "score": 78,
+    "periodScores": [22, 26, 30],
+    "timeoutsRemaining": 3,
+    "inBonus": true,
+    "statistics": {
+      "reboundsOffensive": 6,
+      "reboundsTotal": 36,
+      "assists": 23,
+      "blocks": 3,
+      "steals": 5,
+      "turnovers": 11,
+      "fieldGoalsMade": 29,
+      "fieldGoalsAttempted": 71,
+      "freeThrowsMade": 13,
+      "freeThrowsAttempted": 18,
+      "threePointersMade": 7,
+      "threePointersAttempted": 25,
+      "benchPoints": 16,
+      "biggestLead": 8,
+      "pointsInThePaint": 38,
+      "fastBreakPointsMade": 6
+    },
+    "onCourtPlayers": [
+      {
+        "playerId": 202710,
+        "jerseyNum": "22",
+        "position": "F",
+        "name": "Jimmy Butler",
+        "nameAbbr": "J. Butler",
+        "stats": {
+          "points": 22, "assists": 5, "reboundsDefensive": 6, "reboundsOffensive": 1, "reboundsTotal": 7,
+          "steals": 2, "blocks": 0, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 16, "fieldGoalsMade": 8, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 2, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 8, "freeThrowsMade": 6, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -11, "minutes": "PT32M44.00S", "pointsInThePaint": 12, "turnovers": 3
+        }
+      },
+      {
+        "playerId": 1628389,
+        "jerseyNum": "13",
+        "position": "C",
+        "name": "Bam Adebayo",
+        "nameAbbr": "B. Adebayo",
+        "stats": {
+          "points": 16, "assists": 3, "reboundsDefensive": 7, "reboundsOffensive": 2, "reboundsTotal": 9,
+          "steals": 1, "blocks": 2, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 11, "fieldGoalsMade": 6, "fieldGoalsPercentage": 0.545,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 6, "freeThrowsMade": 4, "freeThrowsPercentage": 0.667,
+          "plusMinusPoints": -8, "minutes": "PT30M08.00S", "pointsInThePaint": 10, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1629029,
+        "jerseyNum": "14",
+        "position": "G",
+        "name": "Tyler Herro",
+        "nameAbbr": "T. Herro",
+        "stats": {
+          "points": 14, "assists": 3, "reboundsDefensive": 3, "reboundsOffensive": 1, "reboundsTotal": 4,
+          "steals": 0, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 13, "fieldGoalsMade": 5, "fieldGoalsPercentage": 0.385,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 2, "freeThrowsPercentage": 1.0,
+          "plusMinusPoints": -6, "minutes": "PT28M18.00S", "pointsInThePaint": 4, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 200768,
+        "jerseyNum": "7",
+        "position": "G",
+        "name": "Kyle Lowry",
+        "nameAbbr": "K. Lowry",
+        "stats": {
+          "points": 6, "assists": 7, "reboundsDefensive": 3, "reboundsOffensive": 0, "reboundsTotal": 3,
+          "steals": 1, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 7, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.286,
+          "threePointersAttempted": 5, "threePointersMade": 2, "threePointersPercentage": 0.4,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -9, "minutes": "PT27M22.00S", "pointsInThePaint": 2, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1628426,
+        "jerseyNum": "16",
+        "position": "F",
+        "name": "Caleb Martin",
+        "nameAbbr": "C. Martin",
+        "stats": {
+          "points": 4, "assists": 1, "reboundsDefensive": 3, "reboundsOffensive": 1, "reboundsTotal": 4,
+          "steals": 1, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 6, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.333,
+          "threePointersAttempted": 3, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -5, "minutes": "PT24M12.00S", "pointsInThePaint": 4, "turnovers": 1
+        }
+      }
+    ],
+    "players": [
+      {
+        "playerId": 202710,
+        "jerseyNum": "22",
+        "position": "F",
+        "name": "Jimmy Butler",
+        "nameAbbr": "J. Butler",
+        "stats": {
+          "points": 22, "assists": 5, "reboundsDefensive": 6, "reboundsOffensive": 1, "reboundsTotal": 7,
+          "steals": 2, "blocks": 0, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 16, "fieldGoalsMade": 8, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 2, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 8, "freeThrowsMade": 6, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -11, "minutes": "PT32M44.00S", "pointsInThePaint": 12, "turnovers": 3
+        }
+      },
+      {
+        "playerId": 1628389,
+        "jerseyNum": "13",
+        "position": "C",
+        "name": "Bam Adebayo",
+        "nameAbbr": "B. Adebayo",
+        "stats": {
+          "points": 16, "assists": 3, "reboundsDefensive": 7, "reboundsOffensive": 2, "reboundsTotal": 9,
+          "steals": 1, "blocks": 2, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 11, "fieldGoalsMade": 6, "fieldGoalsPercentage": 0.545,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 6, "freeThrowsMade": 4, "freeThrowsPercentage": 0.667,
+          "plusMinusPoints": -8, "minutes": "PT30M08.00S", "pointsInThePaint": 10, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1629029,
+        "jerseyNum": "14",
+        "position": "G",
+        "name": "Tyler Herro",
+        "nameAbbr": "T. Herro",
+        "stats": {
+          "points": 14, "assists": 3, "reboundsDefensive": 3, "reboundsOffensive": 1, "reboundsTotal": 4,
+          "steals": 0, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 13, "fieldGoalsMade": 5, "fieldGoalsPercentage": 0.385,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 2, "freeThrowsPercentage": 1.0,
+          "plusMinusPoints": -6, "minutes": "PT28M18.00S", "pointsInThePaint": 4, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 200768,
+        "jerseyNum": "7",
+        "position": "G",
+        "name": "Kyle Lowry",
+        "nameAbbr": "K. Lowry",
+        "stats": {
+          "points": 6, "assists": 7, "reboundsDefensive": 3, "reboundsOffensive": 0, "reboundsTotal": 3,
+          "steals": 1, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 7, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.286,
+          "threePointersAttempted": 5, "threePointersMade": 2, "threePointersPercentage": 0.4,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -9, "minutes": "PT27M22.00S", "pointsInThePaint": 2, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1628426,
+        "jerseyNum": "16",
+        "position": "F",
+        "name": "Caleb Martin",
+        "nameAbbr": "C. Martin",
+        "stats": {
+          "points": 4, "assists": 1, "reboundsDefensive": 3, "reboundsOffensive": 1, "reboundsTotal": 4,
+          "steals": 1, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 6, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.333,
+          "threePointersAttempted": 3, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -5, "minutes": "PT24M12.00S", "pointsInThePaint": 4, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1629312,
+        "jerseyNum": "24",
+        "position": "F",
+        "name": "Haywood Highsmith",
+        "nameAbbr": "H. Highsmith",
+        "stats": {
+          "points": 7, "assists": 1, "reboundsDefensive": 2, "reboundsOffensive": 0, "reboundsTotal": 2,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 6, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 3, "threePointersMade": 1, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 2, "minutes": "PT16M05.00S", "pointsInThePaint": 4, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 204456,
+        "jerseyNum": "0",
+        "position": "G",
+        "name": "Josh Richardson",
+        "nameAbbr": "J. Richardson",
+        "stats": {
+          "points": 4, "assists": 2, "reboundsDefensive": 2, "reboundsOffensive": 0, "reboundsTotal": 2,
+          "steals": 0, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 5, "fieldGoalsMade": 1, "fieldGoalsPercentage": 0.2,
+          "threePointersAttempted": 3, "threePointersMade": 1, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 1, "freeThrowsPercentage": 0.5,
+          "plusMinusPoints": -3, "minutes": "PT14M18.00S", "pointsInThePaint": 2, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1631207,
+        "jerseyNum": "5",
+        "position": "F",
+        "name": "Nikola Jovic",
+        "nameAbbr": "N. Jovic",
+        "stats": {
+          "points": 3, "assists": 1, "reboundsDefensive": 2, "reboundsOffensive": 0, "reboundsTotal": 2,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 4, "fieldGoalsMade": 1, "fieldGoalsPercentage": 0.25,
+          "threePointersAttempted": 2, "threePointersMade": 1, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT10M02.00S", "pointsInThePaint": 0, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1628960,
+        "jerseyNum": "55",
+        "position": "G",
+        "name": "Duncan Robinson",
+        "nameAbbr": "D. Robinson",
+        "stats": {
+          "points": 2, "assists": 0, "reboundsDefensive": 1, "reboundsOffensive": 0, "reboundsTotal": 1,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 2, "fieldGoalsMade": 1, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 1, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT08M00.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 1628437,
+        "jerseyNum": "31",
+        "position": "C",
+        "name": "Thomas Bryant",
+        "nameAbbr": "T. Bryant",
+        "stats": {
+          "points": 0, "assists": 0, "reboundsDefensive": 1, "reboundsOffensive": 1, "reboundsTotal": 2,
+          "steals": 0, "blocks": 1, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 1, "fieldGoalsMade": 0, "fieldGoalsPercentage": 0.0,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT05M00.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      }
+    ]
+  }
+}

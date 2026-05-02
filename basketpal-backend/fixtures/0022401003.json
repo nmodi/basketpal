@@ -1,0 +1,522 @@
+{
+  "gameId": "0022401003",
+  "gameStatus": 3,
+  "gameTimeUTC": "2026-05-01T00:00:00Z",
+  "gameCode": "20260501/LACDEN",
+  "period": 4,
+  "gameClock": "PT00M00.00S",
+  "homeTeam": {
+    "teamId": 1610612743,
+    "teamTricode": "DEN",
+    "teamCity": "Denver",
+    "teamName": "Nuggets",
+    "score": 118,
+    "periodScores": [28, 32, 30, 28],
+    "timeoutsRemaining": 0,
+    "inBonus": false,
+    "statistics": {
+      "reboundsOffensive": 9,
+      "reboundsTotal": 47,
+      "assists": 30,
+      "blocks": 5,
+      "steals": 7,
+      "turnovers": 7,
+      "fieldGoalsMade": 44,
+      "fieldGoalsAttempted": 92,
+      "freeThrowsMade": 17,
+      "freeThrowsAttempted": 22,
+      "threePointersMade": 13,
+      "threePointersAttempted": 33,
+      "benchPoints": 16,
+      "biggestLead": 22,
+      "pointsInThePaint": 50,
+      "fastBreakPointsMade": 12
+    },
+    "onCourtPlayers": [
+      {
+        "playerId": 203999,
+        "jerseyNum": "15",
+        "position": "C",
+        "name": "Nikola Jokic",
+        "nameAbbr": "N. Jokic",
+        "stats": {
+          "points": 32, "assists": 10, "reboundsDefensive": 12, "reboundsOffensive": 3, "reboundsTotal": 15,
+          "steals": 1, "blocks": 2, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 22, "fieldGoalsMade": 11, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 4, "threePointersMade": 2, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 10, "freeThrowsMade": 8, "freeThrowsPercentage": 0.8,
+          "plusMinusPoints": 14, "minutes": "PT38M22.00S", "pointsInThePaint": 16, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1627750,
+        "jerseyNum": "27",
+        "position": "G",
+        "name": "Jamal Murray",
+        "nameAbbr": "J. Murray",
+        "stats": {
+          "points": 26, "assists": 7, "reboundsDefensive": 4, "reboundsOffensive": 1, "reboundsTotal": 5,
+          "steals": 2, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 19, "fieldGoalsMade": 9, "fieldGoalsPercentage": 0.474,
+          "threePointersAttempted": 7, "threePointersMade": 3, "threePointersPercentage": 0.429,
+          "freeThrowsAttempted": 6, "freeThrowsMade": 5, "freeThrowsPercentage": 0.833,
+          "plusMinusPoints": 12, "minutes": "PT36M14.00S", "pointsInThePaint": 8, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1629008,
+        "jerseyNum": "13",
+        "position": "F",
+        "name": "Michael Porter Jr.",
+        "nameAbbr": "M. Porter Jr.",
+        "stats": {
+          "points": 22, "assists": 2, "reboundsDefensive": 5, "reboundsOffensive": 2, "reboundsTotal": 7,
+          "steals": 0, "blocks": 1, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 15, "fieldGoalsMade": 8, "fieldGoalsPercentage": 0.533,
+          "threePointersAttempted": 7, "threePointersMade": 3, "threePointersPercentage": 0.429,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": 10, "minutes": "PT34M08.00S", "pointsInThePaint": 6, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 203932,
+        "jerseyNum": "50",
+        "position": "F",
+        "name": "Aaron Gordon",
+        "nameAbbr": "A. Gordon",
+        "stats": {
+          "points": 12, "assists": 3, "reboundsDefensive": 5, "reboundsOffensive": 1, "reboundsTotal": 6,
+          "steals": 1, "blocks": 1, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 5, "fieldGoalsPercentage": 0.556,
+          "threePointersAttempted": 2, "threePointersMade": 1, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 1, "freeThrowsPercentage": 0.5,
+          "plusMinusPoints": 8, "minutes": "PT30M44.00S", "pointsInThePaint": 8, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 203484,
+        "jerseyNum": "5",
+        "position": "G",
+        "name": "Kentavious Caldwell-Pope",
+        "nameAbbr": "K. Caldwell-Pope",
+        "stats": {
+          "points": 10, "assists": 2, "reboundsDefensive": 3, "reboundsOffensive": 0, "reboundsTotal": 3,
+          "steals": 2, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 4, "fieldGoalsPercentage": 0.444,
+          "threePointersAttempted": 5, "threePointersMade": 2, "threePointersPercentage": 0.4,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 6, "minutes": "PT28M18.00S", "pointsInThePaint": 4, "turnovers": 0
+        }
+      }
+    ],
+    "players": [
+      {
+        "playerId": 203999,
+        "jerseyNum": "15",
+        "position": "C",
+        "name": "Nikola Jokic",
+        "nameAbbr": "N. Jokic",
+        "stats": {
+          "points": 32, "assists": 10, "reboundsDefensive": 12, "reboundsOffensive": 3, "reboundsTotal": 15,
+          "steals": 1, "blocks": 2, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 22, "fieldGoalsMade": 11, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 4, "threePointersMade": 2, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 10, "freeThrowsMade": 8, "freeThrowsPercentage": 0.8,
+          "plusMinusPoints": 14, "minutes": "PT38M22.00S", "pointsInThePaint": 16, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1627750,
+        "jerseyNum": "27",
+        "position": "G",
+        "name": "Jamal Murray",
+        "nameAbbr": "J. Murray",
+        "stats": {
+          "points": 26, "assists": 7, "reboundsDefensive": 4, "reboundsOffensive": 1, "reboundsTotal": 5,
+          "steals": 2, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 19, "fieldGoalsMade": 9, "fieldGoalsPercentage": 0.474,
+          "threePointersAttempted": 7, "threePointersMade": 3, "threePointersPercentage": 0.429,
+          "freeThrowsAttempted": 6, "freeThrowsMade": 5, "freeThrowsPercentage": 0.833,
+          "plusMinusPoints": 12, "minutes": "PT36M14.00S", "pointsInThePaint": 8, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 1629008,
+        "jerseyNum": "13",
+        "position": "F",
+        "name": "Michael Porter Jr.",
+        "nameAbbr": "M. Porter Jr.",
+        "stats": {
+          "points": 22, "assists": 2, "reboundsDefensive": 5, "reboundsOffensive": 2, "reboundsTotal": 7,
+          "steals": 0, "blocks": 1, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 15, "fieldGoalsMade": 8, "fieldGoalsPercentage": 0.533,
+          "threePointersAttempted": 7, "threePointersMade": 3, "threePointersPercentage": 0.429,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": 10, "minutes": "PT34M08.00S", "pointsInThePaint": 6, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 203932,
+        "jerseyNum": "50",
+        "position": "F",
+        "name": "Aaron Gordon",
+        "nameAbbr": "A. Gordon",
+        "stats": {
+          "points": 12, "assists": 3, "reboundsDefensive": 5, "reboundsOffensive": 1, "reboundsTotal": 6,
+          "steals": 1, "blocks": 1, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 5, "fieldGoalsPercentage": 0.556,
+          "threePointersAttempted": 2, "threePointersMade": 1, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 2, "freeThrowsMade": 1, "freeThrowsPercentage": 0.5,
+          "plusMinusPoints": 8, "minutes": "PT30M44.00S", "pointsInThePaint": 8, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 203484,
+        "jerseyNum": "5",
+        "position": "G",
+        "name": "Kentavious Caldwell-Pope",
+        "nameAbbr": "K. Caldwell-Pope",
+        "stats": {
+          "points": 10, "assists": 2, "reboundsDefensive": 3, "reboundsOffensive": 0, "reboundsTotal": 3,
+          "steals": 2, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 4, "fieldGoalsPercentage": 0.444,
+          "threePointersAttempted": 5, "threePointersMade": 2, "threePointersPercentage": 0.4,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 6, "minutes": "PT28M18.00S", "pointsInThePaint": 4, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 202704,
+        "jerseyNum": "1",
+        "position": "G",
+        "name": "Reggie Jackson",
+        "nameAbbr": "R. Jackson",
+        "stats": {
+          "points": 8, "assists": 4, "reboundsDefensive": 2, "reboundsOffensive": 0, "reboundsTotal": 2,
+          "steals": 0, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 7, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.429,
+          "threePointersAttempted": 4, "threePointersMade": 2, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 4, "minutes": "PT20M02.00S", "pointsInThePaint": 4, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1631117,
+        "jerseyNum": "0",
+        "position": "G",
+        "name": "Christian Braun",
+        "nameAbbr": "C. Braun",
+        "stats": {
+          "points": 4, "assists": 1, "reboundsDefensive": 2, "reboundsOffensive": 1, "reboundsTotal": 3,
+          "steals": 1, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 5, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.4,
+          "threePointersAttempted": 2, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 2, "minutes": "PT16M05.00S", "pointsInThePaint": 2, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 201599,
+        "jerseyNum": "6",
+        "position": "C",
+        "name": "DeAndre Jordan",
+        "nameAbbr": "D. Jordan",
+        "stats": {
+          "points": 2, "assists": 0, "reboundsDefensive": 3, "reboundsOffensive": 1, "reboundsTotal": 4,
+          "steals": 0, "blocks": 1, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 2, "fieldGoalsMade": 1, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT10M00.00S", "pointsInThePaint": 2, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 1641748,
+        "jerseyNum": "8",
+        "position": "F",
+        "name": "Peyton Watson",
+        "nameAbbr": "P. Watson",
+        "stats": {
+          "points": 2, "assists": 1, "reboundsDefensive": 1, "reboundsOffensive": 0, "reboundsTotal": 1,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 3, "fieldGoalsMade": 1, "fieldGoalsPercentage": 0.333,
+          "threePointersAttempted": 1, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 2, "minutes": "PT08M00.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 1629963,
+        "jerseyNum": "12",
+        "position": "F",
+        "name": "Hunter Tyson",
+        "nameAbbr": "H. Tyson",
+        "stats": {
+          "points": 0, "assists": 0, "reboundsDefensive": 1, "reboundsOffensive": 0, "reboundsTotal": 1,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 1, "fieldGoalsMade": 0, "fieldGoalsPercentage": 0.0,
+          "threePointersAttempted": 1, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT06M00.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      }
+    ]
+  },
+  "awayTeam": {
+    "teamId": 1610612746,
+    "teamTricode": "LAC",
+    "teamCity": "Los Angeles",
+    "teamName": "Clippers",
+    "score": 104,
+    "periodScores": [28, 26, 26, 24],
+    "timeoutsRemaining": 0,
+    "inBonus": false,
+    "statistics": {
+      "reboundsOffensive": 8,
+      "reboundsTotal": 42,
+      "assists": 28,
+      "blocks": 4,
+      "steals": 6,
+      "turnovers": 10,
+      "fieldGoalsMade": 38,
+      "fieldGoalsAttempted": 90,
+      "freeThrowsMade": 17,
+      "freeThrowsAttempted": 24,
+      "threePointersMade": 11,
+      "threePointersAttempted": 35,
+      "benchPoints": 12,
+      "biggestLead": 14,
+      "pointsInThePaint": 52,
+      "fastBreakPointsMade": 4
+    },
+    "onCourtPlayers": [
+      {
+        "playerId": 202695,
+        "jerseyNum": "2",
+        "position": "F",
+        "name": "Kawhi Leonard",
+        "nameAbbr": "K. Leonard",
+        "stats": {
+          "points": 28, "assists": 4, "reboundsDefensive": 7, "reboundsOffensive": 1, "reboundsTotal": 8,
+          "steals": 2, "blocks": 1, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 20, "fieldGoalsMade": 10, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 8, "freeThrowsMade": 6, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -14, "minutes": "PT37M18.00S", "pointsInThePaint": 14, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 202331,
+        "jerseyNum": "13",
+        "position": "F",
+        "name": "Paul George",
+        "nameAbbr": "P. George",
+        "stats": {
+          "points": 22, "assists": 5, "reboundsDefensive": 5, "reboundsOffensive": 1, "reboundsTotal": 6,
+          "steals": 1, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 18, "fieldGoalsMade": 8, "fieldGoalsPercentage": 0.444,
+          "threePointersAttempted": 8, "threePointersMade": 3, "threePointersPercentage": 0.375,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -12, "minutes": "PT35M42.00S", "pointsInThePaint": 8, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 201935,
+        "jerseyNum": "1",
+        "position": "G",
+        "name": "James Harden",
+        "nameAbbr": "J. Harden",
+        "stats": {
+          "points": 20, "assists": 10, "reboundsDefensive": 5, "reboundsOffensive": 0, "reboundsTotal": 5,
+          "steals": 1, "blocks": 0, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 16, "fieldGoalsMade": 6, "fieldGoalsPercentage": 0.375,
+          "threePointersAttempted": 7, "threePointersMade": 2, "threePointersPercentage": 0.286,
+          "freeThrowsAttempted": 8, "freeThrowsMade": 6, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -10, "minutes": "PT34M05.00S", "pointsInThePaint": 10, "turnovers": 3
+        }
+      },
+      {
+        "playerId": 1627826,
+        "jerseyNum": "40",
+        "position": "C",
+        "name": "Ivica Zubac",
+        "nameAbbr": "I. Zubac",
+        "stats": {
+          "points": 14, "assists": 2, "reboundsDefensive": 7, "reboundsOffensive": 3, "reboundsTotal": 10,
+          "steals": 0, "blocks": 2, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 10, "fieldGoalsMade": 6, "fieldGoalsPercentage": 0.6,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 2, "freeThrowsPercentage": 0.5,
+          "plusMinusPoints": -8, "minutes": "PT28M22.00S", "pointsInThePaint": 12, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1626181,
+        "jerseyNum": "24",
+        "position": "G",
+        "name": "Norman Powell",
+        "nameAbbr": "N. Powell",
+        "stats": {
+          "points": 8, "assists": 2, "reboundsDefensive": 2, "reboundsOffensive": 1, "reboundsTotal": 3,
+          "steals": 1, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.333,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -6, "minutes": "PT26M08.00S", "pointsInThePaint": 2, "turnovers": 0
+        }
+      }
+    ],
+    "players": [
+      {
+        "playerId": 202695,
+        "jerseyNum": "2",
+        "position": "F",
+        "name": "Kawhi Leonard",
+        "nameAbbr": "K. Leonard",
+        "stats": {
+          "points": 28, "assists": 4, "reboundsDefensive": 7, "reboundsOffensive": 1, "reboundsTotal": 8,
+          "steals": 2, "blocks": 1, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 20, "fieldGoalsMade": 10, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 8, "freeThrowsMade": 6, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -14, "minutes": "PT37M18.00S", "pointsInThePaint": 14, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 202331,
+        "jerseyNum": "13",
+        "position": "F",
+        "name": "Paul George",
+        "nameAbbr": "P. George",
+        "stats": {
+          "points": 22, "assists": 5, "reboundsDefensive": 5, "reboundsOffensive": 1, "reboundsTotal": 6,
+          "steals": 1, "blocks": 0, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 18, "fieldGoalsMade": 8, "fieldGoalsPercentage": 0.444,
+          "threePointersAttempted": 8, "threePointersMade": 3, "threePointersPercentage": 0.375,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 3, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -12, "minutes": "PT35M42.00S", "pointsInThePaint": 8, "turnovers": 2
+        }
+      },
+      {
+        "playerId": 201935,
+        "jerseyNum": "1",
+        "position": "G",
+        "name": "James Harden",
+        "nameAbbr": "J. Harden",
+        "stats": {
+          "points": 20, "assists": 10, "reboundsDefensive": 5, "reboundsOffensive": 0, "reboundsTotal": 5,
+          "steals": 1, "blocks": 0, "foulsPersonal": 3, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 16, "fieldGoalsMade": 6, "fieldGoalsPercentage": 0.375,
+          "threePointersAttempted": 7, "threePointersMade": 2, "threePointersPercentage": 0.286,
+          "freeThrowsAttempted": 8, "freeThrowsMade": 6, "freeThrowsPercentage": 0.75,
+          "plusMinusPoints": -10, "minutes": "PT34M05.00S", "pointsInThePaint": 10, "turnovers": 3
+        }
+      },
+      {
+        "playerId": 1627826,
+        "jerseyNum": "40",
+        "position": "C",
+        "name": "Ivica Zubac",
+        "nameAbbr": "I. Zubac",
+        "stats": {
+          "points": 14, "assists": 2, "reboundsDefensive": 7, "reboundsOffensive": 3, "reboundsTotal": 10,
+          "steals": 0, "blocks": 2, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 10, "fieldGoalsMade": 6, "fieldGoalsPercentage": 0.6,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 4, "freeThrowsMade": 2, "freeThrowsPercentage": 0.5,
+          "plusMinusPoints": -8, "minutes": "PT28M22.00S", "pointsInThePaint": 12, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1626181,
+        "jerseyNum": "24",
+        "position": "G",
+        "name": "Norman Powell",
+        "nameAbbr": "N. Powell",
+        "stats": {
+          "points": 8, "assists": 2, "reboundsDefensive": 2, "reboundsOffensive": 1, "reboundsTotal": 3,
+          "steals": 1, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 9, "fieldGoalsMade": 3, "fieldGoalsPercentage": 0.333,
+          "threePointersAttempted": 6, "threePointersMade": 2, "threePointersPercentage": 0.333,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -6, "minutes": "PT26M08.00S", "pointsInThePaint": 2, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 203486,
+        "jerseyNum": "44",
+        "position": "C",
+        "name": "Mason Plumlee",
+        "nameAbbr": "M. Plumlee",
+        "stats": {
+          "points": 4, "assists": 1, "reboundsDefensive": 3, "reboundsOffensive": 2, "reboundsTotal": 5,
+          "steals": 0, "blocks": 1, "foulsPersonal": 2, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 4, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.5,
+          "threePointersAttempted": 0, "threePointersMade": 0, "threePointersPercentage": null,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -4, "minutes": "PT16M02.00S", "pointsInThePaint": 4, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1629611,
+        "jerseyNum": "14",
+        "position": "G-F",
+        "name": "Terance Mann",
+        "nameAbbr": "T. Mann",
+        "stats": {
+          "points": 4, "assists": 1, "reboundsDefensive": 3, "reboundsOffensive": 0, "reboundsTotal": 3,
+          "steals": 0, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 5, "fieldGoalsMade": 2, "fieldGoalsPercentage": 0.4,
+          "threePointersAttempted": 2, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": -2, "minutes": "PT14M15.00S", "pointsInThePaint": 2, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 1630560,
+        "jerseyNum": "3",
+        "position": "G",
+        "name": "Bones Hyland",
+        "nameAbbr": "B. Hyland",
+        "stats": {
+          "points": 4, "assists": 2, "reboundsDefensive": 1, "reboundsOffensive": 0, "reboundsTotal": 1,
+          "steals": 1, "blocks": 0, "foulsPersonal": 1, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 5, "fieldGoalsMade": 1, "fieldGoalsPercentage": 0.2,
+          "threePointersAttempted": 4, "threePointersMade": 2, "threePointersPercentage": 0.5,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT12M00.00S", "pointsInThePaint": 0, "turnovers": 1
+        }
+      },
+      {
+        "playerId": 1630552,
+        "jerseyNum": "11",
+        "position": "G",
+        "name": "Xavier Moon",
+        "nameAbbr": "X. Moon",
+        "stats": {
+          "points": 0, "assists": 1, "reboundsDefensive": 1, "reboundsOffensive": 0, "reboundsTotal": 1,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 2, "fieldGoalsMade": 0, "fieldGoalsPercentage": 0.0,
+          "threePointersAttempted": 1, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT08M00.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      },
+      {
+        "playerId": 1630528,
+        "jerseyNum": "51",
+        "position": "F",
+        "name": "Brandon Boston Jr.",
+        "nameAbbr": "B. Boston Jr.",
+        "stats": {
+          "points": 0, "assists": 0, "reboundsDefensive": 0, "reboundsOffensive": 0, "reboundsTotal": 0,
+          "steals": 0, "blocks": 0, "foulsPersonal": 0, "foulsTechnical": 0,
+          "fieldGoalsAttempted": 1, "fieldGoalsMade": 0, "fieldGoalsPercentage": 0.0,
+          "threePointersAttempted": 1, "threePointersMade": 0, "threePointersPercentage": 0.0,
+          "freeThrowsAttempted": 0, "freeThrowsMade": 0, "freeThrowsPercentage": null,
+          "plusMinusPoints": 0, "minutes": "PT04M00.00S", "pointsInThePaint": 0, "turnovers": 0
+        }
+      }
+    ]
+  }
+}

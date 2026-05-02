@@ -36,15 +36,16 @@ export default function Index() {
             align="center"
             w="100%"
             minH="100vh"
-            bg="#060e1a"
+            bg="bg"
+            px="3"
             pb="12"
         >
             {data.map(({ gameDate, games }) => (
-                <Box key={gameDate} w="100%" maxW="480px" mt="8">
+                <Box key={gameDate} w="100%" maxW="720px" mt="8">
                     <Text
                         fontSize="xs"
                         fontWeight="bold"
-                        color="whiteAlpha.400"
+                        color="fgDim"
                         letterSpacing="widest"
                         textTransform="uppercase"
                         px="2"

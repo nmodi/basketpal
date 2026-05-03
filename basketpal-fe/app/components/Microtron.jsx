@@ -50,23 +50,34 @@ function getScoreColor(teamScore, otherTeamScore, isFinal) {
     return 'chyronFg';
 }
 
-function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity }) {
-    const textAlign = align === 'right' ? 'right' : 'left';
+function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamColor }) {
+    const isRight = align === 'right';
 
     return (
         <Flex
             direction="column"
             justify="flex-start"
-            align={align === 'right' ? 'flex-end' : 'flex-start'}
-            textAlign={textAlign}
+            align={isRight ? 'flex-end' : 'flex-start'}
+            textAlign={isRight ? 'right' : 'left'}
             flex="1"
             minW="0"
+            position="relative"
+            overflow="hidden"
             px={{ base: '5', md: '7' }}
             py={{ base: '5', md: '6' }}
             bg="surface"
             boxShadow="inset 0 1px 0 rgba(255,255,255,0.03)"
         >
-            <Box>
+            <Box
+                position="absolute"
+                inset="0"
+                pointerEvents="none"
+                style={{
+                    background: `linear-gradient(to ${isRight ? 'left' : 'right'}, ${teamColor}38, transparent 80%)`
+                }}
+            />
+
+            <Box position="relative">
                 <Text
                     fontSize="md"
                     fontWeight="bold"
@@ -93,6 +104,7 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity }) {
 
             {isScheduled ? (
                 <Text
+                    position="relative"
                     mt="6"
                     fontFamily="tt-autonomous-mono"
                     fontSize={{ base: '4rem', md: '4.75rem' }}
@@ -103,16 +115,28 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity }) {
                     —
                 </Text>
             ) : (
-                <Text
+                <Box
+                    position="relative"
                     mt="6"
-                    fontFamily="tt-autonomous-mono"
-                    fontSize={{ base: '4.5rem', md: '5.5rem' }}
-                    lineHeight="0.82"
-                    color={scoreColor}
-                    opacity={scoreOpacity}
+                    bg="rgba(0,0,0,0.62)"
+                    borderRadius="md"
+                    px="3"
+                    py="2"
+                    border="1px solid"
+                    borderColor="rgba(255,255,255,0.08)"
+                    width="fit-content"
+                    alignSelf={isRight ? 'flex-end' : 'flex-start'}
                 >
-                    {team.score ?? '--'}
-                </Text>
+                    <Text
+                        fontFamily="tt-autonomous-mono"
+                        fontSize={{ base: '4.5rem', md: '5.5rem' }}
+                        lineHeight="0.82"
+                        color={scoreColor}
+                        opacity={scoreOpacity}
+                    >
+                        {team.score ?? '--'}
+                    </Text>
+                </Box>
             )}
         </Flex>
     );
@@ -152,16 +176,17 @@ export default function Microtron({ game }) {
             transition="all 0.18s ease"
             mb="4"
         >
-            <Box position="absolute" left="0" top="0" bottom="0" w="4px" bg={awayColors.main} />
-            <Box position="absolute" right="0" top="0" bottom="0" w="4px" bg={homeColors.main} />
+            <Box position="absolute" left="0" top="0" bottom="0" w="4px" bg={homeColors.main} zIndex={1} />
+            <Box position="absolute" right="0" top="0" bottom="0" w="4px" bg={awayColors.main} zIndex={1} />
 
             <Flex minH={{ base: '164px', md: '180px' }}>
                 <TeamPanel
-                    team={game.awayTeam}
+                    team={game.homeTeam}
                     align="left"
                     isScheduled={isScheduled}
-                    scoreColor={awayScoreColor}
-                    scoreOpacity={awayScoreOpacity}
+                    scoreColor={homeScoreColor}
+                    scoreOpacity={homeScoreOpacity}
+                    teamColor={homeColors.main}
                 />
 
                 <Flex
@@ -262,11 +287,12 @@ export default function Microtron({ game }) {
                 </Flex>
 
                 <TeamPanel
-                    team={game.homeTeam}
+                    team={game.awayTeam}
                     align="right"
                     isScheduled={isScheduled}
-                    scoreColor={homeScoreColor}
-                    scoreOpacity={homeScoreOpacity}
+                    scoreColor={awayScoreColor}
+                    scoreOpacity={awayScoreOpacity}
+                    teamColor={awayColors.main}
                 />
             </Flex>
         </Box>

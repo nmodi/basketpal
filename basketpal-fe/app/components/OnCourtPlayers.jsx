@@ -151,12 +151,12 @@ export default function OnCourtPlayers({ gameData, isHome }) {
                             <Tr key={player.playerId}>
                                 <Td
                                     px="4"
-                                    py="3"
+                                    py="1.5"
                                     borderBottom="1px solid"
                                     borderColor="line"
                                 >
                                     <Flex align="center" gap="3">
-                                        <Box w="52px" flexShrink={0} overflow="hidden">
+                                        <Box w="64px" flexShrink={0} overflow="hidden">
                                             <PlayerImage league={league} playerId={player.playerId} />
                                         </Box>
                                         <Box minW="0">
@@ -186,13 +186,13 @@ export default function OnCourtPlayers({ gameData, isHome }) {
                                         </Box>
                                     </Flex>
                                 </Td>
-                                <Td isNumeric px="4" py="3" color="fg" fontSize="lg" fontWeight="semibold" borderBottom="1px solid" borderColor="line">
+                                <Td isNumeric px="4" py="1.5" color="fg" fontSize="lg" fontWeight="semibold" borderBottom="1px solid" borderColor="line">
                                     {player.stats?.points ?? '–'}
                                 </Td>
-                                <Td isNumeric px="4" py="3" color="fg" fontSize="lg" borderBottom="1px solid" borderColor="line">
+                                <Td isNumeric px="4" py="1.5" color="fg" fontSize="lg" borderBottom="1px solid" borderColor="line">
                                     {player.stats?.reboundsTotal ?? '–'}
                                 </Td>
-                                <Td isNumeric px="4" py="3" color="fg" fontSize="lg" borderBottom="1px solid" borderColor="line">
+                                <Td isNumeric px="4" py="1.5" color="fg" fontSize="lg" borderBottom="1px solid" borderColor="line">
                                     {player.stats?.assists ?? '–'}
                                 </Td>
                             </Tr>

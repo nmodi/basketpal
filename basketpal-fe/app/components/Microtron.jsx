@@ -1,7 +1,7 @@
 import { Badge, Box, Flex, Text } from '@chakra-ui/react';
 import { useNavigate } from "@remix-run/react";
 import dayjs from 'dayjs';
-import { getMainColor } from 'nba-color';
+import { getTeamStyle } from '../util/teamColorStrategy';
 
 function getCountdownLabel(gameTimeUTC) {
     const gameTime = new Date(gameTimeUTC);
@@ -29,11 +29,6 @@ function formatGameClock(gameClock) {
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function getTeamColors(teamTricode) {
-    return {
-        main: getMainColor(teamTricode)?.hex ?? '#1d4ed8',
-    };
-}
 
 function getScoreOpacity(teamScore, otherTeamScore) {
     if (teamScore == null || otherTeamScore == null) return 1;
@@ -50,8 +45,9 @@ function getScoreColor(teamScore, otherTeamScore, isFinal) {
     return 'chyronFg';
 }
 
-function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamColor }) {
+function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamStyle }) {
     const isRight = align === 'right';
+    const dir = isRight ? 'left' : 'right';
 
     return (
         <Flex
@@ -72,9 +68,7 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamCol
                 position="absolute"
                 inset="0"
                 pointerEvents="none"
-                style={{
-                    background: `linear-gradient(to ${isRight ? 'left' : 'right'}, ${teamColor}38, transparent 80%)`
-                }}
+                style={{ background: teamStyle.getGradient(dir) }}
             />
 
             <Box position="relative">
@@ -95,7 +89,7 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamCol
                     lineHeight="0.95"
                     letterSpacing="0.07em"
                     textTransform="uppercase"
-                    color="fg"
+                    color={teamStyle.nameColor}
                     noOfLines={2}
                 >
                     {team.teamName}
@@ -118,12 +112,12 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamCol
                 <Box
                     position="relative"
                     mt="6"
-                    bg="rgba(0,0,0,0.62)"
+                    bg="bgSunken"
                     borderRadius="md"
                     px="3"
                     py="2"
                     border="1px solid"
-                    borderColor="rgba(255,255,255,0.08)"
+                    borderColor="lineStrong"
                     width="fit-content"
                     alignSelf={isRight ? 'flex-end' : 'flex-start'}
                 >
@@ -148,8 +142,8 @@ export default function Microtron({ game }) {
     const isLive = game.gameStatus === 2;
     const isFinal = game.gameStatus === 3;
     const gameTime = dayjs(game.gameTimeUTC).format('h:mm A');
-    const awayColors = getTeamColors(game.awayTeam.teamTricode);
-    const homeColors = getTeamColors(game.homeTeam.teamTricode);
+    const awayStyle = getTeamStyle(game.awayTeam.teamTricode);
+    const homeStyle = getTeamStyle(game.homeTeam.teamTricode);
     const formattedClock = formatGameClock(game.gameClock);
     const awayScoreColor = getScoreColor(game.awayTeam.score, game.homeTeam.score, isFinal);
     const homeScoreColor = getScoreColor(game.homeTeam.score, game.awayTeam.score, isFinal);
@@ -176,8 +170,8 @@ export default function Microtron({ game }) {
             transition="all 0.18s ease"
             mb="4"
         >
-            <Box position="absolute" left="0" top="0" bottom="0" w="4px" bg={homeColors.main} zIndex={1} />
-            <Box position="absolute" right="0" top="0" bottom="0" w="4px" bg={awayColors.main} zIndex={1} />
+            <Box position="absolute" left="0" top="0" bottom="0" w="4px" bg={homeStyle.barColor} zIndex={1} />
+            <Box position="absolute" right="0" top="0" bottom="0" w="4px" bg={awayStyle.barColor} zIndex={1} />
 
             <Flex minH={{ base: '164px', md: '180px' }}>
                 <TeamPanel
@@ -186,7 +180,7 @@ export default function Microtron({ game }) {
                     isScheduled={isScheduled}
                     scoreColor={homeScoreColor}
                     scoreOpacity={homeScoreOpacity}
-                    teamColor={homeColors.main}
+                    teamStyle={homeStyle}
                 />
 
                 <Flex
@@ -292,7 +286,7 @@ export default function Microtron({ game }) {
                     isScheduled={isScheduled}
                     scoreColor={awayScoreColor}
                     scoreOpacity={awayScoreOpacity}
-                    teamColor={awayColors.main}
+                    teamStyle={awayStyle}
                 />
             </Flex>
         </Box>

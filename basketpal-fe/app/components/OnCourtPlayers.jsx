@@ -11,7 +11,7 @@ import {
     Tooltip,
     Tr,
 } from '@chakra-ui/react';
-import { getMainColor, getSecondaryColor } from 'nba-color';
+import { getTeamStyle } from '../util/teamColorStrategy';
 
 import { hasTripleDouble, tripleDoubleWatch, getTrueShootingPercentage } from '../util/statFunctions';
 import { getLeague } from '../util/league';
@@ -98,13 +98,11 @@ export default function OnCourtPlayers({ gameData, isHome }) {
     const team = isHome ? gameData.homeTeam : gameData.awayTeam;
     const otherTeam = isHome ? gameData.awayTeam : gameData.homeTeam;
     const onCourtPlayers = team.onCourtPlayers;
-    const mainColor = getMainColor(team.teamTricode)?.hex ?? '#1d4ed8';
-    const secondaryColor = getSecondaryColor(team.teamTricode)?.hex ?? mainColor;
+    const teamStyle = getTeamStyle(team.teamTricode);
     const teamMargin = (team.score ?? 0) - (otherTeam.score ?? 0);
 
     return (
         <Box
-            position="relative"
             bg="bgRaised"
             border="1px solid"
             borderColor="line"
@@ -113,13 +111,11 @@ export default function OnCourtPlayers({ gameData, isHome }) {
             flex="1"
             boxShadow="0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03)"
         >
-            <Box position="absolute" left="0" top="0" bottom="0" w="4px" bg={mainColor} />
-
             {/* Header */}
             <Flex
                 px="5"
                 py="4"
-                bgGradient={`linear(to-r, ${mainColor}44, transparent)`}
+                style={{ background: teamStyle.getGradient('right') }}
                 align="center"
             >
                 <Text
@@ -127,11 +123,12 @@ export default function OnCourtPlayers({ gameData, isHome }) {
                     fontWeight="bold"
                     letterSpacing="0.12em"
                     textTransform="uppercase"
-                    color={secondaryColor}
+                    color={teamStyle.nameColor}
                 >
                     {team.teamName} · On Court
                 </Text>
             </Flex>
+            <Box h="4px" bg={teamStyle.barColor} />
 
             <Table variant="unstyled" size="sm">
                 <Thead>

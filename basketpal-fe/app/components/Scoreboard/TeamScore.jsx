@@ -1,5 +1,5 @@
 import { Badge, Box, Flex, Text } from '@chakra-ui/react';
-import { getMainColor } from 'nba-color';
+import { getTeamStyle } from '../../util/teamColorStrategy';
 
 function TimeoutDashes({ count, color }) {
     if (!count) return null;
@@ -14,7 +14,7 @@ function TimeoutDashes({ count, color }) {
 
 export default function TeamScore({ team, align, isHome, isLive, scoreColor }) {
     const isRight = align === 'right';
-    const mainColor = getMainColor(team.teamTricode)?.hex ?? '#1d4ed8';
+    const teamStyle = getTeamStyle(team.teamTricode);
     const isInBonus = !!team.inBonus && isLive;
 
     return (
@@ -27,7 +27,7 @@ export default function TeamScore({ team, align, isHome, isLive, scoreColor }) {
             minW="0"
             px={{ base: '5', md: '7' }}
             py={{ base: '5', md: '6' }}
-            bgGradient={`linear(${isRight ? 'to-bl' : 'to-br'}, ${mainColor}66, transparent)`}
+            style={{ background: teamStyle.getGradient(isRight ? 'bottom left' : 'bottom right') }}
             boxShadow="inset 0 1px 0 rgba(255,255,255,0.03)"
         >
             <Text
@@ -47,7 +47,7 @@ export default function TeamScore({ team, align, isHome, isLive, scoreColor }) {
                 lineHeight="0.95"
                 letterSpacing="0.07em"
                 textTransform="uppercase"
-                color="fg"
+                color={teamStyle.nameColor}
                 noOfLines={2}
             >
                 {team.teamName}
@@ -88,7 +88,7 @@ export default function TeamScore({ team, align, isHome, isLive, scoreColor }) {
                     align={isRight ? 'flex-end' : 'flex-start'}
                 >
                     {isLive && (
-                        <TimeoutDashes count={team.timeoutsRemaining} color={mainColor} />
+                        <TimeoutDashes count={team.timeoutsRemaining} color={teamStyle.barColor} />
                     )}
                     <Text
                         fontSize="sm"

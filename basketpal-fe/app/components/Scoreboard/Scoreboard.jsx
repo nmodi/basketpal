@@ -1,5 +1,5 @@
 import { Badge, Box, Flex, Text } from '@chakra-ui/react';
-import { getMainColor } from 'nba-color';
+import { getTeamStyle } from '../../util/teamColorStrategy';
 import ScoreBreakdown from './ScoreBreakdown';
 import TeamScore from './TeamScore';
 
@@ -31,8 +31,8 @@ export default function Scoreboard({ gameData }) {
     const isFinal = gameData.gameStatus === 3;
     const formattedClock = formatGameClock(gameData.gameClock);
 
-    const homeMainColor = getMainColor(gameData.homeTeam.teamTricode)?.hex ?? '#1d4ed8';
-    const awayMainColor = getMainColor(gameData.awayTeam.teamTricode)?.hex ?? '#1d4ed8';
+    const homeMainColor = getTeamStyle(gameData.homeTeam.teamTricode).barColor;
+    const awayMainColor = getTeamStyle(gameData.awayTeam.teamTricode).barColor;
 
     const homeScoreColor = getScoreColor(gameData.homeTeam.score, gameData.awayTeam.score, isFinal);
     const awayScoreColor = getScoreColor(gameData.awayTeam.score, gameData.homeTeam.score, isFinal);

@@ -1,87 +1,109 @@
-import { Flex, Badge, Box, Heading, HStack, Tooltip, VStack } from '@chakra-ui/react';
+import { Badge, Box, Flex, Text } from '@chakra-ui/react';
+import { getMainColor } from 'nba-color';
 
-import { getMainColor, getSecondaryColor } from 'nba-color';
+function TimeoutDashes({ count, color }) {
+    if (!count) return null;
+    return (
+        <Flex gap="1.5">
+            {Array.from({ length: count }).map((_, i) => (
+                <Box key={i} w="14px" h="2.5px" borderRadius="full" bg={color} opacity={0.65} />
+            ))}
+        </Flex>
+    );
+}
 
-export default function TeamScore({ gameData, isHome }) {
-    const team = isHome ? gameData.homeTeam : gameData.awayTeam;
-    const otherTeam = !isHome ? gameData.homeTeam : gameData.awayTeam;
-
-    const mainColor = getMainColor(team.teamTricode)?.hex;
-    const secondaryColor = getSecondaryColor(team.teamTricode)?.hex;
-
-    const isGameInProgress = gameData.gameStatus === 2;
-    const isGameOver = gameData.gameStatus === 3;
-
-    const isTeamInBonus =
-        team.inBonus === '1' && isGameInProgress ? true : false;
-    const isWinningTeam =
-        gameData.gameStatus === 3 && team.score > otherTeam.score;
-
-    const timeoutIndicators = '⏱️'.repeat(team.timeoutsRemaining);
-
-
-    const score = team.periodScores.reduce((acc, curr) => acc + curr, 0);
+export default function TeamScore({ team, align, isHome, isLive, scoreColor }) {
+    const isRight = align === 'right';
+    const mainColor = getMainColor(team.teamTricode)?.hex ?? '#1d4ed8';
+    const isInBonus = !!team.inBonus && isLive;
 
     return (
         <Flex
             direction="column"
-            align={isHome ? 'flex-end' : 'flex-start'}
-            p="2"
-            width="80%"
-            bgGradient={`linear(${
-                isHome ? 'to-br' : 'to-bl'
-            }, ${mainColor}, gray.900 45%)`}
+            justify="flex-start"
+            align={isRight ? 'flex-end' : 'flex-start'}
+            textAlign={isRight ? 'right' : 'left'}
+            flex="1"
+            minW="0"
+            px={{ base: '5', md: '7' }}
+            py={{ base: '5', md: '6' }}
+            bgGradient={`linear(${isRight ? 'to-bl' : 'to-br'}, ${mainColor}66, transparent)`}
+            boxShadow="inset 0 1px 0 rgba(255,255,255,0.03)"
         >
-            <Heading
-                color={secondaryColor}
-                fontFamily="monte-stella"
+            <Text
+                fontSize="md"
+                fontWeight="bold"
+                color="fgMuted"
+                letterSpacing="0.08em"
                 textTransform="uppercase"
-                fontSize="3xl"
             >
-                {team.teamCity} {team.teamName} {isWinningTeam ? '🏆' : ''}
-            </Heading>
+                {team.teamCity}
+            </Text>
+            <Text
+                mt="1"
+                fontFamily="monte-stella"
+                fontSize={{ base: '3xl', md: '4xl' }}
+                fontWeight="black"
+                lineHeight="0.95"
+                letterSpacing="0.07em"
+                textTransform="uppercase"
+                color="fg"
+                noOfLines={2}
+            >
+                {team.teamName}
+            </Text>
 
-            <Flex 
-                fontSize="large" 
-                direction={isHome ? "row-reverse" : "row"}
-                my="4"
+            {/* Score + info row */}
+            <Flex
+                mt="6"
+                align="center"
+                direction={isRight ? 'row-reverse' : 'row'}
+                gap="4"
             >
-                <Heading
-                    bg="black"
-                    color="orange.100"
-                    border="1px solid white"
+                {/* Jumbotron score box */}
+                <Box
+                    bg="bgSunken"
+                    border="1px solid"
+                    borderColor="lineStrong"
                     px="4"
                     pt="2"
-                    borderRadius="5px"
-                    fontSize="5xl"
-                    fontFamily="tt-autonomous-mono"
+                    pb="3"
+                    borderRadius="sm"
+                    flexShrink={0}
                 >
-                    {String(score).padStart(3, 0)}
-                </Heading>
+                    <Text
+                        fontFamily="tt-autonomous-mono"
+                        fontSize={{ base: '4.5rem', md: '5.5rem' }}
+                        lineHeight="0.82"
+                        color={scoreColor}
+                    >
+                        {team.score ?? '—'}
+                    </Text>
+                </Box>
 
-
-                <VStack 
-                    mx="3"
-                    align={isHome ? "end" : "start"}
+                {/* Timeouts + label */}
+                <Flex
+                    direction="column"
+                    gap="2"
+                    align={isRight ? 'flex-end' : 'flex-start'}
                 >
-                    <Flex justify="center" 
-                            minH="1.5em">
-                        <Tooltip
-                            label={`${team.timeoutsRemaining} Timeouts Remaining`}
-                            aria-label="Timeouts"
-                        >
-                            {timeoutIndicators}
-                        </Tooltip>
-                    </Flex>
-
-                    {isTeamInBonus && (
-                        <Flex justify="center">
-                            <Badge colorScheme="yellow" variant="outline">
-                                Bonus
-                            </Badge>
-                        </Flex>
+                    {isLive && (
+                        <TimeoutDashes count={team.timeoutsRemaining} color={mainColor} />
                     )}
-                </VStack>
+                    <Text
+                        fontSize="sm"
+                        color="fgDim"
+                        letterSpacing="0.14em"
+                        textTransform="uppercase"
+                    >
+                        {isHome ? 'Home' : 'Away'}
+                    </Text>
+                    {isInBonus && (
+                        <Badge colorScheme="yellow" variant="outline" size="sm">
+                            Bonus
+                        </Badge>
+                    )}
+                </Flex>
             </Flex>
         </Flex>
     );

@@ -84,9 +84,23 @@ const Minitron = () => {
 
     const navigate = useNavigate();
 
-    // const { homeTeam, awayTeam } = gameData;
-    // const homeMainColor = getMainColor(homeTeam.teamTricode).hex;
-    // const awayMainColor = getMainColor(awayTeam.teamTricode).hex;
+    const tabStyle = {
+        fontSize: 'sm',
+        fontWeight: 'bold',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: 'fgMuted',
+        pb: '3',
+        mr: '6',
+        px: '0',
+        _selected: {
+            color: 'fg',
+            borderBottom: '2px solid',
+            borderColor: 'highlight',
+            mb: '-1px',
+        },
+        _hover: { color: 'fg' },
+    };
 
     return (
         <Flex
@@ -109,17 +123,20 @@ const Minitron = () => {
                 onClick={() => navigate('/')}
             />
                     <Scoreboard gameData={gameData} />
-                    <Tabs 
-                        align="center" 
-                        size="md" 
-                        variant="enclosed" 
-                        width="100%"
+                    <Tabs
+                        variant="unstyled"
+                        width="90%"
+                        mx="auto"
                     >
-                        <TabList  w="100%">
-                            {!isGameStarted && <Tab>Game Preview</Tab>}
-                            {isGameOver && <Tab>Postgame Report</Tab>}
-                            {isGameStarted && <Tab>On Court</Tab>}
-                            {isGameStarted && <Tab>Team Comparison</Tab>}
+                        <TabList
+                            borderBottom="1px solid"
+                            borderColor="line"
+                            mb="4"
+                        >
+                            {!isGameStarted && <Tab {...tabStyle}>Game Preview</Tab>}
+                            {isGameOver && <Tab {...tabStyle}>Postgame Report</Tab>}
+                            {isGameStarted && <Tab {...tabStyle}>On Court</Tab>}
+                            {isGameStarted && <Tab {...tabStyle}>Team Stats</Tab>}
                         </TabList>
 
                         <TabPanels>
@@ -137,7 +154,7 @@ const Minitron = () => {
 
                             {isGameStarted && (
                                 <TabPanel>
-                                    <Flex justify="space-around" width="100%" alignItems="stretch">
+                                    <Flex gap="4" width="100%" alignItems="stretch">
                                         <OnCourtPlayers gameData={gameData} isHome />
                                         <OnCourtPlayers gameData={gameData} />
                                     </Flex>

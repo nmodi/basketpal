@@ -59,8 +59,8 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamSty
             minW="0"
             position="relative"
             overflow="hidden"
-            px={{ base: '5', md: '7' }}
-            py={{ base: '5', md: '6' }}
+            px={{ base: '3', md: '5' }}
+            py={{ base: '3', md: '4' }}
             bg="surface"
             boxShadow="inset 0 1px 0 rgba(255,255,255,0.03)"
         >
@@ -73,7 +73,7 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamSty
 
             <Box position="relative">
                 <Text
-                    fontSize="md"
+                    fontSize="xs"
                     fontWeight="bold"
                     color="fgMuted"
                     letterSpacing="0.08em"
@@ -82,15 +82,15 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamSty
                     {team.teamTricode}
                 </Text>
                 <Text
-                    mt="3"
+                    mt="1"
                     fontFamily="monte-stella"
-                    fontSize={{ base: '3xl', md: '4xl' }}
+                    fontSize={{ base: 'xl', md: '2xl' }}
                     fontWeight="black"
                     lineHeight="0.95"
                     letterSpacing="0.07em"
                     textTransform="uppercase"
                     color={teamStyle.nameColor}
-                    noOfLines={2}
+                    noOfLines={1}
                 >
                     {team.teamName}
                 </Text>
@@ -99,9 +99,9 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamSty
             {isScheduled ? (
                 <Text
                     position="relative"
-                    mt="6"
+                    mt="3"
                     fontFamily="tt-autonomous-mono"
-                    fontSize={{ base: '4rem', md: '4.75rem' }}
+                    fontSize={{ base: '2.5rem', md: '3rem' }}
                     lineHeight="0.82"
                     color={scoreColor}
                     opacity="0.7"
@@ -111,11 +111,11 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamSty
             ) : (
                 <Box
                     position="relative"
-                    mt="6"
+                    mt="3"
                     bg="bgSunken"
                     borderRadius="md"
-                    px="3"
-                    py="2"
+                    px="2"
+                    py="1"
                     border="1px solid"
                     borderColor="lineStrong"
                     width="fit-content"
@@ -123,8 +123,8 @@ function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamSty
                 >
                     <Text
                         fontFamily="tt-autonomous-mono"
-                        fontSize={{ base: '4.5rem', md: '5.5rem' }}
-                        lineHeight="0.82"
+                        fontSize={{ base: '2.5rem', md: '3rem' }}
+                        lineHeight="0.9"
                         color={scoreColor}
                         opacity={scoreOpacity}
                     >
@@ -168,12 +168,12 @@ export default function Microtron({ game }) {
                 boxShadow: '0 24px 48px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04)'
             }}
             transition="all 0.18s ease"
-            mb="4"
+            mb="2"
         >
             <Box position="absolute" left="0" top="0" bottom="0" w="4px" bg={homeStyle.barColor} zIndex={1} />
             <Box position="absolute" right="0" top="0" bottom="0" w="4px" bg={awayStyle.barColor} zIndex={1} />
 
-            <Flex minH={{ base: '164px', md: '180px' }}>
+            <Flex minH={{ base: '110px', md: '120px' }}>
                 <TeamPanel
                     team={game.homeTeam}
                     align="left"
@@ -187,9 +187,9 @@ export default function Microtron({ game }) {
                     direction="column"
                     align="center"
                     justify="center"
-                    flex="0 0 32%"
-                    px={{ base: '4', md: '5' }}
-                    py={{ base: '4', md: '5' }}
+                    flex="0 0 28%"
+                    px={{ base: '2', md: '3' }}
+                    py={{ base: '3', md: '4' }}
                     borderLeft="1px solid"
                     borderRight="1px solid"
                     borderColor="line"
@@ -198,24 +198,14 @@ export default function Microtron({ game }) {
                     {isScheduled && (
                         <>
                             <Text
-                                fontSize="md"
-                                fontWeight="medium"
-                                color="fgDim"
-                                letterSpacing="0.16em"
-                                textTransform="uppercase"
-                            >
-                                Tip
-                            </Text>
-                            <Text
-                                mt="3"
                                 fontFamily="tt-autonomous-mono"
-                                fontSize={{ base: '2xl', md: '3xl' }}
+                                fontSize={{ base: 'lg', md: 'xl' }}
                                 color="fg"
                             >
                                 {gameTime.replace(/\s?(AM|PM)$/i, ' ET')}
                             </Text>
                             <Text
-                                mt="3"
+                                mt="2"
                                 fontSize="xs"
                                 color="fgMuted"
                                 letterSpacing="0.14em"
@@ -232,8 +222,8 @@ export default function Microtron({ game }) {
                             <Badge
                                 bg="live500"
                                 color="fgInverse"
-                                px="3.5"
-                                py="1"
+                                px="3"
+                                py="0.5"
                                 borderRadius="sm"
                                 fontSize="xs"
                                 letterSpacing="0.16em"
@@ -241,16 +231,16 @@ export default function Microtron({ game }) {
                                 LIVE
                             </Badge>
                             <Flex
-                                mt="6"
+                                mt="3"
                                 align="center"
-                                gap="3"
+                                gap="2"
                                 fontFamily="tt-autonomous-mono"
-                                fontSize={{ base: '2xl', md: '3xl' }}
+                                fontSize={{ base: 'lg', md: 'xl' }}
                                 color="live400"
                                 lineHeight="1"
                             >
                                 <Text>Q{game.period ?? '-'}</Text>
-                                <Text fontSize="lg" transform="translateY(-1px)">•</Text>
+                                <Text fontSize="sm" transform="translateY(-1px)">•</Text>
                                 <Text>{formattedClock ?? 'LIVE'}</Text>
                             </Flex>
                         </>
@@ -259,14 +249,14 @@ export default function Microtron({ game }) {
                     {isFinal && (
                         <>
                             <Box
-                                px="4"
-                                py="1.5"
+                                px="3"
+                                py="1"
                                 border="1px solid"
                                 borderColor="lineStrong"
                                 borderRadius="sm"
                             >
                                 <Text
-                                    fontSize="sm"
+                                    fontSize="xs"
                                     fontWeight="medium"
                                     color="fg"
                                     letterSpacing="0.22em"

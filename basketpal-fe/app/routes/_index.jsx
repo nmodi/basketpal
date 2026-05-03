@@ -1,5 +1,6 @@
 import { Box, Flex, Text } from '@chakra-ui/react';
 import Microtron from '../components/Microtron';
+import { ScheduleHeader } from '../components/Header';
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import axios from "../util/axios";
@@ -39,9 +40,11 @@ export default function Index() {
             bg="bg"
             px="3"
             pb="12"
+            pt="48px"
         >
+            <ScheduleHeader />
             {data.map(({ gameDate, games }) => (
-                <Box key={gameDate} w="100%" maxW="720px" mt="8">
+                <Box key={gameDate} w="100%" maxW="480px" mt="8">
                     <Text
                         fontSize="xs"
                         fontWeight="bold"

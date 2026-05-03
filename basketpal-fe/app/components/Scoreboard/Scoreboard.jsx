@@ -48,6 +48,7 @@ export default function Scoreboard({ gameData }) {
             w="90%"
             mx="auto"
             boxShadow="0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03)"
+            mt="6"
             mb="4"
         >
             <Flex position="relative" overflow="hidden">

@@ -3,7 +3,7 @@ import { Box, Flex, Text } from '@chakra-ui/react';
 import Microtron from '../components/Microtron';
 import { ScheduleHeader } from '../components/Header';
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useFetcher } from "@remix-run/react";
 import axios from "../util/axios";
 import dayjs from 'dayjs';
 
@@ -122,12 +122,22 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
 }
 
 export default function Index() {
-    const data = useLoaderData();
+    const loaderData = useLoaderData();
+    const fetcher = useFetcher();
+    const data = fetcher.data ?? loaderData;
     const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
 
     const visibleGames = (data || []).filter(({ gameDate }) =>
         dayjs(gameDate).format('YYYY-MM-DD') === selectedDate
     );
+
+    const hasLiveGames = visibleGames.some(({ games }) => games.some(g => g.gameStatus === 2));
+
+    useEffect(() => {
+        if (!hasLiveGames) return;
+        const interval = setInterval(() => fetcher.load('/'), 30000);
+        return () => clearInterval(interval);
+    }, [hasLiveGames]);
 
     return (
         <Flex

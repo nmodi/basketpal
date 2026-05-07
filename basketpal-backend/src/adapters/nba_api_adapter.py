@@ -39,6 +39,12 @@ class NBAAPIStatsProvider(NBAStatsProvider):
                 games_on_date = []
                 for game_json in entry["games"]:
                     game = GameSnapshot.from_api(game_json)
+                    if game.gameStatus == GameStatus.IN_PROGRESS:
+                        try:
+                            game_dict = boxscore.BoxScore(game_id=game.gameId).game.get_dict()
+                            game = GameSnapshot.from_api(game_dict)
+                        except Exception:
+                            logger.warning(f"Failed to fetch live boxscore for {game.gameId}, using schedule data")
                     games_on_date.append(game)
 
                 filtered.append({

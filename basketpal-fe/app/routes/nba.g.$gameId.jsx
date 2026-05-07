@@ -1,4 +1,4 @@
-import { Flex, HStack, Select, Text, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
+import { Flex, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import { useLoaderData, useParams } from '@remix-run/react';
 import { GameHeader } from '../components/Header';
 import { json } from '@remix-run/node';
@@ -111,7 +111,7 @@ const Minitron = () => {
             pt="53px"
         >
             <GameHeader />
-                    <Scoreboard gameData={gameData} />
+                    <Scoreboard gameData={gameData} uiDelay={uiDelay} setUiDelay={setUiDelay} />
                     <Tabs
                         variant="unstyled"
                         width="90%"
@@ -161,20 +161,6 @@ const Minitron = () => {
                         </TabPanels>
                     </Tabs>
 
-                    {isGameInProgress && (
-                        <HStack>
-                            <Text>Delay</Text>
-                            <Select w="100px" value={uiDelay} onChange={(e) => setUiDelay(e.target.value)}>
-                                <option value={0}>None</option>
-                                <option value={10000}>10s</option>
-                                <option value={30000}>30s</option>
-                                <option value={45000}>45s</option>
-                                <option value={60000}>60s</option>
-                                <option value={90000}>90s</option>
-                                <option value={120000}>120s</option>
-                            </Select>
-                        </HStack>
-                    )}
         </Flex>
     );
 };

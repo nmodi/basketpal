@@ -1,7 +1,11 @@
-import { Badge, Box, Flex, Text } from '@chakra-ui/react';
+import { Badge, Box, Flex, HStack, Text, Slider, SliderTrack, SliderFilledTrack, SliderThumb, SliderMark } from '@chakra-ui/react';
 import { getTeamStyle } from '../../util/teamColorStrategy';
 import ScoreBreakdown from './ScoreBreakdown';
 import TeamScore from './TeamScore';
+
+const DELAY_STEPS = [0, 10000, 30000, 45000, 60000, 90000, 120000];
+const DELAY_LABELS = ['NONE', '10S', '30S', '45S', '60S', '90S', '2MIN'];
+const DELAY_DISPLAY = ['None', '10s', '30s', '45s', '60s', '90s', '2 min'];
 
 function formatGameClock(gameClock) {
     if (!gameClock) return null;
@@ -26,7 +30,8 @@ function getScoreColor(teamScore, otherTeamScore, isFinal) {
     return 'chyronFg';
 }
 
-export default function Scoreboard({ gameData }) {
+export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
+    const isGameInProgress = gameData.gameStatus === 2;
     const isLive = gameData.gameStatus === 2;
     const isFinal = gameData.gameStatus === 3;
     const formattedClock = formatGameClock(gameData.gameClock);
@@ -140,6 +145,47 @@ export default function Scoreboard({ gameData }) {
             </Flex>
 
             <ScoreBreakdown gameData={gameData} />
+
+            {isGameInProgress && (() => {
+                const sliderIndex = DELAY_STEPS.indexOf(Number(uiDelay));
+                const idx = sliderIndex === -1 ? 0 : sliderIndex;
+                return (
+                    <HStack
+                        px="6"
+                        py="4"
+                        spacing={5}
+                        borderTop="1px solid"
+                        borderColor="line"
+                        align="center"
+                    >
+                        <Text fontSize="2xs" letterSpacing="widest" color="fgMuted" whiteSpace="nowrap">
+                            BROADCAST DELAY
+                        </Text>
+                        <Slider
+                            min={0}
+                            max={DELAY_STEPS.length - 1}
+                            step={1}
+                            value={idx}
+                            onChange={(val) => setUiDelay(DELAY_STEPS[val])}
+                            flex="1"
+                            mb="4"
+                        >
+                            {DELAY_LABELS.map((label, i) => (
+                                <SliderMark key={i} value={i} mt={3} fontSize="2xs" color="fgSubtle" transform="translateX(-50%)">
+                                    {label}
+                                </SliderMark>
+                            ))}
+                            <SliderTrack bg="bgSunken" h="2px">
+                                <SliderFilledTrack bg="lineStrong" />
+                            </SliderTrack>
+                            <SliderThumb boxSize={3.5} bg="fg" />
+                        </Slider>
+                        <Text fontSize="sm" color="fg" whiteSpace="nowrap" minW="10" textAlign="right">
+                            {DELAY_DISPLAY[idx]}
+                        </Text>
+                    </HStack>
+                );
+            })()}
         </Box>
     );
 }

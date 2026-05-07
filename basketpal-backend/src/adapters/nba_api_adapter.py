@@ -27,14 +27,10 @@ class NBAAPIStatsProvider(NBAStatsProvider):
             data = response.json()["leagueSchedule"]
             game_dates = data["gameDates"]
 
-            now = date.today()
-
             filtered = []
             for entry in game_dates:
                 entry_date = datetime.strptime(entry["gameDate"], "%m/%d/%Y %H:%M:%S").date()
 
-                if entry_date < now:
-                    continue
                 if start_dt and entry_date < start_dt:
                     continue
                 if end_dt and entry_date > end_dt:

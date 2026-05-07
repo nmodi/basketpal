@@ -43,7 +43,7 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
     return (
         <Box
             position="fixed"
-            top="48px"
+            top="53px"
             left={0}
             right={0}
             zIndex={99}
@@ -60,7 +60,7 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
                     msOverflowStyle: 'none',
                 }}
             >
-                <Flex px="3" py="2" gap="1" display="inline-flex">
+                <Flex px="4" py="2.5" gap="2" display="inline-flex">
                     {dates.map(d => {
                         const dateStr = d.format('YYYY-MM-DD');
                         const isToday = dateStr === todayStr;
@@ -73,18 +73,18 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
                                 ref={isToday ? todayRef : undefined}
                                 onClick={() => onSelectDate(dateStr)}
                                 cursor="pointer"
-                                px="3"
-                                py="2"
+                                px="4"
+                                py="2.5"
                                 borderRadius="6px"
                                 bg={isSelected ? 'fg' : 'transparent'}
                                 textAlign="center"
-                                w="52px"
+                                w="65px"
                                 userSelect="none"
                                 _hover={{ bg: isSelected ? 'fg' : 'surface' }}
                                 transition="background 0.12s"
                             >
                                 <Text
-                                    fontSize="9px"
+                                    fontSize="11px"
                                     fontWeight="bold"
                                     letterSpacing="0.08em"
                                     fontFamily="tt-autonomous-mono"
@@ -94,7 +94,7 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
                                     {d.format('ddd').toUpperCase()}
                                 </Text>
                                 <Text
-                                    fontSize="md"
+                                    fontSize="xl"
                                     fontWeight="bold"
                                     color={isSelected ? 'bg' : 'fg'}
                                     lineHeight="1.3"
@@ -102,11 +102,11 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
                                 >
                                     {d.format('D')}
                                 </Text>
-                                <Box h="6px" display="flex" alignItems="center" justifyContent="center" mt="1">
+                                <Box h="8px" display="flex" alignItems="center" justifyContent="center" mt="1">
                                     {hasGames && (
                                         <Box
-                                            w="4px"
-                                            h="4px"
+                                            w="5px"
+                                            h="5px"
                                             borderRadius="full"
                                             bg={isSelected ? 'bg' : 'fgDim'}
                                         />
@@ -148,7 +148,7 @@ export default function Index() {
             bg="bg"
             px="3"
             pb="12"
-            pt="112px"
+            pt="133px"
         >
             <ScheduleHeader />
             <DateBar gameDates={data} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
@@ -160,7 +160,7 @@ export default function Index() {
                 </Box>
             ) : (
                 visibleGames.map(({ gameDate, games }) => (
-                    <Box key={gameDate} w="100%" maxW="480px" mt="6">
+                    <Box key={gameDate} w="100%" maxW="600px" mt="6">
                         {games.map(g => (
                             <Microtron key={g.gameId} game={g} />
                         ))}

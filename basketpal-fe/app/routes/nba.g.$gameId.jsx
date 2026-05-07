@@ -108,7 +108,7 @@ const Minitron = () => {
             direction="column"
             color="white"
             fontFamily="tt-autonomous-mono"
-            pt="48px"
+            pt="53px"
         >
             <GameHeader />
                     <Scoreboard gameData={gameData} />

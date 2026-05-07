@@ -7,7 +7,7 @@ const headerStyle = {
     left: 0,
     right: 0,
     zIndex: 100,
-    height: '48px',
+    height: '53px',
     bg: 'bg',
     borderBottom: '1px solid',
     borderColor: 'line',
@@ -16,7 +16,7 @@ const headerStyle = {
 };
 
 const labelStyle = {
-    fontSize: 'xs',
+    fontSize: 'sm',
     fontWeight: 'bold',
     letterSpacing: '0.15em',
     textTransform: 'uppercase',

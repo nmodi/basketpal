@@ -18,28 +18,28 @@ const customTheme = {
     semanticTokens: {
         colors: {
             bg: {
-                default: 'carbon.950',
-                _dark: 'carbon.950',
+                default: 'carbon.800',
+                _dark: 'carbon.800',
             },
             bgRaised: {
-                default: 'carbon.900',
-                _dark: 'carbon.900',
+                default: 'system.bgRaised',
+                _dark: 'system.bgRaised',
             },
             bgSunken: {
                 default: 'system.bgSunken',
                 _dark: 'system.bgSunken',
             },
             surface: {
-                default: 'carbon.800',
-                _dark: 'carbon.800',
+                default: 'carbon.700',
+                _dark: 'carbon.700',
             },
             surface2: {
-                default: 'carbon.700',
-                _dark: 'carbon.700',
+                default: 'carbon.600',
+                _dark: 'carbon.600',
             },
             line: {
-                default: 'carbon.700',
-                _dark: 'carbon.700',
+                default: 'carbon.600',
+                _dark: 'carbon.600',
             },
             lineStrong: {
                 default: 'carbon.500',
@@ -101,13 +101,15 @@ const customTheme = {
           highlight: '#facc15',
           fg: '#f2f4f8',
           chyronFg: '#fff2d6',
-          bgSunken: '#000000',
+          bgRaised: '#1a1e27',
+          bgSunken: '#0b0d13',
           fgInverse: '#ffffff',
         },
         highlight: '#facc15',
         fg: '#f2f4f8',
         chyronFg: '#fff2d6',
-        bgSunken: '#000000',
+        bgRaised: '#1a1e27',
+        bgSunken: '#0b0d13',
         fgInverse: '#ffffff',
         red: {
           50: '#ffe6e6',

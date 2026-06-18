@@ -20,7 +20,6 @@ jiter==0.10.0
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 mdurl==0.1.2
-nba_api==1.10.0
 numpy==1.26.4
 openai==1.87.0
 orjson==3.10.3

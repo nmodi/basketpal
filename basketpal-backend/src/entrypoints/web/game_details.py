@@ -1,6 +1,7 @@
 
 import traceback
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from requests.exceptions import RequestException
 
 # from src.adapters.chatgpt_content_generator import generate_summary
 from src.config.dependencies import content_provider, nba_service
@@ -8,14 +9,27 @@ from src.config.dependencies import content_provider, nba_service
 router = APIRouter(prefix="/games/{game_id}", tags=["Game Details"])
 
 
+def _get_boxscore_or_error(game_id: str, delay: int = None):
+    try:
+        return nba_service.get_boxscore(game_id, delay)
+    except ValueError:
+        # No data for this id (invalid / not yet played).
+        raise HTTPException(status_code=404, detail=f"Game {game_id} not found")
+    except (RequestException, KeyError) as exc:
+        # Upstream NBA provider unreachable/changed (e.g. stats.nba.com timeout,
+        # blocked network, or unexpected payload shape).
+        traceback.print_exc()
+        raise HTTPException(status_code=502, detail=f"NBA stats provider unavailable for game {game_id}") from exc
+
+
 @router.get("/")
 async def get_game_by_id(game_id: str, delay: int = None):
-    return nba_service.get_boxscore(game_id, delay)
+    return _get_boxscore_or_error(game_id, delay)
 
 
 @router.get("/boxscore")
 async def get_boxscore(game_id: str, delay: int = None):
-    return nba_service.get_boxscore(game_id, delay)
+    return _get_boxscore_or_error(game_id, delay)
 
 
 @router.get("/playbyplay")

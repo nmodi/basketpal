@@ -5,6 +5,7 @@ import { ScheduleHeader } from '../components/Header';
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher } from "@remix-run/react";
 import axios from "../util/axios";
+import { toRouteError } from "../util/loaderError";
 import dayjs from 'dayjs';
 
 export const meta = () => {
@@ -17,8 +18,12 @@ export const meta = () => {
 export const loader = async () => {
     const startDate = dayjs().subtract(3, 'day').format('YYYY-MM-DD');
     const endDate = dayjs().add(10, 'day').format('YYYY-MM-DD');
-    const response = await axios.get(`/games/upcoming?start_date=${startDate}&end_date=${endDate}`);
-    return json(response.data);
+    try {
+        const response = await axios.get(`/games/upcoming?start_date=${startDate}&end_date=${endDate}`);
+        return json(response.data);
+    } catch (error) {
+        throw toRouteError(error);
+    }
 };
 
 function DateBar({ gameDates, selectedDate, onSelectDate }) {

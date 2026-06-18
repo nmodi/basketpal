@@ -4,11 +4,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
+  useRouteError,
 } from "@remix-run/react";
 
 import { ChakraProvider } from '@chakra-ui/react'
 
 import {theme} from './theme';
+import ErrorPage from './components/ErrorPage';
 
 export function Layout({ children }) {
   return (
@@ -33,6 +36,17 @@ export default function App() {
   return (
     <ChakraProvider theme={theme}>
         <Outlet />
+    </ChakraProvider>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const status = isRouteErrorResponse(error) ? error.status : 500;
+
+  return (
+    <ChakraProvider theme={theme}>
+      <ErrorPage status={status} />
     </ChakraProvider>
   );
 }

@@ -11,27 +11,32 @@ import TeamStatsComparison from '../components/TeamStatsComparison';
 import GamePreview from '../components/GamePreview';
 import Postgame from '../components/Postgame';
 import axios from '../util/axios';
+import { toRouteError } from '../util/loaderError';
 
 export const loader = async ({ params }) => {
     const gameId = params.gameId;
-    const scoreboardResponse = await axios.get(`/games/${gameId}`);
-    const scoreboard = scoreboardResponse.data;
+    try {
+        const scoreboardResponse = await axios.get(`/games/${gameId}`);
+        const scoreboard = scoreboardResponse.data;
 
-    if (scoreboard && scoreboard.gameStatus === 1) {
+        if (scoreboard && scoreboard.gameStatus === 1) {
+            return json({
+                boxscore: scoreboard
+            });
+        }
+
+        const [boxscore, summary] = await Promise.all([
+            axios.get(`/games/${gameId}/boxscore`),
+            axios.get(`/games/${gameId}/summary`),
+        ]);
+
         return json({
-            boxscore: scoreboard
+            boxscore: boxscore.data,
+            summary: summary.data
         });
+    } catch (error) {
+        throw toRouteError(error);
     }
-
-    const [boxscore, summary] = await Promise.all([
-        axios.get(`/games/${gameId}/boxscore`),
-        axios.get(`/games/${gameId}/summary`),
-    ]);
-
-    return json({
-        boxscore: boxscore.data,
-        summary: summary.data
-    });
 };
 
 const Minitron = () => {

@@ -13,6 +13,22 @@ import Postgame from '../components/Postgame';
 import axios from '../util/axios';
 import { toRouteError } from '../util/loaderError';
 
+export const meta = ({ data }) => {
+    const game = data?.boxscore;
+    if (!game) {
+        return [{ title: 'Basketpal' }];
+    }
+
+    const away = game.awayTeam;
+    const home = game.homeTeam;
+    const title = `${away.teamTricode} @ ${home.teamTricode} | Basketpal`;
+
+    return [
+        { title },
+        { name: 'description', content: `${away.teamCity} ${away.teamName} vs ${home.teamCity} ${home.teamName}` },
+    ];
+};
+
 export const loader = async ({ params }) => {
     const gameId = params.gameId;
     try {

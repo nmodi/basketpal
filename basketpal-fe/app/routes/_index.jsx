@@ -10,8 +10,8 @@ import dayjs from 'dayjs';
 
 export const meta = () => {
     return [
-        { title: 'Basketpal' },
-        { name: 'description', content: 'Welcome to Remix!' },
+        { title: 'NBA Schedule | Basketpal' },
+        { name: 'description', content: 'Live NBA scores, schedule, and game tracking.' },
     ];
 };
 

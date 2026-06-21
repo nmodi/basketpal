@@ -4,7 +4,6 @@ import os
 import random
 from concurrent.futures import ThreadPoolExecutor
 
-import requests
 from openai import OpenAI
 
 from src.common.formatting_utils import format_team_roster, format_pbp, format_period_scores
@@ -13,8 +12,9 @@ from src.core.ports import ContentProvider, StorageClient, NBAStatsProvider
 logger = logging.getLogger(__name__)
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-OPENROUTER_MODELS_URL = f"{OPENROUTER_BASE_URL}/models"
-DEFAULT_MODEL = "openai/gpt-4o-mini"
+DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
+KEY_MOMENTS_FALLBACK_MODEL = "anthropic/claude-haiku-4.5"
+STORY_FALLBACK_MODEL = "anthropic/claude-sonnet-4.6"
 
 SYSTEM_PROMPT = """
 You are a sports journalist writing game recaps for a basketball app.
@@ -41,23 +41,13 @@ Rules you must follow:
 - Each moment must correspond to an actual play in the provided play-by-play.
 """
 
-# Models to pit against each other in the model-comparison view. Entries with a
-# plain string are pinned to that exact OpenRouter slug. Entries with a callable,
-# or a tilde-prefixed string (e.g. "~openai/gpt-latest"), are resolved at request
-# time to whichever matching model OpenRouter most recently published — callables
-# are arbitrary predicates, while tilde-prefixed strings are prefix-matched after
-# stripping the leading "~" and any trailing "-latest" — since some providers
-# (GLM, DeepSeek, Qwen) don't publish a stable "-latest" alias the way
-# OpenAI/Anthropic/Google do.
+# Models to pit against each other in the model-comparison view, pinned to exact
+# OpenRouter slugs.
 COMPARISON_MODEL_SPECS = [
-    ("GPT-4o", "openai/gpt-4o"),
-    ("GPT (latest)", "~openai/gpt-latest"),
-    ("Claude Sonnet (latest)", "~anthropic/claude-sonnet-latest"),
-    ("Claude Haiku (latest)", "~anthropic/claude-haiku-latest"),
-    ("GLM (latest)", lambda model_id: model_id.startswith("z-ai/glm")),
-    ("Gemini (latest)", "~google/gemini-pro-latest"),
-    ("DeepSeek (latest)", lambda model_id: model_id.startswith("deepseek/")),
-    ("Qwen (latest)", lambda model_id: model_id.startswith("qwen/")),
+    ("DeepSeek", "deepseek/deepseek-v4-flash"),
+    ("Claude Sonnet", "anthropic/claude-sonnet-4.6"),
+    ("GLM", "z-ai/glm-5.2"),
+    ("Qwen", "qwen/qwen3.7-plus"),
 ]
 
 
@@ -68,9 +58,8 @@ class OpenRouterContentProvider(ContentProvider):
         if not api_key:
             raise RuntimeError("Missing OPENROUTER_API_KEY environment variable")
 
-        self.api_key = api_key
         self.client = OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
-        self.model = os.environ.get("OPENROUTER_MODEL", DEFAULT_MODEL)
+        self.model = DEFAULT_MODEL
         self.storage_client = storage_client
         self.nba_stats_provider = nba_stats_provider
 
@@ -86,17 +75,29 @@ class OpenRouterContentProvider(ContentProvider):
         key_moments = self._extract_key_moments(context["cleaned_pbp"])
         prompt = self._build_story_prompt(context, key_moments)
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            temperature=0.5,
-            max_tokens=1500,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
-        )
-        recap = self._parse_json(response.choices[0].message.content)
+        models = [self.model, STORY_FALLBACK_MODEL]
+        recap = None
+        for model in models:
+            try:
+                response = self.client.chat.completions.create(
+                    model=model,
+                    temperature=0.5,
+                    max_tokens=1500,
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt},
+                    ],
+                )
+                result = self._parse_json(response.choices[0].message.content)
+                if result.get("headline") and result.get("recap"):
+                    recap = result
+                    break
+                logger.warning("Unusable story result from %s, trying fallback", model)
+            except Exception as exc:
+                logger.warning("Story generation failed with %s: %s", model, exc)
+        if recap is None:
+            raise RuntimeError("All story generation models failed")
         recap["keyMoments"] = key_moments
 
         self.storage_client.save(key, recap)
@@ -114,7 +115,6 @@ class OpenRouterContentProvider(ContentProvider):
         context = self._build_game_context(game_id)
         key_moments = self._extract_key_moments(context["cleaned_pbp"])
         prompt = self._build_story_prompt(context, key_moments)
-        resolved_models = self._resolve_comparison_models()
 
         def run(label_and_model):
             label, model = label_and_model
@@ -143,8 +143,8 @@ class OpenRouterContentProvider(ContentProvider):
                     "playerOfTheGame": None,
                 }
 
-        with ThreadPoolExecutor(max_workers=len(resolved_models)) as executor:
-            results = list(executor.map(run, resolved_models))
+        with ThreadPoolExecutor(max_workers=len(COMPARISON_MODEL_SPECS)) as executor:
+            results = list(executor.map(run, COMPARISON_MODEL_SPECS))
 
         random.shuffle(results)
         for i, result in enumerate(results):
@@ -153,38 +153,6 @@ class OpenRouterContentProvider(ContentProvider):
         self.storage_client.save(key, results)
 
         return results
-
-    def _resolve_comparison_models(self) -> list[tuple[str, str]]:
-        catalog = None
-        if any(
-            callable(spec) or (isinstance(spec, str) and spec.startswith("~"))
-            for _, spec in COMPARISON_MODEL_SPECS
-        ):
-            response = requests.get(
-                OPENROUTER_MODELS_URL,
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                timeout=10,
-            )
-            response.raise_for_status()
-            catalog = sorted(response.json()["data"], key=lambda m: m["created"], reverse=True)
-
-        resolved = []
-        for label, spec in COMPARISON_MODEL_SPECS:
-            if callable(spec):
-                match = next((m["id"] for m in catalog if spec(m["id"])), None)
-                if match is None:
-                    raise RuntimeError(f"No OpenRouter model found for {label}")
-                resolved.append((label, match))
-            elif isinstance(spec, str) and spec.startswith("~"):
-                prefix = spec[1:].removesuffix("-latest")
-                match = next((m["id"] for m in catalog if m["id"].startswith(prefix)), None)
-                if match is None:
-                    raise RuntimeError(f"No OpenRouter model found for {label}")
-                resolved.append((label, match))
-            else:
-                resolved.append((label, spec))
-
-        return resolved
 
     def _build_game_context(self, game_id):
         pbp = self.nba_stats_provider.get_playbyplay(game_id)
@@ -262,17 +230,29 @@ Return a JSON object with exactly this field:
 Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
 """
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            temperature=0.5,
-            max_tokens=1500,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": KEY_MOMENTS_SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
-        )
-        return self._parse_json(response.choices[0].message.content)["keyMoments"]
+        models = [self.model, KEY_MOMENTS_FALLBACK_MODEL]
+        last_exc = None
+        for model in models:
+            try:
+                response = self.client.chat.completions.create(
+                    model=model,
+                    temperature=0.5,
+                    max_tokens=1500,
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": KEY_MOMENTS_SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt},
+                    ],
+                )
+                result = self._parse_json(response.choices[0].message.content)
+                moments = result.get("keyMoments")
+                if moments:
+                    return moments
+                last_exc = ValueError(f"Empty keyMoments from {model}")
+            except Exception as exc:
+                logger.warning("Key moments extraction failed with %s: %s", model, exc)
+                last_exc = exc
+        raise last_exc
 
     def _build_story_prompt(self, context: dict, key_moments: list[dict]) -> str:
         return f"""

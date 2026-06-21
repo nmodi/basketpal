@@ -27,9 +27,6 @@ Backend uses a `.venv` inside `basketpal-backend/`. Frontend uses npm.
 
 Environment variables needed in `basketpal-backend/.env`:
 - `OPENROUTER_API_KEY` — used by `OpenRouterContentProvider` (default content provider) for game summaries and model comparisons
-- `OPENROUTER_MODEL` — defaults to `openai/gpt-4o-mini`
-- `CONTENT_PROVIDER` — `openrouter` (default) or `chatgpt` to fall back to the OpenAI-based `ChatGPTContentProvider`
-- `OPENAI_API_KEY` — only needed if `CONTENT_PROVIDER=chatgpt`
 - `REDIS_URL` — defaults to localhost
 
 ## Architecture
@@ -54,7 +51,7 @@ core/
 adapters/         # Implementations of ports
   nba_api_adapter.py          # nba_api library → NBAStatsProvider
   redis_client.py             # Redis → StorageClient
-  chatgpt_content_generator.py # OpenAI → ContentProvider
+  openrouter_content_generator.py # OpenRouter → ContentProvider
 
 config/
   dependencies.py   # Singleton wiring (dependency injection)

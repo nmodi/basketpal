@@ -31,6 +31,18 @@ _STATS_HEADERS = {
     "Sec-Fetch-Dest": "empty",
 }
 
+# cdn.nba.com (schedule + live boxscore feeds) rejects bare requests with HTTP
+# 403 — it needs a browser fingerprint too. A lighter set than _STATS_HEADERS
+# suffices; keep it in sync with the stats one if blocks reappear.
+_CDN_HEADERS = {
+    "User-Agent": _STATS_HEADERS["User-Agent"],
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Referer": "https://www.nba.com/",
+    "Origin": "https://www.nba.com",
+}
+
 
 def _normalize_result_set(data: dict, name: str) -> list:
     for rs in data.get("resultSets", []):
@@ -53,7 +65,7 @@ class NBAAPIStatsProvider(NBAStatsProvider):
 
         url = _get_schedule_url(league)
 
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=10, headers=_CDN_HEADERS)
         if response.status_code == 200:
             data = response.json()["leagueSchedule"]
             game_dates = data["gameDates"]
@@ -140,7 +152,7 @@ class NBAAPIStatsProvider(NBAStatsProvider):
 
 def _fetch_live_boxscore(game_id: str) -> dict:
     url = f"https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"
-    resp = requests.get(url, timeout=10)
+    resp = requests.get(url, timeout=10, headers=_CDN_HEADERS)
     resp.raise_for_status()
     return resp.json()["game"]
 
@@ -297,7 +309,7 @@ def _get_boxscore_from_schedule(game_id):
     league = League.NBA if game_id.startswith("00") else League.WNBA
     url = _get_schedule_url(league)
 
-    response = requests.get(url, timeout=10)
+    response = requests.get(url, timeout=10, headers=_CDN_HEADERS)
     if response.status_code == 200:
         data = response.json()["leagueSchedule"]
         game_dates = data["gameDates"]

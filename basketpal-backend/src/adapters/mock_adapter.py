@@ -114,5 +114,5 @@ class MockContentProvider:
         _GAME_IDS["in_progress"]: "Game is still in progress.",
     }
 
-    def get_game_summary(self, game_id: str) -> str:
+    def get_game_summary(self, game_id: str, force_refresh: bool = False) -> str:
         return self._SUMMARIES.get(game_id, "Summary unavailable.")

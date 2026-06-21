@@ -66,8 +66,11 @@ const Minitron = () => {
     const fetchInterval = 5000; 
 
     const isGameStarted = gameData.gameStatus !== 1;
-    const isGameInProgress = gameData.gameStatus === 2; 
-    const isGameOver = gameData.gameStatus === 3; 
+    const isGameInProgress = gameData.gameStatus === 2;
+    const isGameOver = gameData.gameStatus === 3;
+    // Old FINAL games fall back to a historical data source with no on-court
+    // info; recently-finished games still have it from the live feed.
+    const hasOnCourtData = gameData.homeTeam.onCourtPlayers?.length > 0 || gameData.awayTeam.onCourtPlayers?.length > 0;
 
     
     useEffect(() => {
@@ -145,7 +148,7 @@ const Minitron = () => {
                         >
                             {!isGameStarted && <Tab {...tabStyle}>Game Preview</Tab>}
                             {isGameOver && <Tab {...tabStyle}>Postgame Report</Tab>}
-                            {isGameStarted && <Tab {...tabStyle}>On Court</Tab>}
+                            {isGameStarted && hasOnCourtData && <Tab {...tabStyle}>On Court</Tab>}
                             {isGameStarted && <Tab {...tabStyle}>Team Stats</Tab>}
                         </TabList>
 
@@ -162,7 +165,7 @@ const Minitron = () => {
                                 </TabPanel>
                             )}
 
-                            {isGameStarted && (
+                            {isGameStarted && hasOnCourtData && (
                                 <TabPanel>
                                     <Flex gap="4" width="100%" alignItems="stretch">
                                         <OnCourtPlayers gameData={gameData} isHome />

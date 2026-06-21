@@ -7,15 +7,19 @@ from src.core.ports import ContentProvider, StorageClient, NBAStatsProvider
 
 logger = logging.getLogger(__name__)
 
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL = "openai/gpt-4o-mini"
 
-class ChatGPTContentProvider(ContentProvider):
+
+class OpenRouterContentProvider(ContentProvider):
     def __init__(self, storage_client: StorageClient, nba_stats_provider: NBAStatsProvider):
-        api_key = os.environ.get("OPENAI_API_KEY")
+        api_key = os.environ.get("OPENROUTER_API_KEY")
 
         if not api_key:
-            raise RuntimeError("Missing OPENAI_API_KEY environment variable")
+            raise RuntimeError("Missing OPENROUTER_API_KEY environment variable")
 
-        self.client = OpenAI()
+        self.client = OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+        self.model = os.environ.get("OPENROUTER_MODEL", DEFAULT_MODEL)
         self.storage_client = storage_client
         self.nba_stats_provider = nba_stats_provider
 
@@ -29,7 +33,7 @@ class ChatGPTContentProvider(ContentProvider):
 
         prompt = self.generate_prompt(game_id)
         response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model,
             temperature=0.5,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -72,9 +76,3 @@ class ChatGPTContentProvider(ContentProvider):
                f"{away_team} roster: {cleaned_visitor_roster}"\
                f"The final score was: {home_team}: {home_team_score} to {away_team}: {away_team_score}"\
                f"play by play: {cleaned_pbp}"
-
-
-
-
-
-

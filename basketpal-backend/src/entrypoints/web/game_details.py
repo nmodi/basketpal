@@ -38,9 +38,9 @@ async def get_playbyplay(game_id: str):
 
 
 @router.get("/summary")
-async def get_summary(game_id: str):
+async def get_summary(game_id: str, refresh: bool = False):
     try:
-        return content_provider.get_game_summary(game_id)
+        return content_provider.get_game_summary(game_id, force_refresh=refresh)
     except Exception:
         traceback.print_exc()
         raise

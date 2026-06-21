@@ -1,4 +1,5 @@
-from datetime import date, time
+import time
+from datetime import date
 from typing import List
 
 from src.config.logger import get_logger
@@ -29,16 +30,23 @@ class NBAStatsService:
 
     def get_boxscore(self, game_id: str, delay: int = None) -> GameSnapshot:
 
-        if self.get_game_status(game_id) == GameStatus.FINAL or delay is None:
-            return self.nba_stats_provider.get_boxscore(game_id)
+        game = self.nba_stats_provider.get_boxscore(game_id)
 
-        snapshot = self._storage_client.get_snapshot(game_id, delay)
-        time_since_snapshot = time.time() - snapshot.snapshotTime
+        if game.gameStatus == GameStatus.FINAL or delay is None:
+            return game
+
+        result = self._storage_client.get_snapshot(game_id, delay)
+
+        if result is None:
+            return game
+
+        snapshot, snapshot_unix_time = result
+        time_since_snapshot = time.time() - snapshot_unix_time
 
         if time_since_snapshot < delay * 2:
             return snapshot
 
-        return self.nba_stats_provider.get_boxscore(game_id)
+        return game
 
     def get_playbyplay(self, game_id: str) -> dict:
         return self.nba_stats_provider.get_playbyplay(game_id)

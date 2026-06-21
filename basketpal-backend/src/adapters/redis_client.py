@@ -33,18 +33,18 @@ class RedisClient(StorageClient):
 
         self.redis.zadd(key, {game.model_dump_json(exclude_none=False): now})
 
-    def get_snapshot(self, game_id: str, delay: int = 20) -> GameSnapshot | None:
+    def get_snapshot(self, game_id: str, delay: int = 20) -> tuple[GameSnapshot, float] | None:
 
         key = f"game:{game_id}:snapshots"
         cutoff = int(time.time()) - delay
 
-        result = self.redis.zrevrangebyscore(key, cutoff, 0, start=0, num=1)
+        result = self.redis.zrevrangebyscore(key, cutoff, 0, withscores=True, start=0, num=1)
 
-        if result is None:
+        if not result:
             return None
 
-        json_game = result[0]
-        return GameSnapshot.model_validate_json(json_game)
+        json_game, score = result[0]
+        return GameSnapshot.model_validate_json(json_game), score
 
     def save(self, key: str, data: any) -> None:
         self.redis.set(key, json.dumps(data), ex=86400)

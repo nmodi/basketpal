@@ -80,15 +80,15 @@ class NullStorageClient:
     def save_snapshot(self, game: GameSnapshot) -> None:
         self._snapshots.setdefault(game.gameId, []).append((time.time(), game))
 
-    def get_snapshot(self, game_id: str, delay: int) -> GameSnapshot | None:
+    def get_snapshot(self, game_id: str, delay: int) -> tuple[GameSnapshot, float] | None:
         entries = self._snapshots.get(game_id, [])
         if not entries:
             return None
         cutoff = time.time() - delay
         for ts, snap in reversed(entries):
             if ts <= cutoff:
-                return snap
-        return entries[0][1]
+                return snap, ts
+        return entries[0][1], entries[0][0]
 
     def save(self, key: str, data: Any) -> None:
         self._store[key] = data
@@ -116,3 +116,6 @@ class MockContentProvider:
 
     def get_game_summary(self, game_id: str, force_refresh: bool = False) -> str:
         return self._SUMMARIES.get(game_id, "Summary unavailable.")
+
+    def get_model_comparison(self, game_id: str, force_refresh: bool = False) -> list[dict]:
+        raise NotImplementedError("Model comparison is not supported by MockContentProvider")

@@ -26,7 +26,10 @@ basketpal/
 Backend uses a `.venv` inside `basketpal-backend/`. Frontend uses npm.
 
 Environment variables needed in `basketpal-backend/.env`:
-- `OPENAI_API_KEY` — GPT-4o-mini for game summaries
+- `OPENROUTER_API_KEY` — used by `OpenRouterContentProvider` (default content provider) for game summaries and model comparisons
+- `OPENROUTER_MODEL` — defaults to `openai/gpt-4o-mini`
+- `CONTENT_PROVIDER` — `openrouter` (default) or `chatgpt` to fall back to the OpenAI-based `ChatGPTContentProvider`
+- `OPENAI_API_KEY` — only needed if `CONTENT_PROVIDER=chatgpt`
 - `REDIS_URL` — defaults to localhost
 
 ## Architecture
@@ -72,7 +75,8 @@ entrypoints/web/
 | Key | Type | Content |
 |---|---|---|
 | `game:{gameId}:snapshots` | Sorted set | Full `GameSnapshot` JSON, scored by unix timestamp |
-| `game:{gameId}:summary` | String | Cached GPT summary, 24hr TTL |
+| `game:{gameId}:summary` | String | Cached recap JSON (`headline`/`recap`/`playerOfTheGame`/`keyMoments`), 24hr TTL |
+| `game:{gameId}:model-comparison` | String | Cached list of per-model recap JSON objects (blind model comparison view), 24hr TTL |
 
 Snapshots are stored only for `IN_PROGRESS` games. The delay feature (`?delay=N`) retrieves the snapshot from N seconds ago using `zrevrangebyscore`.
 

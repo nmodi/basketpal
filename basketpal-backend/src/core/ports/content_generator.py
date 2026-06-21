@@ -2,5 +2,8 @@ from typing import Protocol
 
 
 class ContentProvider(Protocol):
-    def get_game_summary(self, game_id, force_refresh: bool = False) -> str:
+    def get_game_summary(self, game_id, force_refresh: bool = False) -> dict:
+        ...
+
+    def get_model_comparison(self, game_id, force_refresh: bool = False) -> list[dict]:
         ...

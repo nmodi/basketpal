@@ -20,10 +20,10 @@ else:
     storage_client: StorageClient = RedisClient()
     nba_stats_provider: NBAStatsProvider = NBAAPIStatsProvider()
 
-    # if os.environ.get("CONTENT_PROVIDER", "chatgpt").lower() == "openrouter":
-    content_provider: ContentProvider = OpenRouterContentProvider(storage_client, nba_stats_provider)
-    # else:
-    # content_provider: ContentProvider = ChatGPTContentProvider(storage_client, nba_stats_provider)
+    if os.environ.get("CONTENT_PROVIDER", "openrouter").lower() == "chatgpt":
+        content_provider: ContentProvider = ChatGPTContentProvider(storage_client, nba_stats_provider)
+    else:
+        content_provider: ContentProvider = OpenRouterContentProvider(storage_client, nba_stats_provider)
 
 nba_service = NBAStatsService(nba_stats_provider, storage_client)
 nba_poller = LeaguePoller(storage_client, nba_service, League.NBA)

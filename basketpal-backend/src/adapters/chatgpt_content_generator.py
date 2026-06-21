@@ -39,6 +39,9 @@ class ChatGPTContentProvider(ContentProvider):
 
         return summary
 
+    def get_model_comparison(self, game_id, force_refresh: bool = False) -> list[dict]:
+        raise NotImplementedError("Model comparison is not supported by ChatGPTContentProvider")
+
     def generate_prompt(self, game_id):
         pbp = self.nba_stats_provider.get_playbyplay(game_id)
         game = self.nba_stats_provider.get_boxscore(game_id)
@@ -72,9 +75,5 @@ class ChatGPTContentProvider(ContentProvider):
                f"{away_team} roster: {cleaned_visitor_roster}"\
                f"The final score was: {home_team}: {home_team_score} to {away_team}: {away_team_score}"\
                f"play by play: {cleaned_pbp}"
-
-
-
-
 
 

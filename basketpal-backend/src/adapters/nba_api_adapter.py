@@ -53,7 +53,7 @@ class NBAAPIStatsProvider(NBAStatsProvider):
 
         url = _get_schedule_url(league)
 
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         if response.status_code == 200:
             data = response.json()["leagueSchedule"]
             game_dates = data["gameDates"]
@@ -84,6 +84,10 @@ class NBAAPIStatsProvider(NBAStatsProvider):
                 })
 
             return filtered
+
+        raise RequestException(
+            f"Failed to fetch schedule for {league}: HTTP {response.status_code}"
+        )
 
     def get_boxscore(self, game_id: str):
 
@@ -293,7 +297,7 @@ def _get_boxscore_from_schedule(game_id):
     league = League.NBA if game_id.startswith("00") else League.WNBA
     url = _get_schedule_url(league)
 
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
     if response.status_code == 200:
         data = response.json()["leagueSchedule"]
         game_dates = data["gameDates"]

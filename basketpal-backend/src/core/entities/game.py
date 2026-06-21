@@ -55,9 +55,9 @@ class BBallIndivStats(BaseModel):
 
 class BBallPlayer(BaseModel):
     playerId: int | None = None
-    jerseyNum: str = None
+    jerseyNum: str | None = None
     position: str | None = None
-    name: str = None
+    name: str | None = None
     nameAbbr: str | None = None
     stats: BBallIndivStats | None  = None
 
@@ -69,8 +69,8 @@ class TeamSummary(BaseModel):
     teamName: str
     score: Optional[int] = None
     periodScores: List[int] = Field(default_factory=list)
-    timeoutsRemaining: int = None
-    inBonus: bool = None
+    timeoutsRemaining: Optional[int] = None
+    inBonus: Optional[bool] = None
     statistics: Optional[TeamStats] = None
     onCourtPlayers: List[BBallPlayer] = Field(default_factory=list)
     players: List[BBallPlayer] = Field(default_factory=list)
@@ -109,11 +109,11 @@ class TeamSummary(BaseModel):
 
 
 class GameSnapshot(BaseModel):
-    snapshotTime: str = None
+    snapshotTime: Optional[str] = None
     gameId: str
     gameStatus: GameStatus
     gameTimeUTC: str
-    gameClock: str = None
+    gameClock: Optional[str] = None
     gameCode: str
     period: Optional[int] = None
     gameLabel: Optional[str] = None

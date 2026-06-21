@@ -28,19 +28,3 @@ async def get_upcoming_games(
     end_dt = datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else start_dt + timedelta(days=13)
 
     return nba_stats_provider.get_games_dt_range(start_dt, end_dt, league_value)
-
-
-# @router.get("/{game_id}")
-# async def get_game_by_id(game_id: str):
-#     print("hit endpoint in /games")
-#     return nba_stats_provider.get_boxscore(game_id)
-# #
-#
-# @router.get("/{game_id}/boxscore")
-# async def get_boxscore(game_id: str):
-#     return nba_stats_provider.get_boxscore(game_id)
-#
-#
-# @router.get("/{game_id}/playbyplay")
-# async def get_playbyplay(game_id: str):
-#     return nba_stats_provider.get_playbyplay(game_id)

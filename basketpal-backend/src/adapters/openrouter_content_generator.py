@@ -42,10 +42,13 @@ Rules you must follow:
 """
 
 # Models to pit against each other in the model-comparison view. Entries with a
-# string are pinned to that exact OpenRouter slug; entries with a callable are
-# resolved at request time to whichever matching model OpenRouter most recently
-# published, since some providers (GLM, DeepSeek, Qwen) don't publish a stable
-# "-latest" alias the way OpenAI/Anthropic/Google do.
+# plain string are pinned to that exact OpenRouter slug. Entries with a callable,
+# or a tilde-prefixed string (e.g. "~openai/gpt-latest"), are resolved at request
+# time to whichever matching model OpenRouter most recently published — callables
+# are arbitrary predicates, while tilde-prefixed strings are prefix-matched after
+# stripping the leading "~" and any trailing "-latest" — since some providers
+# (GLM, DeepSeek, Qwen) don't publish a stable "-latest" alias the way
+# OpenAI/Anthropic/Google do.
 COMPARISON_MODEL_SPECS = [
     ("GPT-4o", "openai/gpt-4o"),
     ("GPT (latest)", "~openai/gpt-latest"),
@@ -153,10 +156,14 @@ class OpenRouterContentProvider(ContentProvider):
 
     def _resolve_comparison_models(self) -> list[tuple[str, str]]:
         catalog = None
-        if any(callable(spec) for _, spec in COMPARISON_MODEL_SPECS):
+        if any(
+            callable(spec) or (isinstance(spec, str) and spec.startswith("~"))
+            for _, spec in COMPARISON_MODEL_SPECS
+        ):
             response = requests.get(
                 OPENROUTER_MODELS_URL,
                 headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=10,
             )
             response.raise_for_status()
             catalog = sorted(response.json()["data"], key=lambda m: m["created"], reverse=True)
@@ -165,6 +172,12 @@ class OpenRouterContentProvider(ContentProvider):
         for label, spec in COMPARISON_MODEL_SPECS:
             if callable(spec):
                 match = next((m["id"] for m in catalog if spec(m["id"])), None)
+                if match is None:
+                    raise RuntimeError(f"No OpenRouter model found for {label}")
+                resolved.append((label, match))
+            elif isinstance(spec, str) and spec.startswith("~"):
+                prefix = spec[1:].removesuffix("-latest")
+                match = next((m["id"] for m in catalog if m["id"].startswith(prefix)), None)
                 if match is None:
                     raise RuntimeError(f"No OpenRouter model found for {label}")
                 resolved.append((label, match))

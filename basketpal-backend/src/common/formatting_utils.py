@@ -94,7 +94,7 @@ def format_pbp(play_by_play: list):
             "t": f"{minutes:02d}:{seconds:02d}",
             "team": action.get("teamTricode") or "",
             "player": action.get("playerName") or "",
-            "event": _describe_event(action),
+            "event": _describe_event(action, is_opening_jump_ball),
             "score": f"{prev_away}-{prev_home}",
             "tags": tags,
         })
@@ -133,7 +133,7 @@ def _shot_label(action: dict) -> str:
     return label
 
 
-def _describe_event(action: dict) -> str:
+def _describe_event(action: dict, is_opening_jump_ball: bool = False) -> str:
     action_type = action.get("actionType") or ""
     sub_type = (action.get("subType") or "").strip()
     desc = action.get("description") or ""
@@ -153,7 +153,7 @@ def _describe_event(action: dict) -> str:
     if action_type == "Violation":
         return f"Commits {sub_type.lower() or 'rule'} violation"
     if action_type == "Jump Ball":
-        return "Wins opening tip"
+        return "Wins opening tip" if is_opening_jump_ball else "Wins jump ball"
     if action_type == "Substitution":
         return "Substitutes into the game"
     if action_type == "Timeout":

@@ -1,0 +1,92 @@
+SYSTEM_PROMPT = """
+You are a sports journalist writing game recaps for a basketball app.
+Your writing style is energetic and specific — short punchy sentences,
+active voice, concrete details. Think ESPN game recap, not a color commentary transcript.
+
+Rules you must follow:
+- Use ONLY the player names provided in the rosters. Do not reference any other players.
+- Use ONLY the final score provided. Do not infer or calculate scores from play-by-play.
+- Do not describe players with attributes that could become outdated
+  (age, years of experience, contract status, team history).
+- Do not fabricate statistics. If a stat isn't explicitly in the data, don't cite it.
+- Do not narrate every play. Extract the narrative — the runs, the turning points,
+  the player who took over.
+- Write in past tense throughout.
+"""
+
+KEY_MOMENTS_SYSTEM_PROMPT = """
+You are a basketball analyst extracting the narratively significant moments from a game's play-by-play.
+
+Rules you must follow:
+- Use ONLY the player names that appear in the play-by-play provided. Do not reference any other players.
+- Do not fabricate statistics or scores. If a value isn't explicitly in the data, don't cite it.
+- Each moment must correspond to an actual play in the provided play-by-play.
+"""
+
+
+def build_key_moments_prompt(cleaned_pbp: list[dict]) -> str:
+    lead_change_plays = [e for e in cleaned_pbp if "lead_change" in e["tags"] or "tie" in e["tags"]]
+    run_plays = [e for e in cleaned_pbp if "run" in e["tags"]]
+    clutch_plays = [e for e in cleaned_pbp if "clutch" in e["tags"]]
+
+    return f"""
+Identify the 5-8 most narratively significant moments from this game.
+
+PRE-FLAGGED CONTEXT (use these as strong signals):
+- Lead changes occurred at these plays: {lead_change_plays}
+- Scoring runs of 6+: {run_plays}
+- Clutch time plays (final 2 min): {clutch_plays}
+
+FULL COMPRESSED PLAY-BY-PLAY:
+{cleaned_pbp}
+
+OUTPUT FORMAT:
+Return a JSON object with exactly this field:
+{{
+  "keyMoments": [
+    {{
+      "quarter": number,
+      "time": "string — clock time of the play, e.g. '08:42'",
+      "player": "string — player involved in the play",
+      "description": "string — one sentence, specific and narrative",
+      "momentType": "string — e.g. lead_change, run, clutch, turning_point"
+    }}
+  ]
+}}
+
+Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
+"""
+
+
+def build_story_prompt(context: dict, key_moments: list[dict]) -> str:
+    return f"""
+Write a game recap for the following game.
+
+GAME TYPE: {context['game_type']}{context['series_line']}
+
+TEAMS:
+- Home: {context['home_team']} | Roster: {context['cleaned_home_roster']}
+- Away: {context['away_team']} | Roster: {context['cleaned_visitor_roster']}
+
+FINAL SCORE:
+{context['home_team']} {context['home_team_score']}, {context['away_team']} {context['away_team_score']}
+
+QUARTER-BY-QUARTER SCORING:
+{context['cleaned_period_scores']}
+
+KEY MOMENTS:
+{key_moments}
+
+OUTPUT FORMAT:
+Return a JSON object with exactly these fields:
+{{
+  "headline": "string — punchy, specific, under 80 characters",
+  "recap": "string — 3 paragraphs. Para 1: game summary and winner. Para 2: key turning point or run. Para 3: standout player and closing thought",
+  "playerOfTheGame": {{
+    "name": "string — must appear in roster above",
+    "reason": "string — one sentence, no unverifiable stats"
+  }}
+}}
+
+Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
+"""

@@ -6,6 +6,12 @@ from concurrent.futures import ThreadPoolExecutor
 
 from openai import OpenAI
 
+from src.adapters.prompts import (
+    SYSTEM_PROMPT,
+    KEY_MOMENTS_SYSTEM_PROMPT,
+    build_key_moments_prompt,
+    build_story_prompt,
+)
 from src.common.formatting_utils import format_team_roster, format_pbp, format_period_scores
 from src.core.ports import ContentProvider, StorageClient, NBAStatsProvider
 
@@ -15,31 +21,6 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
 KEY_MOMENTS_FALLBACK_MODEL = "anthropic/claude-haiku-4.5"
 STORY_FALLBACK_MODEL = "anthropic/claude-sonnet-4.6"
-
-SYSTEM_PROMPT = """
-You are a sports journalist writing game recaps for a basketball app.
-Your writing style is energetic and specific — short punchy sentences,
-active voice, concrete details. Think ESPN game recap, not a color commentary transcript.
-
-Rules you must follow:
-- Use ONLY the player names provided in the rosters. Do not reference any other players.
-- Use ONLY the final score provided. Do not infer or calculate scores from play-by-play.
-- Do not describe players with attributes that could become outdated
-  (age, years of experience, contract status, team history).
-- Do not fabricate statistics. If a stat isn't explicitly in the data, don't cite it.
-- Do not narrate every play. Extract the narrative — the runs, the turning points,
-  the player who took over.
-- Write in past tense throughout.
-"""
-
-KEY_MOMENTS_SYSTEM_PROMPT = """
-You are a basketball analyst extracting the narratively significant moments from a game's play-by-play.
-
-Rules you must follow:
-- Use ONLY the player names that appear in the play-by-play provided. Do not reference any other players.
-- Do not fabricate statistics or scores. If a value isn't explicitly in the data, don't cite it.
-- Each moment must correspond to an actual play in the provided play-by-play.
-"""
 
 # Models to pit against each other in the model-comparison view, pinned to exact
 # OpenRouter slugs.
@@ -73,35 +54,18 @@ class OpenRouterContentProvider(ContentProvider):
 
         context = self._build_game_context(game_id)
         key_moments = self._extract_key_moments(context["cleaned_pbp"])
-        prompt = self._build_story_prompt(context, key_moments)
+        prompt = build_story_prompt(context, key_moments)
 
-        models = [self.model, STORY_FALLBACK_MODEL]
-        recap = None
-        for model in models:
-            try:
-                response = self.client.chat.completions.create(
-                    model=model,
-                    temperature=0.5,
-                    max_tokens=1500,
-                    response_format={"type": "json_object"},
-                    messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": prompt},
-                    ],
-                )
-                result = self._parse_json(response.choices[0].message.content)
-                if result.get("headline") and result.get("recap"):
-                    recap = result
-                    break
-                logger.warning("Unusable story result from %s, trying fallback", model)
-            except Exception as exc:
-                logger.warning("Story generation failed with %s: %s", model, exc)
-        if recap is None:
-            raise RuntimeError("All story generation models failed")
+        recap = self._call_with_fallback(
+            system=SYSTEM_PROMPT,
+            prompt=prompt,
+            models=[self.model, STORY_FALLBACK_MODEL],
+            validate=lambda r: r.get("headline") and r.get("recap"),
+            label="story",
+        )
         recap["keyMoments"] = key_moments
 
         self.storage_client.save(key, recap)
-
         return recap
 
     def get_model_comparison(self, game_id, force_refresh: bool = False) -> list[dict]:
@@ -114,7 +78,7 @@ class OpenRouterContentProvider(ContentProvider):
 
         context = self._build_game_context(game_id)
         key_moments = self._extract_key_moments(context["cleaned_pbp"])
-        prompt = self._build_story_prompt(context, key_moments)
+        prompt = build_story_prompt(context, key_moments)
 
         def run(label_and_model):
             label, model = label_and_model
@@ -151,10 +115,9 @@ class OpenRouterContentProvider(ContentProvider):
             result["blindLabel"] = f"Recap {chr(65 + i)}"
 
         self.storage_client.save(key, results)
-
         return results
 
-    def _build_game_context(self, game_id):
+    def _build_game_context(self, game_id) -> dict:
         pbp = self.nba_stats_provider.get_playbyplay(game_id)
         game = self.nba_stats_provider.get_boxscore(game_id)
 
@@ -164,22 +127,11 @@ class OpenRouterContentProvider(ContentProvider):
         home_roster = self.nba_stats_provider.get_roster(home_team_id)
         away_roster = self.nba_stats_provider.get_roster(visitor_team_id)
 
-        cleaned_home_roster = format_team_roster(home_roster)
-        cleaned_visitor_roster = format_team_roster(away_roster)
+        home_team = f"{game.homeTeam.teamCity} {game.homeTeam.teamName}"
+        away_team = f"{game.awayTeam.teamCity} {game.awayTeam.teamName}"
 
-        cleaned_pbp = format_pbp(pbp)
-
-        home_team_city = game.homeTeam.teamCity
-        home_team_name = game.homeTeam.teamName
         home_team_score = game.homeTeam.score if game.homeTeam.score is not None else sum(game.homeTeam.periodScores)
-        home_team = f"{home_team_city} {home_team_name}"
-
-        away_team_city = game.awayTeam.teamCity
-        away_team_name = game.awayTeam.teamName
         away_team_score = game.awayTeam.score if game.awayTeam.score is not None else sum(game.awayTeam.periodScores)
-        away_team = f"{away_team_city} {away_team_name}"
-
-        cleaned_period_scores = format_period_scores(home_team, game.homeTeam.periodScores, away_team, game.awayTeam.periodScores)
 
         game_type = self._get_game_type(game_id)
         series_line = f"\nSERIES: {game.seriesText}" if game.seriesText else ""
@@ -189,103 +141,59 @@ class OpenRouterContentProvider(ContentProvider):
             "away_team": away_team,
             "home_team_score": home_team_score,
             "away_team_score": away_team_score,
-            "cleaned_home_roster": cleaned_home_roster,
-            "cleaned_visitor_roster": cleaned_visitor_roster,
-            "cleaned_period_scores": cleaned_period_scores,
-            "cleaned_pbp": cleaned_pbp,
+            "cleaned_home_roster": format_team_roster(home_roster),
+            "cleaned_visitor_roster": format_team_roster(away_roster),
+            "cleaned_period_scores": format_period_scores(
+                home_team, game.homeTeam.periodScores, away_team, game.awayTeam.periodScores
+            ),
+            "cleaned_pbp": format_pbp(pbp),
             "game_type": game_type,
             "series_line": series_line,
         }
 
     def _extract_key_moments(self, cleaned_pbp: list[dict]) -> list[dict]:
-        lead_change_plays = [e for e in cleaned_pbp if "lead_change" in e["tags"] or "tie" in e["tags"]]
-        run_plays = [e for e in cleaned_pbp if "run" in e["tags"]]
-        clutch_plays = [e for e in cleaned_pbp if "clutch" in e["tags"]]
+        prompt = build_key_moments_prompt(cleaned_pbp)
 
-        prompt = f"""
-Identify the 5-8 most narratively significant moments from this game.
+        result = self._call_with_fallback(
+            system=KEY_MOMENTS_SYSTEM_PROMPT,
+            prompt=prompt,
+            models=[self.model, KEY_MOMENTS_FALLBACK_MODEL],
+            validate=lambda r: bool(r.get("keyMoments")),
+            label="key moments",
+        )
+        return result["keyMoments"]
 
-PRE-FLAGGED CONTEXT (use these as strong signals):
-- Lead changes occurred at these plays: {lead_change_plays}
-- Scoring runs of 6+: {run_plays}
-- Clutch time plays (final 2 min): {clutch_plays}
-
-FULL COMPRESSED PLAY-BY-PLAY:
-{cleaned_pbp}
-
-OUTPUT FORMAT:
-Return a JSON object with exactly this field:
-{{
-  "keyMoments": [
-    {{
-      "quarter": number,
-      "time": "string — clock time of the play, e.g. '08:42'",
-      "player": "string — player involved in the play",
-      "description": "string — one sentence, specific and narrative",
-      "momentType": "string — e.g. lead_change, run, clutch, turning_point"
-    }}
-  ]
-}}
-
-Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
-"""
-
-        models = [self.model, KEY_MOMENTS_FALLBACK_MODEL]
+    def _call_with_fallback(
+        self,
+        system: str,
+        prompt: str,
+        models: list[str],
+        validate,
+        label: str,
+        max_tokens: int = 1500,
+    ) -> dict:
         last_exc = None
         for model in models:
             try:
                 response = self.client.chat.completions.create(
                     model=model,
                     temperature=0.5,
-                    max_tokens=1500,
+                    max_tokens=max_tokens,
                     response_format={"type": "json_object"},
                     messages=[
-                        {"role": "system", "content": KEY_MOMENTS_SYSTEM_PROMPT},
+                        {"role": "system", "content": system},
                         {"role": "user", "content": prompt},
                     ],
                 )
                 result = self._parse_json(response.choices[0].message.content)
-                moments = result.get("keyMoments")
-                if moments:
-                    return moments
-                last_exc = ValueError(f"Empty keyMoments from {model}")
+                if validate(result):
+                    return result
+                last_exc = ValueError(f"Unusable {label} result from {model}")
+                logger.warning("Unusable %s result from %s, trying fallback", label, model)
             except Exception as exc:
-                logger.warning("Key moments extraction failed with %s: %s", model, exc)
+                logger.warning("%s generation failed with %s: %s", label.capitalize(), model, exc)
                 last_exc = exc
-        raise last_exc
-
-    def _build_story_prompt(self, context: dict, key_moments: list[dict]) -> str:
-        return f"""
-Write a game recap for the following game.
-
-GAME TYPE: {context['game_type']}{context['series_line']}
-
-TEAMS:
-- Home: {context['home_team']} | Roster: {context['cleaned_home_roster']}
-- Away: {context['away_team']} | Roster: {context['cleaned_visitor_roster']}
-
-FINAL SCORE:
-{context['home_team']} {context['home_team_score']}, {context['away_team']} {context['away_team_score']}
-
-QUARTER-BY-QUARTER SCORING:
-{context['cleaned_period_scores']}
-
-KEY MOMENTS:
-{key_moments}
-
-OUTPUT FORMAT:
-Return a JSON object with exactly these fields:
-{{
-  "headline": "string — punchy, specific, under 80 characters",
-  "recap": "string — 3 paragraphs. Para 1: game summary and winner. Para 2: key turning point or run. Para 3: standout player and closing thought",
-  "playerOfTheGame": {{
-    "name": "string — must appear in roster above",
-    "reason": "string — one sentence, no unverifiable stats"
-  }}
-}}
-
-Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
-"""
+        raise last_exc or RuntimeError(f"All {label} generation models failed")
 
     @staticmethod
     def _get_game_type(game_id: str) -> str:

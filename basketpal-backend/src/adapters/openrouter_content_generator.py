@@ -32,6 +32,15 @@ Rules you must follow:
 - Write in past tense throughout.
 """
 
+KEY_MOMENTS_SYSTEM_PROMPT = """
+You are a basketball analyst extracting the narratively significant moments from a game's play-by-play.
+
+Rules you must follow:
+- Use ONLY the player names that appear in the play-by-play provided. Do not reference any other players.
+- Do not fabricate statistics or scores. If a value isn't explicitly in the data, don't cite it.
+- Each moment must correspond to an actual play in the provided play-by-play.
+"""
+
 # Models to pit against each other in the model-comparison view. Entries with a
 # string are pinned to that exact OpenRouter slug; entries with a callable are
 # resolved at request time to whichever matching model OpenRouter most recently
@@ -70,7 +79,10 @@ class OpenRouterContentProvider(ContentProvider):
             if cached:
                 return cached
 
-        prompt = self.generate_prompt(game_id)
+        context = self._build_game_context(game_id)
+        key_moments = self._extract_key_moments(context["cleaned_pbp"])
+        prompt = self._build_story_prompt(context, key_moments)
+
         response = self.client.chat.completions.create(
             model=self.model,
             temperature=0.5,
@@ -81,7 +93,8 @@ class OpenRouterContentProvider(ContentProvider):
                 {"role": "user", "content": prompt},
             ],
         )
-        recap = self._parse_recap_json(response.choices[0].message.content)
+        recap = self._parse_json(response.choices[0].message.content)
+        recap["keyMoments"] = key_moments
 
         self.storage_client.save(key, recap)
 
@@ -95,7 +108,9 @@ class OpenRouterContentProvider(ContentProvider):
             if cached:
                 return cached
 
-        prompt = self.generate_prompt(game_id)
+        context = self._build_game_context(game_id)
+        key_moments = self._extract_key_moments(context["cleaned_pbp"])
+        prompt = self._build_story_prompt(context, key_moments)
         resolved_models = self._resolve_comparison_models()
 
         def run(label_and_model):
@@ -112,8 +127,8 @@ class OpenRouterContentProvider(ContentProvider):
                     ],
                     extra_body={"reasoning": {"effort": "low"}},
                 )
-                recap = self._parse_recap_json(response.choices[0].message.content)
-                return {"label": label, "model": model, **recap}
+                recap = self._parse_json(response.choices[0].message.content)
+                return {"label": label, "model": model, **recap, "keyMoments": key_moments}
             except Exception:
                 logger.exception("Model comparison failed for %s (%s)", label, model)
                 return {
@@ -158,7 +173,7 @@ class OpenRouterContentProvider(ContentProvider):
 
         return resolved
 
-    def generate_prompt(self, game_id):
+    def _build_game_context(self, game_id):
         pbp = self.nba_stats_provider.get_playbyplay(game_id)
         game = self.nba_stats_provider.get_boxscore(game_id)
 
@@ -188,35 +203,88 @@ class OpenRouterContentProvider(ContentProvider):
         game_type = self._get_game_type(game_id)
         series_line = f"\nSERIES: {game.seriesText}" if game.seriesText else ""
 
+        return {
+            "home_team": home_team,
+            "away_team": away_team,
+            "home_team_score": home_team_score,
+            "away_team_score": away_team_score,
+            "cleaned_home_roster": cleaned_home_roster,
+            "cleaned_visitor_roster": cleaned_visitor_roster,
+            "cleaned_period_scores": cleaned_period_scores,
+            "cleaned_pbp": cleaned_pbp,
+            "game_type": game_type,
+            "series_line": series_line,
+        }
+
+    def _extract_key_moments(self, cleaned_pbp: list[dict]) -> list[dict]:
+        lead_change_plays = [e for e in cleaned_pbp if "lead_change" in e["tags"] or "tie" in e["tags"]]
+        run_plays = [e for e in cleaned_pbp if "run" in e["tags"]]
+        clutch_plays = [e for e in cleaned_pbp if "clutch" in e["tags"]]
+
+        prompt = f"""
+Identify the 5-8 most narratively significant moments from this game.
+
+PRE-FLAGGED CONTEXT (use these as strong signals):
+- Lead changes occurred at these plays: {lead_change_plays}
+- Scoring runs of 6+: {run_plays}
+- Clutch time plays (final 2 min): {clutch_plays}
+
+FULL COMPRESSED PLAY-BY-PLAY:
+{cleaned_pbp}
+
+OUTPUT FORMAT:
+Return a JSON object with exactly this field:
+{{
+  "keyMoments": [
+    {{
+      "quarter": number,
+      "time": "string — clock time of the play, e.g. '08:42'",
+      "player": "string — player involved in the play",
+      "description": "string — one sentence, specific and narrative",
+      "momentType": "string — e.g. lead_change, run, clutch, turning_point"
+    }}
+  ]
+}}
+
+Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
+"""
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            temperature=0.5,
+            max_tokens=1500,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": KEY_MOMENTS_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return self._parse_json(response.choices[0].message.content)["keyMoments"]
+
+    def _build_story_prompt(self, context: dict, key_moments: list[dict]) -> str:
         return f"""
 Write a game recap for the following game.
 
-GAME TYPE: {game_type}{series_line}
+GAME TYPE: {context['game_type']}{context['series_line']}
 
 TEAMS:
-- Home: {home_team} | Roster: {cleaned_home_roster}
-- Away: {away_team} | Roster: {cleaned_visitor_roster}
+- Home: {context['home_team']} | Roster: {context['cleaned_home_roster']}
+- Away: {context['away_team']} | Roster: {context['cleaned_visitor_roster']}
 
 FINAL SCORE:
-{home_team} {home_team_score}, {away_team} {away_team_score}
+{context['home_team']} {context['home_team_score']}, {context['away_team']} {context['away_team_score']}
 
 QUARTER-BY-QUARTER SCORING:
-{cleaned_period_scores}
+{context['cleaned_period_scores']}
 
-PLAY-BY-PLAY:
-{cleaned_pbp}
+KEY MOMENTS:
+{key_moments}
 
 OUTPUT FORMAT:
 Return a JSON object with exactly these fields:
 {{
   "headline": "string — punchy, specific, under 80 characters",
   "recap": "string — 3 paragraphs. Para 1: game summary and winner. Para 2: key turning point or run. Para 3: standout player and closing thought",
-  "keyMoments": [
-    {{
-      "quarter": number,
-      "description": "string — one sentence, specific and narrative"
-    }}
-  ],
   "playerOfTheGame": {{
     "name": "string — must appear in roster above",
     "reason": "string — one sentence, no unverifiable stats"
@@ -240,7 +308,7 @@ Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
         }.get(season_type, "Regular Season")
 
     @staticmethod
-    def _parse_recap_json(content: str) -> dict:
+    def _parse_json(content: str) -> dict:
         if not content:
             raise ValueError("Empty response from model")
 

@@ -11,7 +11,10 @@ import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
-const ABORT_DELAY = 5_000;
+// Deferred loader data (e.g. multi-model recap generation, which can take
+// 60-90s+ for 8 parallel LLM calls) can take well longer than the default
+// 5s — give streamed responses room to finish.
+const ABORT_DELAY = 150_000;
 
 export default function handleRequest(
   request,

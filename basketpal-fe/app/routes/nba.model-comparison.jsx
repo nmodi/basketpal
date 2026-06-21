@@ -1,36 +1,35 @@
-import { useEffect, useState } from 'react';
-import { json } from '@remix-run/node';
-import { useLoaderData, useSearchParams } from '@remix-run/react';
+import { Suspense, useEffect, useState } from 'react';
+import { defer } from '@remix-run/node';
+import { Await, useLoaderData, useSearchParams } from '@remix-run/react';
 import {
     Box,
     Button,
     Flex,
     Heading,
     SimpleGrid,
+    Spinner,
     Tag,
     Text,
     VStack,
 } from '@chakra-ui/react';
 import axios from '../util/axios';
-import { toRouteError } from '../util/loaderError';
 
 const DEFAULT_GAME_ID = '0042500401';
 
 export const meta = () => [{ title: 'Model Comparison | Basketpal' }];
 
-export const loader = async ({ request }) => {
+export const loader = ({ request }) => {
     const { searchParams } = new URL(request.url);
     const gameId = searchParams.get('gameId') || DEFAULT_GAME_ID;
     const refresh = searchParams.get('refresh') === 'true';
 
-    try {
-        const response = await axios.get(`/games/${gameId}/model-comparison`, {
+    const recaps = axios
+        .get(`/games/${gameId}/model-comparison`, {
             params: refresh ? { refresh: true } : {},
-        });
-        return json({ gameId, recaps: response.data });
-    } catch (error) {
-        throw toRouteError(error);
-    }
+        })
+        .then((response) => response.data);
+
+    return defer({ gameId, recaps });
 };
 
 const shuffle = (items) => {
@@ -80,9 +79,7 @@ const RecapCard = ({ recap, revealed, onToggleReveal }) => (
     </Box>
 );
 
-export default function ModelComparison() {
-    const { gameId, recaps } = useLoaderData();
-    const [searchParams] = useSearchParams();
+const RecapGrid = ({ recaps }) => {
     // Render the server's order first so hydration matches, then shuffle
     // client-side after mount to randomize position on every page load.
     const [shuffledRecaps, setShuffledRecaps] = useState(recaps);
@@ -101,6 +98,45 @@ export default function ModelComparison() {
         setRevealed({});
     };
 
+    return (
+        <>
+            <Flex justify="flex-end" mb="6">
+                <Button onClick={toggleRevealAll}>
+                    {allRevealed ? 'Hide All' : 'Reveal All'}
+                </Button>
+            </Flex>
+
+            <SimpleGrid columns={{ base: 1, lg: 2 }} gap="20px">
+                {shuffledRecaps.map((recap) => (
+                    <RecapCard
+                        key={recap.blindLabel}
+                        recap={recap}
+                        revealed={allRevealed || !!revealed[recap.blindLabel]}
+                        onToggleReveal={() => toggleReveal(recap.blindLabel)}
+                    />
+                ))}
+            </SimpleGrid>
+        </>
+    );
+};
+
+const RecapGridFallback = () => (
+    <Flex direction="column" align="center" gap="4" py="20">
+        <Spinner size="xl" color="purple.400" thickness="3px" />
+        <Text color="fgMuted">Generating recaps from 8 models…</Text>
+    </Flex>
+);
+
+const RecapGridError = () => (
+    <Text color="red.400" py="10">
+        Failed to generate recaps. Try regenerating.
+    </Text>
+);
+
+export default function ModelComparison() {
+    const { gameId, recaps } = useLoaderData();
+    const [searchParams] = useSearchParams();
+
     const handleRefresh = () => {
         const params = new URLSearchParams(searchParams);
         params.set('refresh', 'true');
@@ -114,26 +150,16 @@ export default function ModelComparison() {
                     <Heading color="fg">Model Comparison</Heading>
                     <Text color="fgMuted">Game {gameId}</Text>
                 </VStack>
-                <Flex gap="3">
-                    <Button onClick={toggleRevealAll}>
-                        {allRevealed ? 'Hide All' : 'Reveal All'}
-                    </Button>
-                    <Button onClick={handleRefresh} colorScheme="purple">
-                        Regenerate
-                    </Button>
-                </Flex>
+                <Button onClick={handleRefresh} colorScheme="purple">
+                    Regenerate
+                </Button>
             </Flex>
 
-            <SimpleGrid columns={{ base: 1, lg: 2 }} gap="20px">
-                {shuffledRecaps.map((recap) => (
-                    <RecapCard
-                        key={recap.blindLabel}
-                        recap={recap}
-                        revealed={allRevealed || !!revealed[recap.blindLabel]}
-                        onToggleReveal={() => toggleReveal(recap.blindLabel)}
-                    />
-                ))}
-            </SimpleGrid>
+            <Suspense fallback={<RecapGridFallback />}>
+                <Await resolve={recaps} errorElement={<RecapGridError />}>
+                    {(resolvedRecaps) => <RecapGrid recaps={resolvedRecaps} />}
+                </Await>
+            </Suspense>
         </Box>
     );
 }

@@ -24,6 +24,10 @@ def format_pbp(play_by_play: list):
     coincides with a lead change, a tie, a 6+ unanswered-point run, or it
     falls in the final 2 minutes of the 4th quarter / any overtime period —
     those are always kept regardless of category.
+
+    Each returned event carries a "tags" list (any of "lead_change", "tie",
+    "run", "clutch") marking which of those conditions applied, so callers
+    can pull out pre-flagged plays without re-deriving them from scores.
     """
     events = []
 
@@ -75,6 +79,16 @@ def format_pbp(play_by_play: list):
         if removable and not must_preserve:
             continue
 
+        tags = []
+        if is_lead_change:
+            tags.append("lead_change")
+        if is_tie:
+            tags.append("tie")
+        if is_run:
+            tags.append("run")
+        if is_crunch_time:
+            tags.append("clutch")
+
         events.append({
             "q": period,
             "t": f"{minutes:02d}:{seconds:02d}",
@@ -82,6 +96,7 @@ def format_pbp(play_by_play: list):
             "player": action.get("playerName") or "",
             "event": _describe_event(action),
             "score": f"{prev_away}-{prev_home}",
+            "tags": tags,
         })
 
     return events

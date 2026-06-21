@@ -19,8 +19,6 @@ export default function Scoreboard({ gameData, summary }) {
 
     const keysToTheWin = evaluateKeysToTheWin(gameResult.winningTeam, gameResult.losingTeam, 10);
 
-    const story = summary;
-
     return (
         <SimpleGrid templateColumns="2fr 3fr" gap="20px" width="80%">
 
@@ -83,16 +81,26 @@ export default function Scoreboard({ gameData, summary }) {
                             mb="2"
                             fontWeight="bold"
                         >
-                            Game Story
+                            {summary.headline}
                         </Text>
 
                         <Flex direction="column" gap="2" fontFamily="soleil">
-                            {story.split("\n").map((p, i) => (
+                            {summary.recap.split("\n").filter(Boolean).map((p, i) => (
                                 <Text whiteSpace="pre-line" align="left" textIndent="2em" key={i}>
                                     {p}
                                 </Text>
                             ))}
                         </Flex>
+
+                        {summary.keyMoments?.length > 0 && (
+                            <VStack align="start" mt="4" spacing="1">
+                                {summary.keyMoments.map((moment, i) => (
+                                    <Text key={i} fontSize="sm" color="gray.400">
+                                        Q{moment.quarter}: {moment.description}
+                                    </Text>
+                                ))}
+                            </VStack>
+                        )}
                 </Box>
             </Box>
 

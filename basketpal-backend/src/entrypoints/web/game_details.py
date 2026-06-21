@@ -44,3 +44,15 @@ async def get_summary(game_id: str, refresh: bool = False):
     except Exception:
         traceback.print_exc()
         raise
+
+
+@router.get("/model-comparison")
+async def get_model_comparison(game_id: str, refresh: bool = False):
+    if not hasattr(content_provider, "get_model_comparison"):
+        raise HTTPException(status_code=501, detail="Model comparison is not supported by the active content provider")
+
+    try:
+        return content_provider.get_model_comparison(game_id, force_refresh=refresh)
+    except Exception:
+        traceback.print_exc()
+        raise

@@ -87,18 +87,28 @@ class NBAAPIStatsProvider(NBAStatsProvider):
 
     def get_boxscore(self, game_id: str):
 
-        game = _get_boxscore_from_schedule(game_id)
+        scheduled_game = _get_boxscore_from_schedule(game_id)
 
-        if game is None or game.gameStatus != GameStatus.SCHEDULED:
+        if scheduled_game is None or scheduled_game.gameStatus != GameStatus.SCHEDULED:
             try:
                 game_dict = _fetch_live_boxscore(game_id)
             except requests.exceptions.HTTPError:
                 # Live CDN only serves recent games; fall back to the stats
                 # endpoints for historical (FINAL) games.
                 game_dict = _fetch_historical_boxscore(game_id)
-            return GameSnapshot.from_api(game_dict)
+            game = GameSnapshot.from_api(game_dict)
 
-        return game
+            # The schedule feed carries playoff series metadata (gameLabel,
+            # seriesText) that the live/historical boxscore feeds don't; reuse
+            # the lookup above instead of issuing another request for it.
+            if scheduled_game is not None:
+                game.gameLabel = game.gameLabel or scheduled_game.gameLabel
+                game.seriesText = game.seriesText or scheduled_game.seriesText
+                game.seriesGameNumber = game.seriesGameNumber or scheduled_game.seriesGameNumber
+
+            return game
+
+        return scheduled_game
 
     def get_playbyplay(self, game_id):
         try:

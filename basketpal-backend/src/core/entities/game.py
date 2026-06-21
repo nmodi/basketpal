@@ -116,6 +116,9 @@ class GameSnapshot(BaseModel):
     gameClock: str = None
     gameCode: str
     period: Optional[int] = None
+    gameLabel: Optional[str] = None
+    seriesText: Optional[str] = None
+    seriesGameNumber: Optional[str] = None
     homeTeam: TeamSummary
     awayTeam: TeamSummary
 

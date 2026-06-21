@@ -154,13 +154,21 @@ export const getBestStats = (stats, N) => {
 
     // console.log(stats);
 
+    const percentageStats = new Set(['fieldGoalsPercentage', 'threePointersPercentage']);
+
     // Calculate impressiveness score for each stat
     let scores = [];
 
     for (let stat in stats) {
         if (statWeights.hasOwnProperty(stat) && statNames.hasOwnProperty(stat)) {
-            let score = stats[stat] * statWeights[stat];
-            scores.push({ name: statNames[stat], score: score, value: stats[stat] });
+            const isPercentage = percentageStats.has(stat);
+            const displayValue = isPercentage ? stats[stat] * 100 : stats[stat];
+            let score = displayValue * statWeights[stat];
+            scores.push({
+                name: statNames[stat],
+                score: score,
+                value: isPercentage ? `${displayValue.toFixed(1)}%` : displayValue
+            });
         }
     }
 

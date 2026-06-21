@@ -72,7 +72,7 @@ export default function TeamStatsComparison({
             statFunction: (stats) => {
                 const made = stats.fieldGoalsMade;
                 const attempted = stats.fieldGoalsAttempted;
-                const percentage = ((made / attempted) * 100).toFixed(1);
+                const percentage = attempted ? ((made / attempted) * 100).toFixed(1) : '0.0';
 
                 return {
                     formatted: `${made} / ${attempted} (${percentage}%)`,
@@ -86,7 +86,7 @@ export default function TeamStatsComparison({
             statFunction: (stats) => {
                 const made = stats.freeThrowsMade;
                 const attempted = stats.freeThrowsAttempted;
-                const percentage = ((made / attempted) * 100).toFixed(1);
+                const percentage = attempted ? ((made / attempted) * 100).toFixed(1) : '0.0';
 
                 return {
                     formatted: `${made} / ${attempted} (${percentage}%)`,
@@ -100,13 +100,37 @@ export default function TeamStatsComparison({
             statFunction: (stats) => {
                 const made = stats.threePointersMade;
                 const attempted = stats.threePointersAttempted;
-                const percentage = ((made / attempted) * 100).toFixed(1);
+                const percentage = attempted ? ((made / attempted) * 100).toFixed(1) : '0.0';
 
                 return {
                     formatted: `${made} / ${attempted} (${percentage}%)`,
                     value: parseFloat(percentage)
                 };
             }
+        },
+        {
+            title: "Field Goal %",
+            statKeys: ['fieldGoalsPercentage'],
+            statFunction: (stats) => ({
+                formatted: `${(stats.fieldGoalsPercentage * 100).toFixed(1)}%`,
+                value: stats.fieldGoalsPercentage
+            })
+        },
+        {
+            title: "Free Throw %",
+            statKeys: ['freeThrowsPercentage'],
+            statFunction: (stats) => ({
+                formatted: `${(stats.freeThrowsPercentage * 100).toFixed(1)}%`,
+                value: stats.freeThrowsPercentage
+            })
+        },
+        {
+            title: "3PT %",
+            statKeys: ['threePointersPercentage'],
+            statFunction: (stats) => ({
+                formatted: `${(stats.threePointersPercentage * 100).toFixed(1)}%`,
+                value: stats.threePointersPercentage
+            })
         },
         {
             title: "Bench Points",

@@ -26,10 +26,17 @@ export const getTopPlayers = (team, N) => {
         .slice(0, N);
 }
 
+const withPercentages = (stats) => ({
+    ...stats,
+    fieldGoalsPercentage: stats.fieldGoalsAttempted ? stats.fieldGoalsMade / stats.fieldGoalsAttempted : 0,
+    freeThrowsPercentage: stats.freeThrowsAttempted ? stats.freeThrowsMade / stats.freeThrowsAttempted : 0,
+    threePointersPercentage: stats.threePointersAttempted ? stats.threePointersMade / stats.threePointersAttempted : 0,
+});
+
 export const evaluateKeysToTheWin = (winningTeam, losingTeam, N = 3) => {
 
-    const winningTeamStats = winningTeam.statistics;
-    const losingTeamStats = losingTeam.statistics;
+    const winningTeamStats = withPercentages(winningTeam.statistics);
+    const losingTeamStats = withPercentages(losingTeam.statistics);
 
     // Define the stats to compare along with their weights
     const keyStats = {
@@ -45,7 +52,7 @@ export const evaluateKeysToTheWin = (winningTeam, losingTeam, N = 3) => {
         'freeThrowsPercentage': 1,
         'threePointersPercentage': 1.5,
         'threePointersMade': 1,
-        'turnoversTotal': -2
+        'turnovers': -2
     };
 
     // Calculate the weighted percentage difference for each stat

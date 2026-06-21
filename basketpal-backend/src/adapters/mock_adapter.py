@@ -99,23 +99,41 @@ class NullStorageClient:
 
 class MockContentProvider:
     _SUMMARIES = {
-        _GAME_IDS["final"]: (
-            "The Denver Nuggets dominated the Los Angeles Clippers 118-104 on the strength of a vintage "
-            "triple-double from Nikola Jokic, who finished with 32 points, 15 rebounds, and 10 assists. "
-            "The two-time MVP was virtually unstoppable, drawing fouls at will and dissecting the Clippers' "
-            "defense with surgical precision.\n\n"
-            "Jamal Murray delivered the secondary scoring punch with 26 points and seven assists, while "
-            "Michael Porter Jr. chipped in 22 points on efficient shooting. The Nuggets raced to a "
-            "17-point halftime lead and never allowed Los Angeles to pull within 11 in the second half.\n\n"
-            "Kawhi Leonard led the Clippers with 28 gutsy points, but turnovers — 10 of them — were their "
-            "undoing. James Harden posted 20 points and a team-high 10 assists, yet Los Angeles couldn't "
-            "overcome Denver's relentless half-court offense and the sheer dominance of Jokic on both ends."
-        ),
-        _GAME_IDS["in_progress"]: "Game is still in progress.",
+        _GAME_IDS["final"]: {
+            "headline": "Jokic's triple-double powers Nuggets past Clippers",
+            "recap": (
+                "The Denver Nuggets dominated the Los Angeles Clippers 118-104 on the strength of a vintage "
+                "triple-double from Nikola Jokic, who finished with 32 points, 15 rebounds, and 10 assists. "
+                "The two-time MVP was virtually unstoppable, drawing fouls at will and dissecting the Clippers' "
+                "defense with surgical precision.\n\n"
+                "Jamal Murray delivered the secondary scoring punch with 26 points and seven assists, while "
+                "Michael Porter Jr. chipped in 22 points on efficient shooting. The Nuggets raced to a "
+                "17-point halftime lead and never allowed Los Angeles to pull within 11 in the second half.\n\n"
+                "Kawhi Leonard led the Clippers with 28 gutsy points, but turnovers — 10 of them — were their "
+                "undoing. James Harden posted 20 points and a team-high 10 assists, yet Los Angeles couldn't "
+                "overcome Denver's relentless half-court offense and the sheer dominance of Jokic on both ends."
+            ),
+            "keyMoments": [],
+            "playerOfTheGame": {
+                "name": "Nikola Jokic",
+                "reason": "Recorded a triple-double and controlled the game on both ends.",
+            },
+        },
+        _GAME_IDS["in_progress"]: {
+            "headline": "Game is still in progress.",
+            "recap": "Game is still in progress.",
+            "keyMoments": [],
+            "playerOfTheGame": None,
+        },
     }
 
-    def get_game_summary(self, game_id: str, force_refresh: bool = False) -> str:
-        return self._SUMMARIES.get(game_id, "Summary unavailable.")
+    def get_game_summary(self, game_id: str, force_refresh: bool = False) -> dict:
+        return self._SUMMARIES.get(game_id, {
+            "headline": "Summary unavailable.",
+            "recap": "Summary unavailable.",
+            "keyMoments": [],
+            "playerOfTheGame": None,
+        })
 
     def get_model_comparison(self, game_id: str, force_refresh: bool = False) -> list[dict]:
         raise NotImplementedError("Model comparison is not supported by MockContentProvider")

@@ -32,15 +32,6 @@ export const loader = ({ request }) => {
     return defer({ gameId, recaps });
 };
 
-const shuffle = (items) => {
-    const copy = [...items];
-    for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-};
-
 const RecapCard = ({ recap, revealed, onToggleReveal }) => (
     <Box bg="surface" p="5" borderRadius="15px">
         <Flex justify="space-between" align="center" mb="3">
@@ -80,12 +71,6 @@ const RecapCard = ({ recap, revealed, onToggleReveal }) => (
 );
 
 const RecapGrid = ({ recaps }) => {
-    // Render the server's order first so hydration matches, then shuffle
-    // client-side after mount to randomize position on every page load.
-    const [shuffledRecaps, setShuffledRecaps] = useState(recaps);
-    useEffect(() => {
-        setShuffledRecaps(shuffle(recaps));
-    }, [recaps]);
     const [revealed, setRevealed] = useState({});
     const [allRevealed, setAllRevealed] = useState(false);
 
@@ -107,7 +92,7 @@ const RecapGrid = ({ recaps }) => {
             </Flex>
 
             <SimpleGrid columns={{ base: 1, lg: 2 }} gap="20px">
-                {shuffledRecaps.map((recap) => (
+                {recaps.map((recap) => (
                     <RecapCard
                         key={recap.blindLabel}
                         recap={recap}
@@ -136,6 +121,16 @@ const RecapGridError = () => (
 export default function ModelComparison() {
     const { gameId, recaps } = useLoaderData();
     const [searchParams] = useSearchParams();
+
+    // Once the loader has consumed `refresh=true` for this load, drop it from
+    // the URL so later reloads don't bypass the backend cache.
+    useEffect(() => {
+        if (searchParams.get('refresh') === 'true') {
+            const params = new URLSearchParams(searchParams);
+            params.delete('refresh');
+            window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+        }
+    }, []);
 
     const handleRefresh = () => {
         const params = new URLSearchParams(searchParams);

@@ -75,37 +75,42 @@ const Minitron = () => {
     
     useEffect(() => {
         const fetchData = async () => {
+            try {
+                let response;
 
-            let response; 
+                if (!isGameStarted) {
+                    response = await axios.get(`/games/${params.gameId}`);
+                } else {
+                    response = await axios.get(`/games/${params.gameId}/boxscore`)
+                }
 
-            if (!isGameStarted) {
-                // response = await fetch('https://basketpal-be.onrender.com/games');
-                // response = await fetch('http://127.0.0.1:8000/games');
-                response = await axios.get("/games");
-            } else {
-                // response = await fetch(`https://basketpal-be.onrender.com/games/${params.gameId}/boxscore`)
-                response = await axios.get(`/games/${params.gameId}/boxscore`)
-            }
+                if (!isGameOver) {
+                    const newData = response.data;
 
-            if (!isGameOver) {
-                const newData = response.data;
+                    if (isGameInProgress) {
+                        queueRef.current.push(newData);
+                        const queueLength = (uiDelay / fetchInterval) - 1;
 
-                if (isGameInProgress) {
-                    queueRef.current.push(newData);
-                    const queueLength = (uiDelay / fetchInterval) - 1; 
-
-                    if (queueRef.current.length > queueLength) {
-                        const nextData = queueRef.current.shift();
-                        setGameData(nextData);
+                        let nextData;
+                        while (queueRef.current.length > queueLength) {
+                            nextData = queueRef.current.shift();
+                        }
+                        if (nextData) {
+                            setGameData(nextData);
+                        }
+                    } else {
+                        setGameData(newData);
                     }
                 }
+            } catch (error) {
+                console.error('Failed to poll game data', error);
             }
         };
 
-        const interval = setInterval(fetchData, isGameStarted ? fetchInterval : '30000');
+        const interval = setInterval(fetchData, isGameStarted ? fetchInterval : 30000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [uiDelay, isGameStarted, isGameInProgress, isGameOver, params.gameId]);
 
     const tabStyle = {
         fontSize: 'sm',

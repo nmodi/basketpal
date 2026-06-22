@@ -24,7 +24,7 @@ Rules you must follow:
 """
 
 
-def build_key_moments_prompt(cleaned_pbp: list[dict]) -> str:
+def build_key_moments_prompt(cleaned_pbp: list[dict], scoring_runs: list[dict]) -> str:
     lead_change_plays = [e for e in cleaned_pbp if "lead_change" in e["tags"] or "tie" in e["tags"]]
     run_plays = [e for e in cleaned_pbp if "run" in e["tags"]]
     clutch_plays = [e for e in cleaned_pbp if "clutch" in e["tags"]]
@@ -34,7 +34,7 @@ Identify the 5-8 most narratively significant moments from this game.
 
 PRE-FLAGGED CONTEXT (use these as strong signals):
 - Lead changes occurred at these plays: {lead_change_plays}
-- Scoring runs of 6+: {run_plays}
+- Scoring runs (8+ unanswered, ground truth): {scoring_runs}
 - Clutch time plays (final 2 min): {clutch_plays}
 
 FULL COMPRESSED PLAY-BY-PLAY:
@@ -74,6 +74,9 @@ FINAL SCORE:
 QUARTER-BY-QUARTER SCORING:
 {context['cleaned_period_scores']}
 
+SCORING RUNS (8+ unanswered points — ground truth, cite these figures directly):
+{context['scoring_runs']}
+
 KEY MOMENTS:
 {key_moments}
 
@@ -81,7 +84,7 @@ OUTPUT FORMAT:
 Return a JSON object with exactly these fields:
 {{
   "headline": "string — punchy, specific, under 80 characters",
-  "recap": "string — 3 paragraphs. Para 1: game summary and winner. Para 2: key turning point or run. Para 3: standout player and closing thought",
+  "recap": "string — exactly 3 short paragraphs (4-6 sentences total, under 600 characters). Para 1: game summary and winner. Para 2: key turning point or run. Para 3: standout player and closing thought. Do NOT repeat yourself or restate the same point; stop once the recap is complete.",
   "playerOfTheGame": {{
     "name": "string — must appear in roster above",
     "reason": "string — one sentence, no unverifiable stats"

@@ -108,7 +108,7 @@ const RecapGrid = ({ recaps }) => {
 const RecapGridFallback = () => (
     <Flex direction="column" align="center" gap="4" py="20">
         <Spinner size="xl" color="purple.400" thickness="3px" />
-        <Text color="fgMuted">Generating recaps from 8 models…</Text>
+        <Text color="fgMuted">Generating recaps from multiple models…</Text>
     </Flex>
 );
 

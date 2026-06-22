@@ -16,8 +16,12 @@ def format_team_roster(roster):
     return players
 
 
+_MIN_RUN_POINTS = 8  # threshold for structured run objects surfaced to the prompt
+
+
 def format_pbp(play_by_play: list):
-    """Compress playbyplayv3 actions into short, narrative-relevant events.
+    """Compress playbyplayv3 actions into short, narrative-relevant events,
+    and extract structured scoring-run records.
 
     Routine noise (subs, timeouts, replay reviews, non-opening jump balls,
     and all but the last free throw of a trip) is dropped, unless the event
@@ -27,19 +31,47 @@ def format_pbp(play_by_play: list):
 
     Each returned event carries a "tags" list (any of "lead_change", "tie",
     "run", "clutch") marking which of those conditions applied, so callers
-    can pull out pre-flagged plays without re-deriving them from scores.
+    can pull out pre-flagged plays without re-deriving them from scores. The
+    6+ bar here drives PBP compression only.
+
+    The second return value is a list of structured scoring-run objects for
+    runs of _MIN_RUN_POINTS (8+) or more unanswered points — these are handed
+    to the content-generation prompt as ground-truth context. Each run is
+    {team, points, scoreBefore, startQ, startTime, endQ, endTime, players}.
+
+    Returns (events, runs).
     """
     events = []
+    runs = []
 
     prev_home, prev_away, prev_diff = 0, 0, 0
     run_team, run_points = None, 0
+    run_start_q, run_start_t, run_start_home, run_start_away = None, None, 0, 0
+    run_last_q, run_last_t = None, None
+    run_players = []
     seen_jump_ball = False
+
+    def _close_run():
+        # Seal the in-progress run (called when the opponent scores, ending it,
+        # and once more after the loop for a run still live at the final buzzer).
+        if run_team is not None and run_points >= _MIN_RUN_POINTS:
+            runs.append({
+                "team": run_team,
+                "points": run_points,
+                "scoreBefore": f"{run_start_away}-{run_start_home}",
+                "startQ": run_start_q,
+                "startTime": run_start_t,
+                "endQ": run_last_q,
+                "endTime": run_last_t,
+                "players": run_players,
+            })
 
     for action in play_by_play:
         action_type = action.get("actionType") or ""
         sub_type = (action.get("subType") or "").strip()
         period = action.get("period") or 1
         minutes, seconds = _parse_clock(action.get("clock"))
+        clock = f"{minutes:02d}:{seconds:02d}"
 
         is_lead_change = is_tie = is_run = False
 
@@ -55,10 +87,22 @@ def format_pbp(play_by_play: list):
             points_scored = (new_home + new_away) - (prev_home + prev_away)
             if points_scored > 0:
                 scoring_team = action.get("teamTricode") or action.get("teamId")
+                scorer = action.get("playerName") or ""
                 if scoring_team == run_team:
                     run_points += points_scored
+                    run_last_q, run_last_t = period, clock
+                    if scorer and scorer not in run_players:
+                        run_players.append(scorer)
                 else:
-                    run_team, run_points = scoring_team, points_scored
+                    # Opponent scored: the prior run (if any) is over. Seal it
+                    # at its own last play, then open a new run by this team.
+                    _close_run()
+                    run_team = scoring_team
+                    run_points = points_scored
+                    run_start_q, run_start_t = period, clock
+                    run_start_home, run_start_away = prev_home, prev_away
+                    run_last_q, run_last_t = period, clock
+                    run_players = [scorer] if scorer else []
                 is_run = run_points >= 6
 
             prev_home, prev_away, prev_diff = new_home, new_away, new_diff
@@ -91,7 +135,7 @@ def format_pbp(play_by_play: list):
 
         events.append({
             "q": period,
-            "t": f"{minutes:02d}:{seconds:02d}",
+            "t": clock,
             "team": action.get("teamTricode") or "",
             "player": action.get("playerName") or "",
             "event": _describe_event(action, is_opening_jump_ball),
@@ -99,7 +143,10 @@ def format_pbp(play_by_play: list):
             "tags": tags,
         })
 
-    return events
+    # A run may still be live at the final buzzer — seal it once more.
+    _close_run()
+
+    return events, runs
 
 
 def format_period_scores(home_team: str, home_period_scores: list, away_team: str, away_period_scores: list):

@@ -1,3 +1,6 @@
+# Side-effect import: load .env before any other src.* module reads env vars
+# at import time. Must stay first.
+from src.config.bootstrap import *  # noqa: F401,F403
 import asyncio
 from contextlib import asynccontextmanager
 

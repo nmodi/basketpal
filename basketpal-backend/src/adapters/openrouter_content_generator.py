@@ -59,8 +59,8 @@ def _preview_result(result: dict | None, label: str) -> str:
 # --- File artifact capture -------------------------------------------------
 # Each generation episode (a summary or a model comparison) writes one YAML
 # file capturing every LLM call's prompt + output, annotated with the model.
-# Default location is a gitignored dir under the backend; override with
-# CONTENT_IO_DIR (set to "off"/"false"/"0"/"none" to disable, e.g. in prod).
+# Writing is OFF by default; opt in by setting CONTENT_IO_DIR to a directory
+# path. "off"/"false"/"0"/"none" also disable (no-op).
 _BACKEND_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_IO_DIR = _BACKEND_ROOT / ".content_io"
 
@@ -68,12 +68,13 @@ _KEY_MOMENTS_PBP_MARKER = "FULL COMPRESSED PLAY-BY-PLAY:"
 
 
 def _resolve_io_dir() -> Path | None:
-    raw = os.environ.get("CONTENT_IO_DIR", "").strip().lower()
-    if raw in {"0", "false", "off", "none"}:
+    raw = os.environ.get("CONTENT_IO_DIR", "").strip()
+    if not raw or raw.lower() in {"0", "false", "off", "none"}:
         return None
-    if raw:
-        return Path(raw).expanduser()
-    return _DEFAULT_IO_DIR
+    # "default" (case-insensitive) uses the built-in gitignored location.
+    if raw.lower() == "default":
+        return _DEFAULT_IO_DIR
+    return Path(raw).expanduser()
 
 
 _IO_DIR = _resolve_io_dir()

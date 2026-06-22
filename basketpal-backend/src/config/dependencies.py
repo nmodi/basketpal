@@ -1,12 +1,14 @@
 import os
-from dotenv import load_dotenv
+
+# Importing bootstrap loads .env into os.environ. Must run before any module
+# reads env vars at import time. Kept here too so non-entrypoint import paths
+# (e.g. tests importing dependencies directly) still load .env first.
+from src.config.bootstrap import *  # noqa: F401,F403
 
 from src.core.application.nba_stats_service import NBAStatsService
 from src.core.application.league_poller import LeaguePoller
 from src.core.entities.leagues import League
 from src.core.ports import StorageClient, ContentProvider, NBAStatsProvider
-
-load_dotenv()
 
 if os.environ.get("MOCK_DATA", "").lower() in ("1", "true", "yes"):
     from src.adapters.mock_adapter import MockNBAStatsProvider, NullStorageClient, MockContentProvider

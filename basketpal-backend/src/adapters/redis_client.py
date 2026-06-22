@@ -4,7 +4,9 @@ import time
 from typing import Any
 
 import redis
-from dotenv import load_dotenv
+
+# Importing bootstrap loads .env into os.environ at import time.
+from src.config.bootstrap import *  # noqa: F401,F403
 
 from src.core.entities.game import GameSnapshot
 from src.core.ports.storage_client import StorageClient
@@ -14,7 +16,6 @@ DEFAULT_REDIS_URL = "redis://localhost:6379"
 
 class RedisClient(StorageClient):
     def __init__(self):
-        load_dotenv()
         redis_url = os.environ.get("REDIS_URL") or DEFAULT_REDIS_URL
 
         try:

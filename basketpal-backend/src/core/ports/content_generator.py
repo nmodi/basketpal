@@ -7,3 +7,6 @@ class ContentProvider(Protocol):
 
     def get_model_comparison(self, game_id, force_refresh: bool = False) -> list[dict]:
         ...
+
+    def get_matchup_preview(self, game_id, force_refresh: bool = False) -> dict:
+        ...

@@ -45,6 +45,15 @@ async def get_summary(game_id: str, refresh: bool = False):
         raise
 
 
+@router.get("/matchup-preview")
+async def get_matchup_preview(game_id: str, refresh: bool = False):
+    try:
+        return content_provider.get_matchup_preview(game_id, force_refresh=refresh)
+    except Exception:
+        traceback.print_exc()
+        raise
+
+
 @router.get("/model-comparison")
 async def get_model_comparison(game_id: str, refresh: bool = False):
     try:

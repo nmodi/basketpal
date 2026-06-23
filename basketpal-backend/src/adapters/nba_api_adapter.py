@@ -149,6 +149,66 @@ class NBAAPIStatsProvider(NBAStatsProvider):
         resp.raise_for_status()
         return _normalize_result_set(resp.json(), "CommonTeamRoster")
 
+    def get_team_season_stats(self, season, league_id, season_type="Regular Season"):
+        # leaguedashteamstats — per-game team season averages (PTS, REB, AST,
+        # FG%, 3P%, TOV) plus season W/L/WinPCT for the whole league in one call.
+        # The league*dash* family 500s unless the full filter param set is sent
+        # (even as empty defaults) — nba_api ships all of these for that reason.
+        data = _stats_get(
+            "leaguedashteamstats",
+            {
+                "LeagueID": league_id,
+                "Season": season,
+                "SeasonType": season_type,
+                "PerMode": "PerGame",
+                "MeasureType": "Base",
+                "Outcome": "", "Location": "", "Month": 0, "SeasonSegment": "",
+                "DateFrom": "", "DateTo": "", "OpponentTeamID": 0, "VsConference": "",
+                "VsDivision": "", "Conference": "", "Division": "", "TeamID": 0,
+                "PlayerID": 0, "GameSegment": "", "Period": 0, "ShotClockRange": "",
+                "LastNGames": 0, "PlusSplit": "N", "Rank": "N", "PaceAdjust": "N",
+                "PlusMinus": "N",
+            },
+        )
+        return _normalize_result_set(data, "LeagueDashTeamStats")
+
+    def get_player_season_stats(self, season, league_id, season_type="Regular Season"):
+        # leaguedashplayerstats — per-game player season averages league-wide;
+        # caller filters by team and ranks to find leaders. Same full-param
+        # requirement as get_team_season_stats.
+        data = _stats_get(
+            "leaguedashplayerstats",
+            {
+                "LeagueID": league_id,
+                "Season": season,
+                "SeasonType": season_type,
+                "PerMode": "PerGame",
+                "MeasureType": "Base",
+                "Outcome": "", "Location": "", "Month": 0, "SeasonSegment": "",
+                "DateFrom": "", "DateTo": "", "OpponentTeamID": 0, "VsConference": "",
+                "VsDivision": "", "Conference": "", "Division": "", "TeamID": 0,
+                "PlayerID": 0, "GameSegment": "", "Period": 0, "ShotClockRange": "",
+                "LastNGames": 0, "PlusSplit": "N", "Rank": "N", "PaceAdjust": "N",
+                "PlusMinus": "N",
+            },
+        )
+        return _normalize_result_set(data, "LeagueDashPlayerStats")
+
+    def get_team_game_log(self, team_id, season, league_id):
+        # teamgamelog — that team's game-by-game log (WL, matchup, margin). The
+        # MATCHUP field ("BOS vs. LAL" / "BOS @ LAL") lets the caller pull both
+        # recent form and the season head-to-head from a single fetch per team.
+        data = _stats_get(
+            "teamgamelog",
+            {
+                "TeamID": team_id,
+                "Season": season,
+                "LeagueID": league_id,
+                "SeasonType": "Regular Season",
+            },
+        )
+        return _normalize_result_set(data, "TeamGameLog")
+
 
 def _fetch_live_boxscore(game_id: str) -> dict:
     url = f"https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"

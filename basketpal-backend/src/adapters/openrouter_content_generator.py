@@ -6,7 +6,7 @@ import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 
 import yaml
@@ -15,12 +15,15 @@ from openai import OpenAI
 from src.adapters.prompts import (
     SYSTEM_PROMPT,
     KEY_MOMENTS_SYSTEM_PROMPT,
+    MATCHUP_PREVIEW_SYSTEM_PROMPT,
     build_key_moments_prompt,
     build_story_prompt,
+    build_matchup_preview_prompt,
 )
 from src.common.formatting_utils import format_team_roster, format_pbp, format_period_scores
 from src.config.logger import get_logger
-from src.core.ports import ContentProvider, StorageClient, NBAStatsProvider
+from src.core.entities.leagues import League
+from src.core.ports import ContentProvider, InjuriesProvider, StorageClient, NBAStatsProvider
 
 # Dedicated channel for content-generation I/O so it can be toggled without
 # flooding the rest of the app. INFO always shows a concise per-call summary;
@@ -161,7 +164,12 @@ COMPARISON_MODEL_SPECS = [
 
 
 class OpenRouterContentProvider(ContentProvider):
-    def __init__(self, storage_client: StorageClient, nba_stats_provider: NBAStatsProvider):
+    def __init__(
+        self,
+        storage_client: StorageClient,
+        nba_stats_provider: NBAStatsProvider,
+        injuries_provider: InjuriesProvider,
+    ):
         api_key = os.environ.get("OPENROUTER_API_KEY")
 
         if not api_key:
@@ -171,6 +179,7 @@ class OpenRouterContentProvider(ContentProvider):
         self.model = DEFAULT_MODEL
         self.storage_client = storage_client
         self.nba_stats_provider = nba_stats_provider
+        self.injuries_provider = injuries_provider
 
     def get_game_summary(self, game_id, force_refresh: bool = False) -> dict:
         key = f"game:{game_id}:summary"
@@ -200,6 +209,31 @@ class OpenRouterContentProvider(ContentProvider):
         _write_io_file(game_id, "summary", records)
         self.storage_client.save(key, recap)
         return recap
+
+    def get_matchup_preview(self, game_id, force_refresh: bool = False) -> dict:
+        key = f"game:{game_id}:matchup-preview"
+
+        if not force_refresh:
+            cached = self.storage_client.get(key)
+            if cached:
+                return cached
+
+        context = self._build_preview_context(game_id)
+        records = []
+        prompt = build_matchup_preview_prompt(context)
+
+        preview = self._call_with_fallback(
+            system=MATCHUP_PREVIEW_SYSTEM_PROMPT,
+            prompt=prompt,
+            models=[self.model, *STORY_FALLBACK_MODELS],
+            validate=lambda r: r.get("headline") and r.get("preview") and r.get("playersToWatch") is not None,
+            label="preview",
+            records=records,
+        )
+
+        _write_io_file(game_id, "matchup-preview", records)
+        self.storage_client.save(key, preview)
+        return preview
 
     def get_model_comparison(self, game_id, force_refresh: bool = False) -> list[dict]:
         key = f"game:{game_id}:model-comparison"
@@ -433,3 +467,289 @@ class OpenRouterContentProvider(ContentProvider):
             text = text.strip()
 
         return json.loads(text)
+
+    # --- Matchup preview --------------------------------------------------
+    # Pre-game previews can't reuse _build_game_context (which depends on PBP +
+    # a played boxscore). Instead we pull season-level context — standings,
+    # team/player season averages, recent form + head-to-head, rosters, and
+    # injuries — across two providers, then hand a formatted context dict to the
+    # preview prompt. League/team fetches are cached (1h) so generating previews
+    # for multiple games on the same day shares the heavy league-wide calls.
+
+    _LEAGUE_CACHE_TTL = 3600        # standings / team & player season stats
+    _ROSTER_CACHE_TTL = 86400       # rosters change slowly
+    _INJURIES_CACHE_TTL = 900       # injuries shift day-to-day
+
+    @staticmethod
+    def _current_season() -> str:
+        today = date.today()
+        year = today.year if today.month >= 10 else today.year - 1
+        return f"{year}-{str(year + 1)[-2:]}"
+
+    def _cached(self, key: str, ttl: int, fn) -> any:
+        cached = self.storage_client.get(key)
+        if cached is not None:
+            return cached
+        value = fn()
+        self.storage_client.save_with_ttl(key, value, ttl)
+        return value
+
+    def _fetch_team_stats(self, season, league) -> list:
+        try:
+            return self._cached(
+                f"league:{season}:teamstats", self._LEAGUE_CACHE_TTL,
+                lambda: self.nba_stats_provider.get_team_season_stats(season, league.league_id),
+            )
+        except Exception as exc:
+            content_logger.warning("team season stats fetch failed: %s", exc)
+            return []
+
+    def _fetch_player_stats(self, season, league) -> list:
+        try:
+            return self._cached(
+                f"league:{season}:playerstats", self._LEAGUE_CACHE_TTL,
+                lambda: self.nba_stats_provider.get_player_season_stats(season, league.league_id),
+            )
+        except Exception as exc:
+            content_logger.warning("player season stats fetch failed: %s", exc)
+            return []
+
+    def _fetch_roster(self, team_id) -> list:
+        try:
+            return self._cached(
+                f"team:{team_id}:roster", self._ROSTER_CACHE_TTL,
+                lambda: self.nba_stats_provider.get_roster(team_id),
+            )
+        except Exception as exc:
+            content_logger.warning("roster fetch failed for team %s: %s", team_id, exc)
+            return []
+
+    def _fetch_game_log(self, team_id, season, league) -> list:
+        try:
+            return self._cached(
+                f"team:{team_id}:gamelog:{season}", self._LEAGUE_CACHE_TTL,
+                lambda: self.nba_stats_provider.get_team_game_log(team_id, season, league.league_id),
+            )
+        except Exception as exc:
+            content_logger.warning("game log fetch failed for team %s: %s", team_id, exc)
+            return []
+
+    def _fetch_injuries(self, league) -> list:
+        try:
+            return self._cached(
+                f"league:{league.code}:injuries", self._INJURIES_CACHE_TTL,
+                lambda: self.injuries_provider.get_injuries(league),
+            )
+        except Exception as exc:
+            content_logger.warning("injuries fetch failed: %s", exc)
+            return []
+
+    @staticmethod
+    def _find_row(rows: list, field: str, value) -> dict:
+        # NBA endpoints return TeamID as int in some result sets and str in
+        # others; coerce both sides to str so the lookup is robust.
+        target = str(value)
+        for row in rows:
+            if str(row.get(field)) == target:
+                return row
+        return {}
+
+    @staticmethod
+    def _dash_record(ts: dict) -> str:
+        # Season W-L totals come from leaguedashteamstats (W/L are counts even
+        # under PerMode=PerGame).
+        if not ts:
+            return "—"
+        return f"{ts.get('W', 0)}-{ts.get('L', 0)}"
+
+    @staticmethod
+    def _dash_winpct(ts: dict) -> str:
+        if not ts:
+            return "—"
+        pct = ts.get("W_PCT")
+        return f"{float(pct):.3f}" if pct not in (None, "") else "—"
+
+    @staticmethod
+    def _gamelog_last10(gamelog: list) -> str:
+        if not gamelog:
+            return "—"
+        recent = list(reversed(gamelog))[:10]
+        wins = sum(1 for g in recent if g.get("WL") == "W")
+        return f"{wins}-{len(recent) - wins}"
+
+    @staticmethod
+    def _gamelog_streak(gamelog: list) -> str:
+        if not gamelog:
+            return "—"
+        # gamelog is oldest→newest; count consecutive same results from the end.
+        recent = list(reversed(gamelog))
+        first = recent[0].get("WL")
+        if not first:
+            return "—"
+        n = 0
+        for g in recent:
+            if g.get("WL") == first:
+                n += 1
+            else:
+                break
+        return f"{first}{n}"  # e.g. "W3" / "L2"
+
+    @staticmethod
+    def _gamelog_venue_record(gamelog: list, is_home: bool) -> str:
+        # MATCHUP "BOS vs. LAL" → home game; "BOS @ LAL" → away game.
+        if not gamelog:
+            return "—"
+        marker = "vs." if is_home else "@"
+        games = [g for g in gamelog if marker in (g.get("MATCHUP") or "")]
+        if not games:
+            return "—"
+        wins = sum(1 for g in games if g.get("WL") == "W")
+        return f"{wins}-{len(games) - wins}"
+
+    @staticmethod
+    def _team_stats_line(ts: dict) -> str:
+        if not ts:
+            return "No data"
+        return (
+            f"{ts.get('PTS', '—')} PTS, {ts.get('REB', '—')} REB, {ts.get('AST', '—')} AST, "
+            f"{ts.get('FG_PCT', '—')} FG%, {ts.get('FG3_PCT', '—')} 3P%, {ts.get('TOV', '—')} TOV"
+        )
+
+    @staticmethod
+    def _leaders(players: list) -> str:
+        if not players:
+            return "No data"
+        scorers = sorted(players, key=lambda r: r.get("PTS") or 0, reverse=True)[:3]
+        parts = [
+            f"{p.get('PLAYER_NAME', '?')} ({p.get('PTS', '—')} PPG, "
+            f"{p.get('REB', '—')} RPG, {p.get('AST', '—')} APG)"
+            for p in scorers
+        ]
+        return "; ".join(parts)
+
+    @staticmethod
+    def _form(gamelog: list) -> str:
+        if not gamelog:
+            return "No data"
+        # teamgamelog is oldest→newest; surface most recent first.
+        recent = list(reversed(gamelog))[:5]
+        parts = []
+        for g in recent:
+            wl = g.get("WL", "?")
+            matchup = g.get("MATCHUP", "")
+            pts = g.get("PTS")
+            parts.append(f"{wl} {matchup} {pts}" if pts is not None else f"{wl} {matchup}")
+        return ", ".join(parts)
+
+    @staticmethod
+    def _h2h(home_gamelog: list, away_gamelog: list, away_tri: str, home_tri: str,
+             home_name: str, away_name: str) -> str:
+        # teamgamelog carries only the logging team's PTS (no margin/opponent
+        # score), so join the two teams' logs on Game_ID to recover both scores.
+        home_meetings = {g.get("Game_ID"): g for g in home_gamelog
+                         if away_tri in (g.get("MATCHUP") or "")}
+        if not home_meetings:
+            return f"{home_name} and {away_name} have not met this season."
+        away_by_gid = {g.get("Game_ID"): g for g in away_gamelog
+                       if home_tri in (g.get("MATCHUP") or "")}
+        wins = sum(1 for g in home_meetings.values() if g.get("WL") == "W")
+        losses = len(home_meetings) - wins
+        # home_meetings preserves gamelog (oldest→newest) order, so the last key
+        # is the most recent meeting.
+        last_gid = list(home_meetings)[-1]
+        hp = home_meetings[last_gid].get("PTS")
+        ap = away_by_gid.get(last_gid, {}).get("PTS")
+        score = "score unavailable"
+        if hp is not None and ap is not None:
+            score = f"{home_tri} {hp}, {away_tri} {ap}"
+        return f"Season series: {home_tri} {wins}-{losses} {away_tri}. Last meeting: {score}."
+
+    @staticmethod
+    def _roster_line(roster: list) -> list | str:
+        names = format_team_roster(roster)
+        return names if names else "No roster data"
+
+    @staticmethod
+    def _injuries_line(rows: list) -> str:
+        if not rows:
+            return "None reported"
+        parts = []
+        for r in rows:
+            name = r.get("player_name") or "?"
+            status = r.get("status") or "unknown"
+            itype = r.get("injury_type")
+            suffix = f", {itype}" if itype else ""
+            parts.append(f"{name} ({status}{suffix})")
+        return "; ".join(parts)
+
+    def _build_preview_context(self, game_id) -> dict:
+        game = self.nba_stats_provider.get_boxscore(game_id)
+        home = game.homeTeam
+        away = game.awayTeam
+        home_id, away_id = home.teamId, away.teamId
+        home_tri, away_tri = home.teamTricode, away.teamTricode
+        home_name = f"{home.teamCity} {home.teamName}"
+        away_name = f"{away.teamCity} {away.teamName}"
+
+        league = League.NBA if game_id.startswith("00") else League.WNBA
+        season = self._current_season()
+
+        # Fan out the data calls; each degrades to an empty default on failure
+        # so a single flaky feed doesn't block preview generation. Records come
+        # from the dash team-stats call (W/L/WinPCT), and Last-10 / streak /
+        # home-road splits are derived from each team's game log.
+        with ThreadPoolExecutor(max_workers=5) as ex:
+            f_teamstats = ex.submit(self._fetch_team_stats, season, league)
+            f_playerstats = ex.submit(self._fetch_player_stats, season, league)
+            f_home_roster = ex.submit(self._fetch_roster, home_id)
+            f_away_roster = ex.submit(self._fetch_roster, away_id)
+            f_home_gamelog = ex.submit(self._fetch_game_log, home_id, season, league)
+            f_away_gamelog = ex.submit(self._fetch_game_log, away_id, season, league)
+            f_injuries = ex.submit(self._fetch_injuries, league)
+
+            teamstats_rows = f_teamstats.result()
+            playerstats_rows = f_playerstats.result()
+            home_roster = f_home_roster.result()
+            away_roster = f_away_roster.result()
+            home_gamelog = f_home_gamelog.result()
+            away_gamelog = f_away_gamelog.result()
+            injuries_rows = f_injuries.result()
+
+        home_ts = self._find_row(teamstats_rows, "TEAM_ID", home_id)
+        away_ts = self._find_row(teamstats_rows, "TEAM_ID", away_id)
+        home_players = [r for r in playerstats_rows if str(r.get("TEAM_ID")) == str(home_id)]
+        away_players = [r for r in playerstats_rows if str(r.get("TEAM_ID")) == str(away_id)]
+        home_injuries = [r for r in injuries_rows if r.get("team_tricode") == home_tri]
+        away_injuries = [r for r in injuries_rows if r.get("team_tricode") == away_tri]
+
+        series_line = f"\nSERIES: {game.seriesText}" if game.seriesText else ""
+        game_type = self._get_game_type(game_id)
+
+        return {
+            "home_team": home_name,
+            "away_team": away_name,
+            "game_type": game_type,
+            "series_line": series_line,
+            "game_time": game.gameTimeUTC or "",
+            "home_record": self._dash_record(home_ts),
+            "home_standings": self._dash_winpct(home_ts),
+            "home_last10": self._gamelog_last10(home_gamelog),
+            "home_streak": self._gamelog_streak(home_gamelog),
+            "home_home_record": self._gamelog_venue_record(home_gamelog, is_home=True),
+            "away_record": self._dash_record(away_ts),
+            "away_standings": self._dash_winpct(away_ts),
+            "away_last10": self._gamelog_last10(away_gamelog),
+            "away_streak": self._gamelog_streak(away_gamelog),
+            "away_road_record": self._gamelog_venue_record(away_gamelog, is_home=False),
+            "home_form": self._form(home_gamelog),
+            "away_form": self._form(away_gamelog),
+            "h2h": self._h2h(home_gamelog, away_gamelog, away_tri, home_tri, home_name, away_name),
+            "home_team_stats": self._team_stats_line(home_ts),
+            "away_team_stats": self._team_stats_line(away_ts),
+            "home_leaders": self._leaders(home_players),
+            "away_leaders": self._leaders(away_players),
+            "home_roster": self._roster_line(home_roster),
+            "away_roster": self._roster_line(away_roster),
+            "home_injuries": self._injuries_line(home_injuries),
+            "away_injuries": self._injuries_line(away_injuries),
+        }

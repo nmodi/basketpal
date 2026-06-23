@@ -69,6 +69,15 @@ class MockNBAStatsProvider:
     def get_roster(self, team_id: int) -> list:
         return []
 
+    def get_team_season_stats(self, season: str, league_id: str, season_type: str = "Regular Season") -> list:
+        return []
+
+    def get_player_season_stats(self, season: str, league_id: str, season_type: str = "Regular Season") -> list:
+        return []
+
+    def get_team_game_log(self, team_id: int, season: str, league_id: str) -> list:
+        return []
+
 
 class NullStorageClient:
     """In-memory storage client so the app runs without Redis in mock mode."""
@@ -93,8 +102,19 @@ class NullStorageClient:
     def save(self, key: str, data: Any) -> None:
         self._store[key] = data
 
+    def save_with_ttl(self, key: str, data: Any, ttl: int) -> None:
+        # TTL is ignored in mock mode — values live for the process lifetime.
+        self._store[key] = data
+
     def get(self, key: str) -> Any:
         return self._store.get(key)
+
+
+class MockInjuriesProvider:
+    """No-op injuries provider so MOCK_DATA mode wires cleanly."""
+
+    def get_injuries(self, league: League) -> list:
+        return []
 
 
 class MockContentProvider:
@@ -137,3 +157,51 @@ class MockContentProvider:
 
     def get_model_comparison(self, game_id: str, force_refresh: bool = False) -> list[dict]:
         raise NotImplementedError("Model comparison is not supported by MockContentProvider")
+
+    _PREVIEWS = {
+        _GAME_IDS["scheduled"]: {
+            "headline": "Warriors' firepower meets Lakers' size in prime-time clash",
+            "preview": (
+                "The Warriors bring the league's most explosive perimeter attack to "
+                "Los Angeles for a marquee tilt against a Lakers team built on size, "
+                "rim pressure, and home-court grit. Golden State's pace-and-space "
+                "identity collides head-on with the Lakers' half-court physicality, "
+                "setting up a stylistic contrast that should decide the night.\n\n"
+                "Golden State has been streaky on the road but arrives riding a "
+                "scoring surge from its backcourt, while the Lakers have protected "
+                "home floor all season behind efficient interior play. With the "
+                "season series still tight, every possession matters.\n\n"
+                "Stephen Curry's shooting gravity warps every defense he faces, and "
+                "LeBron James remains the engine of everything Los Angeles does. "
+                "Expect a fourth-quarter chess match decided by which star imposes "
+                "their will."
+            ),
+            "playersToWatch": [
+                {
+                    "name": "Stephen Curry",
+                    "reason": "His shot-making and off-ball movement dictate Golden State's entire offense.",
+                },
+                {
+                    "name": "LeBron James",
+                    "reason": "Still the Lakers' primary playmaker and late-game closer.",
+                },
+                {
+                    "name": "Anthony Davis",
+                    "reason": "His rim protection is the key to slowing the Warriors' drives.",
+                },
+            ],
+            "storylines": [
+                "Three-point volume vs. paint efficiency — can the Warriors outscore the Lakers' size?",
+                "Home-court edge: the Lakers have been tough to beat in their building.",
+                "Fourth-quarter execution — which star closes under pressure?",
+            ],
+        },
+    }
+
+    def get_matchup_preview(self, game_id: str, force_refresh: bool = False) -> dict:
+        return self._PREVIEWS.get(game_id, {
+            "headline": "Preview unavailable in mock mode.",
+            "preview": "Preview unavailable in mock mode.",
+            "playersToWatch": [],
+            "storylines": [],
+        })

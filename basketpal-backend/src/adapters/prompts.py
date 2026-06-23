@@ -23,6 +23,23 @@ Rules you must follow:
 - Each moment must correspond to an actual play in the provided play-by-play.
 """
 
+MATCHUP_PREVIEW_SYSTEM_PROMPT = """
+You are a sports journalist writing game previews for a basketball app.
+Your writing style is energetic and specific — short punchy sentences,
+active voice, concrete details. Think ESPN game preview, not a betting breakdown.
+
+Rules you must follow:
+- Use ONLY the player names provided in the data. Do not reference any other players.
+- Use ONLY the records, standings, and statistics provided. Do not fabricate or infer stats.
+- Do not describe players with attributes that could become outdated
+  (age, years of experience, contract status, team history).
+- The game has not happened yet. Never state or imply an outcome, final score, or that a play occurred.
+  Write in present tense for current form and future tense for what to expect.
+- Do not predict a specific final score or guarantee a winner.
+- Surface the storylines: records, recent form, head-to-head, and what each team does well.
+- Keep it tight — no filler, no clichés.
+"""
+
 
 def build_key_moments_prompt(cleaned_pbp: list[dict], scoring_runs: list[dict]) -> str:
     lead_change_plays = [e for e in cleaned_pbp if "lead_change" in e["tags"] or "tie" in e["tags"]]
@@ -89,6 +106,58 @@ Return a JSON object with exactly these fields:
     "name": "string — must appear in roster above",
     "reason": "string — one sentence, no unverifiable stats"
   }}
+}}
+
+Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
+"""
+
+
+def build_matchup_preview_prompt(context: dict) -> str:
+    return f"""
+Write a game preview for the following matchup.
+
+GAME: {context['home_team']} (home) vs {context['away_team']} (away)
+GAME TYPE: {context['game_type']}{context['series_line']}
+TIPOFF: {context['game_time']}
+
+STANDINGS & RECORDS:
+- {context['home_team']}: {context['home_record']} | {context['home_standings']} | Last 10: {context['home_last10']} | Streak: {context['home_streak']} | Home: {context['home_home_record']}
+- {context['away_team']}: {context['away_record']} | {context['away_standings']} | Last 10: {context['away_last10']} | Streak: {context['away_streak']} | Road: {context['away_road_record']}
+
+RECENT FORM (most recent first):
+- {context['home_team']}: {context['home_form']}
+- {context['away_team']}: {context['away_form']}
+
+HEAD-TO-HEAD THIS SEASON:
+{context['h2h']}
+
+TEAM SEASON AVERAGES:
+- {context['home_team']}: {context['home_team_stats']}
+- {context['away_team']}: {context['away_team_stats']}
+
+KEY PLAYERS (season averages):
+- {context['home_team']}: {context['home_leaders']}
+- {context['away_team']}: {context['away_leaders']}
+
+ROSTERS:
+- {context['home_team']}: {context['home_roster']}
+- {context['away_team']}: {context['away_roster']}
+
+INJURIES:
+- {context['home_team']}: {context['home_injuries']}
+- {context['away_team']}: {context['away_injuries']}
+
+OUTPUT FORMAT:
+Return a JSON object with exactly these fields:
+{{
+  "headline": "string — punchy, specific, under 80 characters",
+  "preview": "string — exactly 3 short paragraphs (4-6 sentences total, under 600 characters). Para 1: matchup stakes and records. Para 2: recent form and head-to-head storyline. Para 3: players to watch and what to expect. Do not repeat yourself; stop once complete.",
+  "playersToWatch": [
+    {{ "name": "string — must appear in rosters above", "reason": "string — one sentence, no unverifiable stats" }}
+  ],
+  "storylines": [
+    "string — one narrative thread worth watching"
+  ]
 }}
 
 Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.

@@ -36,8 +36,19 @@ export const loader = async ({ params }) => {
         const scoreboard = scoreboardResponse.data;
 
         if (scoreboard && scoreboard.gameStatus === 1) {
+            // Pre-game: fetch the AI matchup preview alongside the scoreboard.
+            // The preview is cached 24h server-side, so a failed fetch shouldn't
+            // break the page — resolve to null on error and render the countdown.
+            let preview = null;
+            try {
+                const previewResponse = await axios.get(`/games/${gameId}/matchup-preview`);
+                preview = previewResponse.data;
+            } catch (e) {
+                // leave preview null; GamePreview renders the countdown only.
+            }
             return json({
-                boxscore: scoreboard
+                boxscore: scoreboard,
+                preview
             });
         }
 
@@ -56,7 +67,7 @@ export const loader = async ({ params }) => {
 };
 
 const Minitron = () => {
-    const {boxscore, summary} = useLoaderData();
+    const {boxscore, summary, preview} = useLoaderData();
 
     const [gameData, setGameData] = useState(boxscore);
     const queueRef = useRef([boxscore]);
@@ -160,7 +171,7 @@ const Minitron = () => {
                         <TabPanels>
                             {!isGameStarted && (
                                 <TabPanel>
-                                    <GamePreview gameData={gameData} />
+                                    <GamePreview gameData={gameData} preview={preview} />
                                 </TabPanel>
                             )}
 

@@ -50,6 +50,9 @@ class RedisClient(StorageClient):
     def save(self, key: str, data: any) -> None:
         self.redis.set(key, json.dumps(data), ex=86400)
 
+    def save_with_ttl(self, key: str, data: any, ttl: int) -> None:
+        self.redis.set(key, json.dumps(data), ex=ttl)
+
     def get(self, key: str) -> any:
         blob = self.redis.get(key)
         if blob:

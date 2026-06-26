@@ -18,7 +18,6 @@
     "@remix-run/serve": "^2.9.1",
     "axios": "^1.10.0",
     "dayjs": "^1.11.11",
-    "framer-motion": "^11.1.7",
     "isbot": "^4.1.0",
     "nba-color": "^1.4.1",
     "react": "^18.2.0",

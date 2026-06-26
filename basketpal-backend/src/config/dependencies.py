@@ -27,4 +27,3 @@ else:
 
 nba_service = NBAStatsService(nba_stats_provider, storage_client)
 nba_poller = LeaguePoller(storage_client, nba_service, League.NBA)
-# wnba_poller = LeaguePoller(storage_client, nba_service, League.WNBA)

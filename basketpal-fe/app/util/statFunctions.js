@@ -124,8 +124,6 @@ export const calculatePIE = (player, teamStats = player.teamStats) => {
 
 export const getBestStats = (stats, N) => {
 
-    stats = {...stats, atr: calculateAssistToTurnoverRatio(stats)}
-
     const statWeights = {
         points: 5,
         assists: 4,
@@ -135,8 +133,7 @@ export const getBestStats = (stats, N) => {
         fieldGoalsPercentage: 5,
         threePointersPercentage: 5,
         threePointersMade: 3,
-        turnovers: -2
-        // atr: 2,
+        turnovers: -2,
     };
 
     const statNames = {
@@ -149,10 +146,7 @@ export const getBestStats = (stats, N) => {
         threePointersPercentage: '3P%',
         threePointersMade: '3PT',
         turnovers: 'TO',
-        atr: 'A:TO'
     }
-
-    // console.log(stats);
 
     const percentageStats = new Set(['fieldGoalsPercentage', 'threePointersPercentage']);
 
@@ -175,17 +169,5 @@ export const getBestStats = (stats, N) => {
     // Sort the stats by impressiveness score in descending order
     scores.sort((a, b) => b.score - a.score);
 
-    // Return the top 3 most impressive stats
     return scores.slice(0, N);
-}
-
-
-function calculateAssistToTurnoverRatio({assists, turnovers}) {
-    // Check if turnovers are zero to avoid division by zero
-    if (turnovers === 0) {
-        // If there are no turnovers, the ratio is infinite
-        return assists > 0 ? assists : 0;
-    }
-    // Calculate the assist-to-turnover ratio
-    return assists / turnovers;
 }

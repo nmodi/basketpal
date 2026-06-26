@@ -11,9 +11,6 @@ class NBAStatsProvider(Protocol):
     def get_boxscore(self, game_id: str) -> GameSnapshot:
         ...
 
-    # def get_live_boxscore(self, game_id: str, data: dict) -> None:
-    #     ...
-
     def get_playbyplay(self, game_id: str) -> dict:
         ...
 

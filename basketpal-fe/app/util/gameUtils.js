@@ -15,13 +15,12 @@ export const getGameResult = (gameData) => {
 export const getTopPlayers = (team, N) => {
     return team.players
         .map(p => (
-            {...p, 
-                teamId: team.teamId, 
+            {...p,
+                teamId: team.teamId,
                 gameScore: calculateGameScore(p.stats),
                 teamStats: team.statistics,
                 pie: calculatePIE(p, team.statistics)
             }))
-        // .map(p => ({...p, pie: calculatePIE(p)}))
         .sort((a, b) => b.pie - a.pie)
         .slice(0, N);
 }
@@ -87,8 +86,6 @@ export const evaluateKeysToTheWin = (winningTeam, losingTeam, N = 3) => {
 
     // Get the top N most uneven stats
     const topStats = statDiffs.slice(0, N);
-
-    // console.log('topStats', topStats);
 
     // Construct objects for the winning team and losing team
     const winningTeamTopStats = {};

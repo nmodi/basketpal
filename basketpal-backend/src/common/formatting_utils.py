@@ -9,11 +9,7 @@ _FT_TRIP_RE = re.compile(r"Free Throw (\d+) of (\d+)")
 
 
 def format_team_roster(roster):
-    players = []
-    for player in roster:
-        name = player.get("PLAYER")
-        players.append(f"{name}")
-    return players
+    return [p.get("PLAYER") for p in roster]
 
 
 _MIN_RUN_POINTS = 8  # threshold for structured run objects surfaced to the prompt

@@ -24,10 +24,6 @@ class NBAStatsService:
 
         return games_by_date[0]["games"]
 
-    def get_game_status(self, game_id: str) -> GameStatus:
-        game = self.nba_stats_provider.get_boxscore(game_id)
-        return game.gameStatus
-
     def get_boxscore(self, game_id: str, delay: int = None) -> GameSnapshot:
 
         game = self.nba_stats_provider.get_boxscore(game_id)
@@ -50,6 +46,3 @@ class NBAStatsService:
 
     def get_playbyplay(self, game_id: str) -> dict:
         return self.nba_stats_provider.get_playbyplay(game_id)
-
-    def get_roster(self, team_id: int) -> dict:
-        return self.nba_stats_provider.get_roster(team_id)

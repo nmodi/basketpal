@@ -124,19 +124,3 @@ export function getTeamStyle(tricode) {
     return STRATEGIES[strategyName](mainHex, accentHex);
 }
 
-// Exposed so the colors reference page can render all variants
-export function getAllTeamVariants(tricode) {
-    const allData = getAllColors();
-    const teamData = allData[tricode];
-    const mainHex = getMainColor(tricode)?.hex ?? '#1d4ed8';
-    const allHexes = teamData ? Object.values(teamData.colors).map(c => c.hex) : [mainHex];
-    const accentHex = getBestAccent(mainHex, allHexes);
-    return {
-        mainHex,
-        accentHex,
-        variants: Object.fromEntries(
-            Object.entries(STRATEGIES).map(([name, fn]) => [name, fn(mainHex, accentHex)])
-        ),
-        activeStrategy: TEAM_OVERRIDES[tricode] ?? DEFAULT_STRATEGY,
-    };
-}

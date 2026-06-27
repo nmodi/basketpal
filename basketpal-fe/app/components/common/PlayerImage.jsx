@@ -2,7 +2,7 @@ import { Image } from "@chakra-ui/react";
 
 import { League } from '../../util/league';
 
-const PlayerImage = ({playerId, league}) => {
+const PlayerImage = ({playerId, league, ...rest}) => {
 
     let src = league === League.NBA ?
     `https://cdn.nba.com/headshots/nba/latest/260x190/${playerId}.png` :
@@ -17,6 +17,7 @@ const PlayerImage = ({playerId, league}) => {
             src={src}
             fallbackSrc={fallbackSrc}
             m="0 auto"
+            {...rest}
         />
     )
 }

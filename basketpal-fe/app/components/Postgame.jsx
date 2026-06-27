@@ -1,18 +1,19 @@
 import {
     Flex,
-    Image,
     Text,
     Box,
     HStack,
     VStack,
     SimpleGrid,
-    Heading
+    Skeleton,
+    SkeletonText,
 } from '@chakra-ui/react';
 import { getGameResult, getTopPlayers, evaluateKeysToTheWin } from '../util/gameUtils';
 import { getBestStats } from '../util/statFunctions';
 import TeamStatsComparison from './TeamStatsComparison';
+import PlayerImage from './common/PlayerImage';
 
-export default function Scoreboard({ gameData, summary }) {
+export default function Scoreboard({ gameData, summary, league }) {
     const gameResult = getGameResult(gameData);
     const potg = getTopPlayers(gameResult.winningTeam, 1)[0];
 
@@ -35,10 +36,10 @@ export default function Scoreboard({ gameData, summary }) {
                             Player of the Game
                         </Text>
                         <VStack>
-                            <Image
-                                src={`https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/${potg.playerId}.png`}
+                            <PlayerImage
+                                league={league}
+                                playerId={potg.playerId}
                                 w="250px"
-                                // m="0 auto"
                                 objectFit="contain"
                             />
                             <Text
@@ -60,11 +61,12 @@ export default function Scoreboard({ gameData, summary }) {
 
                     {/** stats */}
                     <Box bg="gray.800" p="4" borderRadius="15px" alignSelf="start" width="100%">
-                        <TeamStatsComparison 
+                        <TeamStatsComparison
                             leftTeam={gameResult.winningTeam}
-                            rightTeam={gameResult.losingTeam} 
+                            rightTeam={gameResult.losingTeam}
                             leftTeamStats={keysToTheWin.winningTeamTopStats}
                             rightTeamStats={keysToTheWin.losingTeamTopStats}
+                            league={league}
                         />
                     </Box>
                 </VStack>
@@ -75,32 +77,44 @@ export default function Scoreboard({ gameData, summary }) {
             <Box>
                 {/** story */}
                 <Box bg="gray.800" p="4" borderRadius="15px">
-                        <Text
-                            textTransform="uppercase"
-                            fontSize="3xl"
-                            mb="2"
-                            fontWeight="bold"
-                        >
-                            {summary.headline}
-                        </Text>
+                    {summary === undefined ? (
+                        <>
+                            <Skeleton height="36px" mb="4" borderRadius="6px" startColor="gray.700" endColor="gray.600" />
+                            <SkeletonText noOfLines={7} spacing="3" skeletonHeight="3" startColor="gray.700" endColor="gray.600" />
+                            <SkeletonText mt="6" noOfLines={3} spacing="2" skeletonHeight="2" startColor="gray.700" endColor="gray.600" />
+                        </>
+                    ) : summary ? (
+                        <>
+                            <Text
+                                textTransform="uppercase"
+                                fontSize="3xl"
+                                mb="2"
+                                fontWeight="bold"
+                            >
+                                {summary.headline}
+                            </Text>
 
-                        <Flex direction="column" gap="2" fontFamily="soleil">
-                            {summary.recap.split("\n").filter(Boolean).map((p, i) => (
-                                <Text whiteSpace="pre-line" align="left" textIndent="2em" key={i}>
-                                    {p}
-                                </Text>
-                            ))}
-                        </Flex>
-
-                        {summary.keyMoments?.length > 0 && (
-                            <VStack align="start" mt="4" spacing="1">
-                                {summary.keyMoments.map((moment, i) => (
-                                    <Text key={i} fontSize="sm" color="gray.400">
-                                        Q{moment.quarter}: {moment.description}
+                            <Flex direction="column" gap="2" fontFamily="soleil">
+                                {summary.recap.split("\n").filter(Boolean).map((p, i) => (
+                                    <Text whiteSpace="pre-line" align="left" textIndent="2em" key={i}>
+                                        {p}
                                     </Text>
                                 ))}
-                            </VStack>
-                        )}
+                            </Flex>
+
+                            {summary.keyMoments?.length > 0 && (
+                                <VStack align="start" mt="4" spacing="1">
+                                    {summary.keyMoments.map((moment, i) => (
+                                        <Text key={i} fontSize="sm" color="gray.400">
+                                            Q{moment.quarter}: {moment.description}
+                                        </Text>
+                                    ))}
+                                </VStack>
+                            )}
+                        </>
+                    ) : (
+                        <Text color="gray.500" fontSize="sm">Article unavailable</Text>
+                    )}
                 </Box>
             </Box>
 

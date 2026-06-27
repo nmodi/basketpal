@@ -2,6 +2,7 @@ import { Badge, Box, Flex, Text } from '@chakra-ui/react';
 import { useNavigate } from "@remix-run/react";
 import dayjs from 'dayjs';
 import { getTeamStyle } from '../util/teamColorStrategy';
+import { getLeague } from '../util/league';
 
 function getCountdownLabel(gameTimeUTC) {
     const gameTime = new Date(gameTimeUTC);
@@ -161,7 +162,7 @@ export default function Microtron({ game }) {
             w="100%"
             boxShadow="0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03)"
             cursor="pointer"
-            onClick={() => navigate(`/nba/g/${game.gameId}`)}
+            onClick={() => navigate(`/${getLeague(game.gameId).toLowerCase()}/g/${game.gameId}`)}
             _hover={{
                 borderColor: 'lineStrong',
                 transform: 'translateY(-2px)',

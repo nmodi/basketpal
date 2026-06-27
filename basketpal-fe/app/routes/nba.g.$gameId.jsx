@@ -1,5 +1,6 @@
 import { Flex, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
-import { useLoaderData, useParams } from '@remix-run/react';
+import { useLoaderData, useParams, useRouteError, isRouteErrorResponse } from '@remix-run/react';
+import ErrorPage from '../components/ErrorPage';
 import { GameHeader } from '../components/Header';
 import { json } from '@remix-run/node';
 import { useEffect, useState, useRef } from 'react';
@@ -12,6 +13,7 @@ import GamePreview from '../components/GamePreview';
 import Postgame from '../components/Postgame';
 import axios from '../util/axios';
 import { toRouteError } from '../util/loaderError';
+import { getLeague, League } from '../util/league';
 
 export const meta = ({ data }) => {
     const game = data?.boxscore;
@@ -36,43 +38,26 @@ export const loader = async ({ params }) => {
         const scoreboard = scoreboardResponse.data;
 
         if (scoreboard && scoreboard.gameStatus === 1) {
-            // Pre-game: fetch the AI matchup preview alongside the scoreboard.
-            // The preview is cached 24h server-side, so a failed fetch shouldn't
-            // break the page — resolve to null on error and render the countdown.
-            let preview = null;
-            try {
-                const previewResponse = await axios.get(`/games/${gameId}/matchup-preview`);
-                preview = previewResponse.data;
-            } catch (e) {
-                // leave preview null; GamePreview renders the countdown only.
-            }
-            return json({
-                boxscore: scoreboard,
-                preview
-            });
+            return json({ boxscore: scoreboard });
         }
 
-        const [boxscore, summary] = await Promise.all([
-            axios.get(`/games/${gameId}/boxscore`),
-            axios.get(`/games/${gameId}/summary`),
-        ]);
-
-        return json({
-            boxscore: boxscore.data,
-            summary: summary.data
-        });
+        const boxscoreResponse = await axios.get(`/games/${gameId}/boxscore`);
+        return json({ boxscore: boxscoreResponse.data });
     } catch (error) {
         throw toRouteError(error);
     }
 };
 
 const Minitron = () => {
-    const {boxscore, summary, preview} = useLoaderData();
+    const {boxscore} = useLoaderData();
 
     const [gameData, setGameData] = useState(boxscore);
     const queueRef = useRef([boxscore]);
     const params = useParams();
+    const league = getLeague(params.gameId);
     const [uiDelay, setUiDelay] = useState(0);
+    const [summary, setSummary] = useState(undefined); // undefined=loading, null=failed
+    const [preview, setPreview] = useState(undefined);
 
     const fetchInterval = 5000; 
 
@@ -123,6 +108,22 @@ const Minitron = () => {
         return () => clearInterval(interval);
     }, [uiDelay, isGameStarted, isGameInProgress, isGameOver, params.gameId]);
 
+    useEffect(() => {
+        if (isGameOver) {
+            axios.get(`/games/${params.gameId}/summary`)
+                .then(r => setSummary(r.data))
+                .catch(() => setSummary(null));
+        }
+    }, [isGameOver, params.gameId]);
+
+    useEffect(() => {
+        if (!isGameStarted) {
+            axios.get(`/games/${params.gameId}/matchup-preview`)
+                .then(r => setPreview(r.data))
+                .catch(() => setPreview(null));
+        }
+    }, [isGameStarted, params.gameId]);
+
     const tabStyle = {
         fontSize: 'sm',
         fontWeight: 'bold',
@@ -150,7 +151,7 @@ const Minitron = () => {
             fontFamily="tt-autonomous-mono"
             pt="53px"
         >
-            <GameHeader />
+            <GameHeader back={league === League.WNBA ? '/wnba' : '/'} />
                     <Scoreboard gameData={gameData} uiDelay={uiDelay} setUiDelay={setUiDelay} />
                     <Tabs
                         variant="unstyled"
@@ -177,7 +178,7 @@ const Minitron = () => {
 
                             {isGameOver && (
                                 <TabPanel>
-                                    <Postgame gameData={gameData} summary={summary} />
+                                    <Postgame gameData={gameData} summary={summary} league={league} />
                                 </TabPanel>
                             )}
 
@@ -194,7 +195,8 @@ const Minitron = () => {
                                 <TabPanel>
                                     <TeamStatsComparison
                                         leftTeam={gameData.homeTeam}
-                                        rightTeam={gameData.awayTeam} />
+                                        rightTeam={gameData.awayTeam}
+                                        league={league} />
                                 </TabPanel>
                             )}
 
@@ -204,5 +206,11 @@ const Minitron = () => {
         </Flex>
     );
 };
+
+export function ErrorBoundary() {
+    const error = useRouteError();
+    const status = isRouteErrorResponse(error) ? error.status : 500;
+    return <ErrorPage status={status} />;
+}
 
 export default Minitron;

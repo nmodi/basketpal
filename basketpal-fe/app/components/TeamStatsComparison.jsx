@@ -5,15 +5,16 @@ import {
     Th,
     Td,
     TableContainer,
-    Image,
     HStack,
 } from '@chakra-ui/react';
+import TeamIcon from './common/TeamIcon';
 
 export default function TeamStatsComparison({
     leftTeam,
     rightTeam,
     leftTeamStats = leftTeam.statistics,
-    rightTeamStats = rightTeam.statistics
+    rightTeamStats = rightTeam.statistics,
+    league
 }) {
 
     const gameStatRows = [
@@ -178,19 +179,13 @@ export default function TeamStatsComparison({
                         <Th></Th>
                         <Td>
                             <HStack>
-                                <Image
-                                    src={`https://cdn.nba.com/logos/nba/${leftTeam.teamId}/primary/L/logo.svg`}
-                                    w="32px"
-                                />
+                                <TeamIcon teamId={leftTeam.teamId} league={league} />
                                 <span>{leftTeam.teamTricode}</span>
                             </HStack>
                         </Td>
                         <Td>
                             <HStack>
-                                <Image
-                                    src={`https://cdn.nba.com/logos/nba/${rightTeam.teamId}/primary/L/logo.svg`}
-                                    w="32px"
-                                />
+                                <TeamIcon teamId={rightTeam.teamId} league={league} />
                                 <span>{rightTeam.teamTricode}</span>
                             </HStack>
                         </Td>

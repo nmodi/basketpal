@@ -10,8 +10,8 @@ import dayjs from 'dayjs';
 
 export const meta = () => {
     return [
-        { title: 'NBA Schedule | Basketpal' },
-        { name: 'description', content: 'Live NBA scores, schedule, and game tracking.' },
+        { title: 'WNBA Schedule | Basketpal' },
+        { name: 'description', content: 'Live WNBA scores, schedule, and game tracking.' },
     ];
 };
 
@@ -19,7 +19,7 @@ export const loader = async () => {
     const startDate = dayjs().subtract(3, 'day').format('YYYY-MM-DD');
     const endDate = dayjs().add(10, 'day').format('YYYY-MM-DD');
     try {
-        const response = await axios.get(`/games/upcoming?league=nba&start_date=${startDate}&end_date=${endDate}`);
+        const response = await axios.get(`/games/upcoming?league=wnba&start_date=${startDate}&end_date=${endDate}`);
         return json(response.data);
     } catch (error) {
         throw toRouteError(error);
@@ -126,7 +126,7 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
     );
 }
 
-export default function Index() {
+export default function WnbaIndex() {
     const loaderData = useLoaderData();
     const fetcher = useFetcher();
     const data = fetcher.data ?? loaderData;
@@ -140,7 +140,7 @@ export default function Index() {
 
     useEffect(() => {
         if (!hasLiveGames) return;
-        const interval = setInterval(() => fetcher.load('/'), 30000);
+        const interval = setInterval(() => fetcher.load('/wnba'), 30000);
         return () => clearInterval(interval);
     }, [hasLiveGames]);
 
@@ -155,7 +155,7 @@ export default function Index() {
             pb="12"
             pt="133px"
         >
-            <ScheduleHeader league="NBA" />
+            <ScheduleHeader league="WNBA" />
             <DateBar gameDates={data} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
             {visibleGames.length === 0 ? (
                 <Box mt="16" textAlign="center">

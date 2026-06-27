@@ -2,7 +2,9 @@ import {
     Flex,
     Text,
     Box,
-    VStack
+    VStack,
+    Skeleton,
+    SkeletonText,
 } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -27,6 +29,13 @@ export default function GamePreview({gameData, preview}) {
                 <Text fontSize="xl">Game starts {gameTime}</Text>
             ) : (
                 <Text fontSize="xl">Game is not officially scheduled</Text>
+            )}
+
+            {preview === undefined && (
+                <Box bg="gray.800" p="4" borderRadius="15px" width="80%">
+                    <Skeleton height="36px" mb="4" borderRadius="6px" startColor="gray.700" endColor="gray.600" />
+                    <SkeletonText noOfLines={5} spacing="3" skeletonHeight="3" startColor="gray.700" endColor="gray.600" />
+                </Box>
             )}
 
             {preview?.headline && (

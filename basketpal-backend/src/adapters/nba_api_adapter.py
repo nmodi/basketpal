@@ -211,8 +211,14 @@ class NBAAPIStatsProvider(NBAStatsProvider):
 
 
 def _fetch_live_boxscore(game_id: str) -> dict:
-    url = f"https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"
-    resp = requests.get(url, timeout=10, headers=_CDN_HEADERS)
+    is_wnba = not game_id.startswith("00")
+    if is_wnba:
+        url = f"https://cdn.wnba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"
+        headers = {**_CDN_HEADERS, "Referer": "https://www.wnba.com/", "Origin": "https://www.wnba.com"}
+    else:
+        url = f"https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"
+        headers = _CDN_HEADERS
+    resp = requests.get(url, timeout=10, headers=headers)
     resp.raise_for_status()
     return resp.json()["game"]
 

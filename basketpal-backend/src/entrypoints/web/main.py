@@ -5,28 +5,41 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 import uvicorn
 import os
 
-from src.config.dependencies import nba_poller
+from src.config.dependencies import nba_poller, wnba_poller
 from src.entrypoints.web.games import router as games_router
 from src.entrypoints.web.game_details import router as game_details_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    task = asyncio.create_task(nba_poller.start())
+    nba_task = asyncio.create_task(nba_poller.start())
+    wnba_task = asyncio.create_task(wnba_poller.start())
     yield
     await nba_poller.stop()
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        print("Polling loop stopped.")
+    await wnba_poller.stop()
+    nba_task.cancel()
+    wnba_task.cancel()
+    for task in [nba_task, wnba_task]:
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+    print("Polling loops stopped.")
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 app.include_router(games_router)
 app.include_router(game_details_router)

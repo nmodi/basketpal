@@ -10,22 +10,22 @@ class GameStatus(Enum):
 
 
 class TeamStats(BaseModel):
-    reboundsOffensive: int
-    reboundsTotal: int
-    assists: int
-    blocks: int
-    steals: int
-    turnovers: int
-    fieldGoalsMade: int
-    fieldGoalsAttempted: int
-    freeThrowsMade: int
-    freeThrowsAttempted: int
-    threePointersMade: int
-    threePointersAttempted: int
-    benchPoints: int
-    biggestLead: int
-    pointsInThePaint: int
-    fastBreakPointsMade: int
+    reboundsOffensive: int = 0
+    reboundsTotal: int = 0
+    assists: int = 0
+    blocks: int = 0
+    steals: int = 0
+    turnovers: int = 0
+    fieldGoalsMade: int = 0
+    fieldGoalsAttempted: int = 0
+    freeThrowsMade: int = 0
+    freeThrowsAttempted: int = 0
+    threePointersMade: int = 0
+    threePointersAttempted: int = 0
+    benchPoints: int = 0
+    biggestLead: int = 0
+    pointsInThePaint: int = 0
+    fastBreakPointsMade: int = 0
 
 
 class BBallIndivStats(BaseModel):

@@ -13,6 +13,7 @@ const headerStyle = {
     borderColor: 'line',
     px: '6',
     align: 'center',
+    justify: 'space-between',
 };
 
 const labelStyle = {
@@ -24,18 +25,30 @@ const labelStyle = {
     color: 'fgMuted',
 };
 
-export function ScheduleHeader() {
+export function ScheduleHeader({ league }) {
     return (
         <Flex {...headerStyle}>
             <Text {...labelStyle} color="fg">BASKETPAL</Text>
+            <Flex gap="5">
+                <Link to="/" style={{ textDecoration: 'none' }}>
+                    <Text {...labelStyle} color={league === 'NBA' ? 'fg' : 'fgMuted'} _hover={{ color: 'fg' }} transition="color 0.15s">
+                        NBA
+                    </Text>
+                </Link>
+                <Link to="/wnba" style={{ textDecoration: 'none' }}>
+                    <Text {...labelStyle} color={league === 'WNBA' ? 'fg' : 'fgMuted'} _hover={{ color: 'fg' }} transition="color 0.15s">
+                        WNBA
+                    </Text>
+                </Link>
+            </Flex>
         </Flex>
     );
 }
 
-export function GameHeader() {
+export function GameHeader({ back = '/' }) {
     return (
         <Flex {...headerStyle}>
-            <Link to="/" style={{ textDecoration: 'none' }}>
+            <Link to={back} style={{ textDecoration: 'none' }}>
                 <Text
                     {...labelStyle}
                     _hover={{ color: 'fg' }}

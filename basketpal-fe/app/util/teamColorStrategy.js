@@ -1,5 +1,24 @@
 import { getAllColors, getMainColor } from 'nba-color';
 
+// ponytail: hardcoded since nba-color has no WNBA data
+const WNBA_COLORS = {
+    ATL: { main: '#E03A3E', accent: '#002B5C' }, // Dream: red + navy
+    CHI: { main: '#418FDE', accent: '#FFCD00' }, // Sky: sky blue + radiant yellow
+    CON: { main: '#003767', accent: '#F4A629' }, // Sun: navy + orange
+    DAL: { main: '#002B5C', accent: '#78BE20' }, // Wings: navy + lime
+    IND: { main: '#002D62', accent: '#FFCD00' }, // Fever: navy + gold
+    LVA: { main: '#010101', accent: '#A7A8A9' }, // Aces: black + silver
+    LAS: { main: '#552583', accent: '#FDB927' }, // Sparks: purple + gold
+    MIN: { main: '#79B2DE', accent: '#266092' }, // Lynx: light blue + dark blue (avoid clash with NBA MIN)
+    NYL: { main: '#010101', accent: '#6ECEB2' }, // Liberty: black + seafoam green
+    PHX: { main: '#5C2D91', accent: '#E56020' }, // Mercury: purple + orange
+    SEA: { main: '#2C5234', accent: '#FED300' }, // Storm: green + yellow
+    WAS: { main: '#C8102E', accent: '#002B5C' }, // Mystics: red + navy
+    GSV: { main: '#010101', accent: '#AD96DC' }, // Valkyries: black + valkyrie violet
+    TOR: { main: '#612C51', accent: '#B8CCEA' }, // Tempo: bordeaux + hydrogen blue
+    PDX: { main: '#E91E8C', accent: '#8BC8E5' }, // Fire: blazing pink + light blue
+};
+
 // ─── color math ──────────────────────────────────────────────────────────────
 
 function getLuminance(hex) {
@@ -92,7 +111,23 @@ const STRATEGIES = { baseline, twoTone, twoTonePop, pop, bold };
 
 const DEFAULT_STRATEGY = 'bold';
 
-// Override the strategy for specific teams.
+export const WNBA_TEAM_OVERRIDES = {
+    ATL: 'baseline',
+    CHI: 'baseline',
+    CON: 'pop',
+    DAL: 'pop',
+    GSV: 'twoTonePop',
+    IND: 'pop',
+    LVA: 'twoTonePop',
+    LAS: 'pop',
+    NYL: 'twoTonePop',
+    PDX: 'twoTonePop',
+    PHX: 'twoTonePop',
+    SEA: 'twoTonePop',
+    TOR: 'pop',
+};
+
+// Override the strategy for specific NBA teams.
 // Valid values: 'baseline' | 'twoTone' | 'pop' | 'bold'
 export const TEAM_OVERRIDES = {
     BKN: 'twoTonePop',
@@ -114,13 +149,22 @@ export const TEAM_OVERRIDES = {
 
 // ─── public API ──────────────────────────────────────────────────────────────
 
-export function getTeamStyle(tricode) {
-    const allData = getAllColors();
-    const teamData = allData[tricode];
-    const mainHex = getMainColor(tricode)?.hex ?? '#1d4ed8';
-    const allHexes = teamData ? Object.values(teamData.colors).map(c => c.hex) : [mainHex];
-    const accentHex = getBestAccent(mainHex, allHexes);
-    const strategyName = TEAM_OVERRIDES[tricode] ?? DEFAULT_STRATEGY;
+export function getTeamStyle(tricode, strategyOverride) {
+    let mainHex, accentHex;
+    const isWnba = !!WNBA_COLORS[tricode];
+    if (isWnba) {
+        ({ main: mainHex, accent: accentHex } = WNBA_COLORS[tricode]);
+    } else {
+        const allData = getAllColors();
+        const teamData = allData[tricode];
+        mainHex = getMainColor(tricode)?.hex ?? '#1d4ed8';
+        const allHexes = teamData ? Object.values(teamData.colors).map(c => c.hex) : [mainHex];
+        accentHex = getBestAccent(mainHex, allHexes);
+    }
+    const strategyName = strategyOverride ?? (isWnba ? WNBA_TEAM_OVERRIDES[tricode] : TEAM_OVERRIDES[tricode]) ?? DEFAULT_STRATEGY;
     return STRATEGIES[strategyName](mainHex, accentHex);
 }
+
+export const STRATEGY_NAMES = Object.keys(STRATEGIES);
+export const WNBA_TRICODES = Object.keys(WNBA_COLORS);
 

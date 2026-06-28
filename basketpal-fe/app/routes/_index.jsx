@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
 import Microtron from '../components/Microtron';
 import { ScheduleHeader } from '../components/Header';
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useFetcher } from "@remix-run/react";
 import axios from "../util/axios";
 import { toRouteError } from "../util/loaderError";
@@ -15,12 +15,19 @@ export const meta = () => {
     ];
 };
 
-export const loader = async () => {
+export const loader = async ({ request }) => {
     const startDate = dayjs().subtract(3, 'day').format('YYYY-MM-DD');
     const endDate = dayjs().add(10, 'day').format('YYYY-MM-DD');
     try {
         const response = await axios.get(`/games/upcoming?league=nba&start_date=${startDate}&end_date=${endDate}`);
-        return json(response.data);
+        const data = response.data;
+        const forced = new URL(request.url).searchParams.has('nba');
+        if (!forced) {
+            const todayStr = dayjs().format('YYYY-MM-DD');
+            const hasTodayGames = data.some(({ gameDate }) => dayjs(gameDate).format('YYYY-MM-DD') === todayStr);
+            if (!hasTodayGames) return redirect('/wnba');
+        }
+        return json(data);
     } catch (error) {
         throw toRouteError(error);
     }

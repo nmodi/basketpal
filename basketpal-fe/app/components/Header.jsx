@@ -30,7 +30,7 @@ export function ScheduleHeader({ league }) {
         <Flex {...headerStyle}>
             <Text {...labelStyle} color="fg">BASKETPAL</Text>
             <Flex gap="5">
-                <Link to="/" style={{ textDecoration: 'none' }}>
+                <Link to="/?nba=1" style={{ textDecoration: 'none' }}>
                     <Text {...labelStyle} color={league === 'NBA' ? 'fg' : 'fgMuted'} _hover={{ color: 'fg' }} transition="color 0.15s">
                         NBA
                     </Text>

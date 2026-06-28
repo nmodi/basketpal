@@ -110,19 +110,35 @@ const Minitron = () => {
     }, [uiDelay, isGameStarted, isGameInProgress, isGameOver, params.gameId]);
 
     useEffect(() => {
-        if (isGameOver) {
-            axios.get(`/games/${params.gameId}/summary`)
-                .then(r => setSummary(r.data))
-                .catch(() => setSummary(null));
-        }
+        if (!isGameOver) return;
+        let stopped = false;
+        let timeoutId;
+        const poll = async () => {
+            if (stopped) return;
+            try {
+                const r = await axios.get(`/games/${params.gameId}/summary`);
+                if (r.status === 200) { setSummary(r.data); return; }
+            } catch { setSummary(null); return; }
+            if (!stopped) timeoutId = setTimeout(poll, 3000);
+        };
+        poll();
+        return () => { stopped = true; clearTimeout(timeoutId); };
     }, [isGameOver, params.gameId]);
 
     useEffect(() => {
-        if (!isGameStarted) {
-            axios.get(`/games/${params.gameId}/matchup-preview`)
-                .then(r => setPreview(r.data))
-                .catch(() => setPreview(null));
-        }
+        if (isGameStarted) return;
+        let stopped = false;
+        let timeoutId;
+        const poll = async () => {
+            if (stopped) return;
+            try {
+                const r = await axios.get(`/games/${params.gameId}/matchup-preview`);
+                if (r.status === 200) { setPreview(r.data); return; }
+            } catch { setPreview(null); return; }
+            if (!stopped) timeoutId = setTimeout(poll, 3000);
+        };
+        poll();
+        return () => { stopped = true; clearTimeout(timeoutId); };
     }, [isGameStarted, params.gameId]);
 
     const safeTab = Math.min(activeTab, tabs.length - 1);

@@ -68,12 +68,12 @@ const Minitron = () => {
             label: 'On Court',
             panel: (
                 <div className={styles.onCourtGrid}>
-                    <OnCourtPlayers gameData={gameData} isHome />
                     <OnCourtPlayers gameData={gameData} />
+                    <OnCourtPlayers gameData={gameData} isHome />
                 </div>
             )
         },
-        isGameStarted && { label: 'Team Stats', panel: <TeamStatsComparison leftTeam={gameData.homeTeam} rightTeam={gameData.awayTeam} league={league} /> },
+        isGameStarted && { label: 'Team Stats', panel: <TeamStatsComparison leftTeam={gameData.awayTeam} rightTeam={gameData.homeTeam} league={league} /> },
     ].filter(Boolean);
 
     useEffect(() => {

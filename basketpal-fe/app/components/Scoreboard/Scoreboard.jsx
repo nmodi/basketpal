@@ -47,15 +47,15 @@ export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
     return (
         <div className={styles.card}>
             <div className={styles.teams}>
-                <div className={styles.colorBarLeft} style={{ background: homeMainColor }} />
-                <div className={styles.colorBarRight} style={{ background: awayMainColor }} />
+                <div className={styles.colorBarLeft} style={{ background: awayMainColor }} />
+                <div className={styles.colorBarRight} style={{ background: homeMainColor }} />
 
                 <TeamScore
-                    team={gameData.homeTeam}
+                    team={gameData.awayTeam}
                     align="left"
-                    isHome
                     isLive={isLive}
-                    scoreColor={homeScoreColor}
+                    isWinner={isFinal && gameData.awayTeam.score > gameData.homeTeam.score}
+                    scoreColor={awayScoreColor}
                 />
 
                 <div className={styles.center}>
@@ -74,10 +74,12 @@ export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
                 </div>
 
                 <TeamScore
-                    team={gameData.awayTeam}
+                    team={gameData.homeTeam}
                     align="right"
+                    isHome
                     isLive={isLive}
-                    scoreColor={awayScoreColor}
+                    isWinner={isFinal && gameData.homeTeam.score > gameData.awayTeam.score}
+                    scoreColor={homeScoreColor}
                 />
             </div>
 

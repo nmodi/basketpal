@@ -55,27 +55,22 @@
   text-align: left;
 }
 
-.gradient {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
 .teamContent {
   position: relative;
 }
 
-.tricode {
+.record {
   font-size: 14px;
-  font-weight: bold;
-  color: var(--fg-muted);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 0;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+  margin: 4px 0 0;
 }
 
 .teamName {
-  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
   font-family: monte-stella, sans-serif;
   font-weight: 900;
   line-height: 0.95;
@@ -83,8 +78,20 @@
   text-transform: uppercase;
   font-size: 24px;
   overflow: hidden;
+}
+
+.teamNameText {
+  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.trophy {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: var(--highlight);
+  transform: translateY(-2px);
 }
 
 .teamNameLong {
@@ -126,6 +133,16 @@
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
   background: var(--bg-sunken);
+  gap: 10px;
+}
+
+.matchup {
+  font-size: 13px;
+  color: var(--fg-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+  font-family: tt-autonomous-mono, monospace;
 }
 
 .gameTime {
@@ -136,13 +153,12 @@
 }
 
 .countdown {
-  margin-top: 8px;
   font-size: 14px;
   color: var(--fg-muted);
   letter-spacing: 0.14em;
   text-align: center;
   text-transform: uppercase;
-  margin: 8px 0 0;
+  margin: 0;
 }
 
 .liveBadge {
@@ -159,7 +175,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
   font-family: tt-autonomous-mono, monospace;
   font-size: 20px;
   color: var(--live-400);

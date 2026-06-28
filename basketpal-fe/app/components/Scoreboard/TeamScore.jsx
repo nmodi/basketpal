@@ -1,3 +1,4 @@
+import { Trophy } from '@phosphor-icons/react';
 import { getTeamStyle } from '../../util/teamColorStrategy';
 import styles from './TeamScore.module.css';
 
@@ -12,7 +13,7 @@ function TimeoutDashes({ count, color }) {
     );
 }
 
-export default function TeamScore({ team, align, isHome, isLive, scoreColor }) {
+export default function TeamScore({ team, align, isHome, isLive, isWinner, scoreColor }) {
     const isRight = align === 'right';
     const teamStyle = getTeamStyle(team.teamTricode);
     const isInBonus = !!team.inBonus && isLive;
@@ -24,7 +25,9 @@ export default function TeamScore({ team, align, isHome, isLive, scoreColor }) {
         >
             <p className={styles.city}>{team.teamCity}</p>
             <p className={styles.teamName} style={{ color: teamStyle.nameColor }}>
+                {isWinner && isHome && <Trophy className={styles.trophy} weight="fill" />}
                 {team.teamName}
+                {isWinner && !isHome && <Trophy className={styles.trophy} weight="fill" />}
             </p>
 
             <div className={`${styles.scoreRow} ${isRight ? styles.scoreRowReverse : ''}`}>

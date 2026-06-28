@@ -1,7 +1,7 @@
 import { getAllColors, getMainColor } from 'nba-color';
 
 // ponytail: hardcoded since nba-color has no WNBA data
-const WNBA_COLORS = {
+export const WNBA_COLORS = {
     ATL: { main: '#E03A3E', accent: '#002B5C' }, // Dream: red + navy
     CHI: { main: '#418FDE', accent: '#FFCD00' }, // Sky: sky blue + radiant yellow
     CON: { main: '#003767', accent: '#F4A629' }, // Sun: navy + orange

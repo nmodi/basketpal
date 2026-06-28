@@ -1,3 +1,4 @@
+import { Trophy } from '@phosphor-icons/react';
 import { useNavigate } from "@remix-run/react";
 import dayjs from 'dayjs';
 import { getTeamStyle } from '../util/teamColorStrategy';
@@ -42,19 +43,21 @@ function getScoreColor(teamScore, otherTeamScore, isFinal) {
     return 'var(--chyron-fg)';
 }
 
-function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamStyle }) {
+function TeamPanel({ team, align, isScheduled, isWinner, scoreColor, scoreOpacity, teamStyle }) {
     const isRight = align === 'right';
-    const dir = isRight ? 'left' : 'right';
     const isLong = team.teamName.length > 8;
 
     return (
         <div className={`${styles.teamPanel} ${isRight ? styles.teamPanelRight : styles.teamPanelLeft}`}>
-            <div className={styles.gradient} style={{ background: teamStyle.getGradient(dir) }} />
             <div className={styles.teamContent}>
-                <p className={styles.tricode}>{team.teamTricode}</p>
                 <p className={`${styles.teamName} ${isLong ? styles.teamNameLong : ''}`} style={{ color: teamStyle.nameColor }}>
-                    {team.teamName}
+                    {isWinner && isRight && <Trophy className={styles.trophy} weight="fill" />}
+                    <span className={styles.teamNameText}>{team.teamName}</span>
+                    {isWinner && !isRight && <Trophy className={styles.trophy} weight="fill" />}
                 </p>
+                {team.wins != null && team.losses != null && (
+                    <p className={styles.record}>{team.wins}–{team.losses}</p>
+                )}
             </div>
             <div className={`${styles.scoreBox} ${isRight ? styles.scoreBoxRight : styles.scoreBoxLeft}`}>
                 <p className={styles.scoreText} style={{ color: scoreColor, opacity: isScheduled ? 0.4 : scoreOpacity }}>
@@ -84,20 +87,22 @@ export default function Microtron({ game }) {
             className={styles.card}
             onClick={() => navigate(`/${getLeague(game.gameId).toLowerCase()}/g/${game.gameId}`)}
         >
-            <div className={`${styles.colorBar} ${styles.colorBarLeft}`} style={{ background: homeStyle.barColor }} />
-            <div className={`${styles.colorBar} ${styles.colorBarRight}`} style={{ background: awayStyle.barColor }} />
+            <div className={`${styles.colorBar} ${styles.colorBarLeft}`} style={{ background: awayStyle.barColor }} />
+            <div className={`${styles.colorBar} ${styles.colorBarRight}`} style={{ background: homeStyle.barColor }} />
 
             <div className={styles.body}>
                 <TeamPanel
-                    team={game.homeTeam}
+                    team={game.awayTeam}
                     align="left"
                     isScheduled={isScheduled}
-                    scoreColor={homeScoreColor}
-                    scoreOpacity={homeScoreOpacity}
-                    teamStyle={homeStyle}
+                    isWinner={isFinal && game.awayTeam.score > game.homeTeam.score}
+                    scoreColor={awayScoreColor}
+                    scoreOpacity={awayScoreOpacity}
+                    teamStyle={awayStyle}
                 />
 
                 <div className={styles.center}>
+                    <p className={styles.matchup}>{game.awayTeam.teamTricode} @ {game.homeTeam.teamTricode}</p>
                     {isScheduled && (
                         <>
                             <p className={styles.gameTime}>{gameTime.replace(/\s?(AM|PM)$/i, ' ET')}</p>
@@ -122,12 +127,13 @@ export default function Microtron({ game }) {
                 </div>
 
                 <TeamPanel
-                    team={game.awayTeam}
+                    team={game.homeTeam}
                     align="right"
                     isScheduled={isScheduled}
-                    scoreColor={awayScoreColor}
-                    scoreOpacity={awayScoreOpacity}
-                    teamStyle={awayStyle}
+                    isWinner={isFinal && game.homeTeam.score > game.awayTeam.score}
+                    scoreColor={homeScoreColor}
+                    scoreOpacity={homeScoreOpacity}
+                    teamStyle={homeStyle}
                 />
             </div>
         </div>

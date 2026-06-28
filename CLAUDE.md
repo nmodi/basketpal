@@ -6,6 +6,7 @@ Real-time NBA game tracker with live player stats, team comparisons, broadcast d
 
 - Never `git commit` or `git push`. All commits and pushes must be done manually by the user.
 - Any changes to AGENTS.md must also be reflected in CLAUDE.md and vice versa.
+- Use `@phosphor-icons/react` for all icons in the frontend.
 
 ## Repo structure
 

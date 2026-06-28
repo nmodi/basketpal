@@ -67,6 +67,8 @@ class TeamSummary(BaseModel):
     teamTricode: str
     teamCity: str
     teamName: str
+    wins: Optional[int] = None
+    losses: Optional[int] = None
     score: Optional[int] = None
     periodScores: List[int] = Field(default_factory=list)
     timeoutsRemaining: Optional[int] = None

@@ -16,30 +16,39 @@
   z-index: 99;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
 }
 
-.dateScroll {
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.dateArrow {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fg-dim);
+  padding: 16px 16px;
+  flex-shrink: 0;
+  user-select: none;
+  display: flex;
+  align-items: center;
 }
 
-.dateScroll::-webkit-scrollbar {
-  display: none;
+.dateArrow:hover {
+  color: var(--fg);
 }
 
 .dateInner {
-  display: inline-flex;
-  padding: 8px 16px;
-  gap: 8px;
+  display: flex;
+  flex: 1;
+  padding: 6px 0;
 }
 
 .dateItem {
   cursor: pointer;
-  padding: 10px 16px;
+  flex: 1;
+  padding: 8px 4px;
   border-radius: 6px;
   text-align: center;
-  width: 65px;
   user-select: none;
   transition: background 0.12s;
   background: transparent;
@@ -59,7 +68,7 @@
 
 .dateDow {
   font-size: 11px;
-  font-weight: bold;
+  font-weight: 600;
   letter-spacing: 0.08em;
   font-family: tt-autonomous-mono, monospace;
   color: var(--fg-dim);
@@ -71,17 +80,27 @@
   color: var(--bg);
 }
 
-.dateNum {
-  font-size: 20px;
-  font-weight: bold;
+.dateDowToday {
   color: var(--fg);
-  line-height: 1.3;
-  margin-top: 4px;
+}
+
+.dateNum {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-dim);
+  line-height: 1.4;
+  margin-top: 3px;
   display: block;
+  letter-spacing: 0.05em;
+  font-family: tt-autonomous-mono, monospace;
 }
 
 .dateNumSelected {
   color: var(--bg);
+}
+
+.dateNumToday {
+  color: var(--fg);
 }
 
 .dateDot {
@@ -89,7 +108,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .dot {
@@ -108,6 +127,17 @@
   max-width: 600px;
   margin-top: 24px;
 }
+
+.groupHeader {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  color: var(--fg);
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  font-family: tt-autonomous-mono, monospace;
+}
+
 
 .empty {
   margin-top: 64px;

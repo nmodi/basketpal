@@ -31,7 +31,7 @@ export default function ScoreBreakdown({ gameData }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {[homeTeam, awayTeam].map((team) => {
+                    {[awayTeam, homeTeam].map((team) => {
                         const total = team.score ?? team.periodScores.reduce((a, b) => a + b, 0);
                         return (
                             <tr key={team.teamId}>

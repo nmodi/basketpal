@@ -1,18 +1,8 @@
 import { Suspense, useEffect, useState } from 'react';
 import { defer } from '@remix-run/node';
 import { Await, useLoaderData, useSearchParams } from '@remix-run/react';
-import {
-    Box,
-    Button,
-    Flex,
-    Heading,
-    SimpleGrid,
-    Spinner,
-    Tag,
-    Text,
-    VStack,
-} from '@chakra-ui/react';
 import axios from '../util/axios';
+import styles from '../styles/ModelComparison.module.css';
 
 const DEFAULT_GAME_ID = '0042500401';
 
@@ -33,41 +23,39 @@ export const loader = ({ request }) => {
 };
 
 const RecapCard = ({ recap, revealed, onToggleReveal }) => (
-    <Box bg="surface" p="5" borderRadius="15px">
-        <Flex justify="space-between" align="center" mb="3">
-            <Heading size="md" color="fg">{recap.blindLabel}</Heading>
-            <Button size="sm" onClick={onToggleReveal}>
+    <div className={styles.card}>
+        <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>{recap.blindLabel}</h2>
+            <button className={styles.btn} onClick={onToggleReveal}>
                 {revealed ? 'Hide' : 'Reveal'}
-            </Button>
-        </Flex>
-        {revealed && (
-            <Tag colorScheme="purple" mb="3">{recap.label}</Tag>
-        )}
+            </button>
+        </div>
+        {revealed && <span className={styles.tag}>{recap.label}</span>}
 
-        <Heading size="sm" color="fg" mb="2">{recap.headline}</Heading>
+        <h3 className={styles.recapHeadline}>{recap.headline}</h3>
 
-        <Flex direction="column" gap="2">
+        <div className={styles.recapBody}>
             {(recap.recap || '').split('\n').filter(Boolean).map((p, i) => (
-                <Text key={i} color="fg" whiteSpace="pre-wrap">{p}</Text>
+                <p key={i} className={styles.recapParagraph}>{p}</p>
             ))}
-        </Flex>
+        </div>
 
         {recap.keyMoments?.length > 0 && (
-            <VStack align="start" mt="3" spacing="1">
+            <div className={styles.keyMoments}>
                 {recap.keyMoments.map((moment, i) => (
-                    <Text key={i} fontSize="sm" color="fgMuted">
+                    <p key={i} className={styles.keyMoment}>
                         Q{moment.quarter}: {moment.description}
-                    </Text>
+                    </p>
                 ))}
-            </VStack>
+            </div>
         )}
 
         {recap.playerOfTheGame && (
-            <Text fontSize="sm" color="fgMuted" mt="3">
+            <p className={styles.potg}>
                 POTG: {recap.playerOfTheGame.name} — {recap.playerOfTheGame.reason}
-            </Text>
+            </p>
         )}
-    </Box>
+    </div>
 );
 
 const RecapGrid = ({ recaps }) => {
@@ -85,13 +73,12 @@ const RecapGrid = ({ recaps }) => {
 
     return (
         <>
-            <Flex justify="flex-end" mb="6">
-                <Button onClick={toggleRevealAll}>
+            <div className={styles.revealAllRow}>
+                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={toggleRevealAll}>
                     {allRevealed ? 'Hide All' : 'Reveal All'}
-                </Button>
-            </Flex>
-
-            <SimpleGrid columns={{ base: 1, lg: 2 }} gap="20px">
+                </button>
+            </div>
+            <div className={styles.grid}>
                 {recaps.map((recap) => (
                     <RecapCard
                         key={recap.blindLabel}
@@ -100,22 +87,20 @@ const RecapGrid = ({ recaps }) => {
                         onToggleReveal={() => toggleReveal(recap.blindLabel)}
                     />
                 ))}
-            </SimpleGrid>
+            </div>
         </>
     );
 };
 
 const RecapGridFallback = () => (
-    <Flex direction="column" align="center" gap="4" py="20">
-        <Spinner size="xl" color="purple.400" thickness="3px" />
-        <Text color="fgMuted">Generating recaps from multiple models…</Text>
-    </Flex>
+    <div className={styles.fallback}>
+        <div className={styles.spinner} />
+        <p className={styles.fallbackText}>Generating recaps from multiple models…</p>
+    </div>
 );
 
 const RecapGridError = () => (
-    <Text color="red.400" py="10">
-        Failed to generate recaps. Try regenerating.
-    </Text>
+    <p className={styles.error}>Failed to generate recaps. Try regenerating.</p>
 );
 
 export default function ModelComparison() {
@@ -139,22 +124,22 @@ export default function ModelComparison() {
     };
 
     return (
-        <Box p="8">
-            <Flex justify="space-between" align="center" mb="6">
-                <VStack align="start" spacing="0">
-                    <Heading color="fg">Model Comparison</Heading>
-                    <Text color="fgMuted">Game {gameId}</Text>
-                </VStack>
-                <Button onClick={handleRefresh} colorScheme="purple">
+        <div className={styles.page}>
+            <div className={styles.pageHeader}>
+                <div>
+                    <h1 className={styles.pageTitle}>Model Comparison</h1>
+                    <p className={styles.pageSubtitle}>Game {gameId}</p>
+                </div>
+                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleRefresh}>
                     Regenerate
-                </Button>
-            </Flex>
+                </button>
+            </div>
 
             <Suspense fallback={<RecapGridFallback />}>
                 <Await resolve={recaps} errorElement={<RecapGridError />}>
                     {(resolvedRecaps) => <RecapGrid recaps={resolvedRecaps} />}
                 </Await>
             </Suspense>
-        </Box>
+        </div>
     );
 }

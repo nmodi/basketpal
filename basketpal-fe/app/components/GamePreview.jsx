@@ -1,83 +1,60 @@
-import {
-    Flex,
-    Text,
-    Box,
-    VStack,
-    Skeleton,
-    SkeletonText,
-} from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-
-
+import styles from './GamePreview.module.css';
 
 export default function GamePreview({gameData, preview}) {
-    dayjs.extend(relativeTime)
+    dayjs.extend(relativeTime);
 
-    let isScheduled = true;
-    if (dayjs(gameData.gameTimeUTC).unix() < 0) {
-        isScheduled = false;
-    }
+    const isScheduled = dayjs(gameData.gameTimeUTC).unix() >= 0;
 
     const gameTime = dayjs().isAfter(dayjs(gameData.gameTimeUTC)) ?
         "any minute now..."
         : dayjs(gameData.gameTimeUTC).fromNow();
 
     return (
-        <Flex direction="column" align="center" gap="20px">
-            {isScheduled ? (
-                <Text fontSize="xl">Game starts {gameTime}</Text>
-            ) : (
-                <Text fontSize="xl">Game is not officially scheduled</Text>
-            )}
+        <div className={styles.container}>
+            <p className={styles.startLabel}>
+                {isScheduled ? `Game starts ${gameTime}` : 'Game is not officially scheduled'}
+            </p>
 
             {preview === undefined && (
-                <Box bg="gray.800" p="4" borderRadius="15px" width="80%">
-                    <Skeleton height="36px" mb="4" borderRadius="6px" startColor="gray.700" endColor="gray.600" />
-                    <SkeletonText noOfLines={5} spacing="3" skeletonHeight="3" startColor="gray.700" endColor="gray.600" />
-                </Box>
+                <div className={styles.card}>
+                    <div className={styles.skeletonTitle} />
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className={styles.skeletonLine} style={{ width: i % 3 === 2 ? '60%' : '100%' }} />
+                    ))}
+                </div>
             )}
 
             {preview?.headline && (
-                <Box bg="gray.800" p="4" borderRadius="15px" width="80%">
-                    <Text
-                        textTransform="uppercase"
-                        fontSize="3xl"
-                        mb="2"
-                        fontWeight="bold"
-                    >
-                        {preview.headline}
-                    </Text>
+                <div className={styles.card}>
+                    <p className={styles.headline}>{preview.headline}</p>
 
-                    <Flex direction="column" gap="2" fontFamily="soleil">
+                    <div className={styles.body}>
                         {preview.preview.split("\n").filter(Boolean).map((p, i) => (
-                            <Text whiteSpace="pre-line" align="left" textIndent="2em" key={i}>
-                                {p}
-                            </Text>
+                            <p key={i} className={styles.paragraph}>{p}</p>
                         ))}
-                    </Flex>
+                    </div>
 
                     {preview.playersToWatch?.length > 0 && (
-                        <VStack align="start" mt="4" spacing="1">
+                        <div className={styles.playerList}>
                             {preview.playersToWatch.map((player, i) => (
-                                <Text key={i} fontSize="sm" color="gray.400">
+                                <p key={i} className={styles.playerNote}>
                                     {player.name} — {player.reason}
-                                </Text>
+                                </p>
                             ))}
-                        </VStack>
+                        </div>
                     )}
 
                     {preview.storylines?.length > 0 && (
-                        <VStack align="start" mt="2" spacing="1">
+                        <div className={styles.storylines}>
                             {preview.storylines.map((storyline, i) => (
-                                <Text key={i} fontSize="sm" color="gray.400">
-                                    • {storyline}
-                                </Text>
+                                <p key={i} className={styles.playerNote}>• {storyline}</p>
                             ))}
-                        </VStack>
+                        </div>
                     )}
-                </Box>
+                </div>
             )}
-        </Flex>
+        </div>
     );
 }

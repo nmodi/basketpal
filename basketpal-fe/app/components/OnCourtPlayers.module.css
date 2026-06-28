@@ -1,0 +1,107 @@
+.container {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  flex: 1;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.teamHeader {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+}
+
+.teamHeaderTitle {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.colorBar {
+  height: 4px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  color: var(--fg-dim);
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 12px 16px;
+  background: var(--surface);
+}
+
+.thLeft { text-align: left; }
+.thRight { text-align: right; }
+
+.tdPlayer {
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.playerCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.playerImg {
+  width: 64px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.playerImg img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.playerInfo {
+  min-width: 0;
+}
+
+.playerName {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.jerseyNum {
+  color: var(--fg-dim);
+  font-weight: normal;
+  margin-left: 6px;
+}
+
+.emojis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.tdStat {
+  padding: 6px 16px;
+  color: var(--fg);
+  font-size: 18px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+
+.tdStatNormal {
+  font-weight: normal;
+}

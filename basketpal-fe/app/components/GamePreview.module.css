@@ -1,0 +1,84 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.startLabel {
+  font-size: 20px;
+  margin: 0;
+}
+
+.card {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: 15px;
+  width: 80%;
+}
+
+.skeletonTitle {
+  height: 36px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.headline {
+  text-transform: uppercase;
+  font-size: 30px;
+  margin: 0 0 8px;
+  font-weight: bold;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: soleil, sans-serif;
+}
+
+.paragraph {
+  white-space: pre-line;
+  text-align: left;
+  text-indent: 2em;
+  margin: 0;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  align-items: flex-start;
+}
+
+.playerNote {
+  font-size: 14px;
+  color: var(--fg-dim);
+  margin: 0;
+}
+
+.storylines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  align-items: flex-start;
+}

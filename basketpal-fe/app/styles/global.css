@@ -1,0 +1,41 @@
+:root {
+  --bg: #14171f;
+  --bg-raised: #1a1e27;
+  --bg-sunken: #0b0d13;
+  --surface: #1e222c;
+  --surface2: #2e3340;
+  --line: #2e3340;
+  --line-strong: #474d5c;
+  --fg: #f2f4f8;
+  --fg-muted: #a1a7b5;
+  --fg-dim: #6c7384;
+  --fg-inverse: #ffffff;
+  --chyron-fg: #fff2d6;
+  --live-500: #df3a3e;
+  --live-400: #e76568;
+  --highlight: #facc15;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: sans-serif;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+}

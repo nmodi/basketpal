@@ -8,10 +8,12 @@ import {
   useRouteError,
 } from "@remix-run/react";
 
-import { ChakraProvider } from '@chakra-ui/react'
-
-import {theme} from './theme';
 import ErrorPage from './components/ErrorPage';
+import globalStyles from './styles/global.css?url';
+
+export function links() {
+  return [{ rel: 'stylesheet', href: globalStyles }];
+}
 
 export function Layout({ children }) {
   return (
@@ -33,20 +35,12 @@ export function Layout({ children }) {
 }
 
 export default function App() {
-  return (
-    <ChakraProvider theme={theme}>
-        <Outlet />
-    </ChakraProvider>
-  );
+  return <Outlet />;
 }
 
 export function ErrorBoundary() {
   const error = useRouteError();
   const status = isRouteErrorResponse(error) ? error.status : 500;
 
-  return (
-    <ChakraProvider theme={theme}>
-      <ErrorPage status={status} />
-    </ChakraProvider>
-  );
+  return <ErrorPage status={status} />;
 }

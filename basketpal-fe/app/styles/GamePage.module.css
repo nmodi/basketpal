@@ -1,0 +1,49 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  font-family: tt-autonomous-mono, monospace;
+  padding-top: 53px;
+}
+
+.tabsWrap {
+  width: 90%;
+  margin: 0 auto;
+}
+
+.tabList {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+
+.tab {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  padding: 0 0 12px;
+  margin-right: 24px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s;
+  margin-bottom: -1px;
+}
+
+.tab:hover { color: var(--fg); }
+
+.tabActive {
+  color: var(--fg);
+  border-bottom-color: var(--highlight);
+}
+
+.onCourtGrid {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  align-items: stretch;
+}

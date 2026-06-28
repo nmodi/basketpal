@@ -1,0 +1,118 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 133px 12px 48px;
+}
+
+.dateBar {
+  position: fixed;
+  top: 53px;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.dateScroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dateScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.dateInner {
+  display: inline-flex;
+  padding: 8px 16px;
+  gap: 8px;
+}
+
+.dateItem {
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 6px;
+  text-align: center;
+  width: 65px;
+  user-select: none;
+  transition: background 0.12s;
+  background: transparent;
+}
+
+.dateItem:hover {
+  background: var(--surface);
+}
+
+.dateItemSelected {
+  background: var(--fg);
+}
+
+.dateItemSelected:hover {
+  background: var(--fg);
+}
+
+.dateDow {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-dim);
+  line-height: 1;
+  display: block;
+}
+
+.dateDowSelected {
+  color: var(--bg);
+}
+
+.dateNum {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--fg);
+  line-height: 1.3;
+  margin-top: 4px;
+  display: block;
+}
+
+.dateNumSelected {
+  color: var(--bg);
+}
+
+.dateDot {
+  height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--fg-dim);
+}
+
+.dotSelected {
+  background: var(--bg);
+}
+
+.gamesGroup {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 24px;
+}
+
+.empty {
+  margin-top: 64px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--fg-dim);
+  letter-spacing: 0.05em;
+}

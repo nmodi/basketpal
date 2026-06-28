@@ -1,5 +1,5 @@
-import { Flex, Text, Box } from '@chakra-ui/react';
 import { Link } from '@remix-run/react';
+import styles from './ErrorPage.module.css';
 
 const COPY = {
     notFound: {
@@ -22,81 +22,26 @@ function copyForStatus(status) {
     return COPY.client;
 }
 
-const labelStyle = {
-    fontFamily: 'tt-autonomous-mono',
-    fontWeight: 'bold',
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase',
-};
-
 const ErrorPage = ({ status = 500 }) => {
     const { title, message } = copyForStatus(status);
 
     return (
-        <Flex
-            direction="column"
-            align="center"
-            justify="center"
-            textAlign="center"
-            minH="100vh"
-            bg="bg"
-            px="6"
-        >
-            <Text
-                fontFamily="monte-stella, sans-serif"
-                fontWeight="bold"
-                fontSize={{ base: '96px', md: '140px' }}
-                lineHeight="1"
-                color="lineStrong"
-            >
-                {status}
-            </Text>
-
-            <Text {...labelStyle} fontSize="lg" color="fg" mt="4">
-                {title}
-            </Text>
-
-            <Text fontSize="sm" color="fgDim" mt="3" maxW="380px">
-                {message}
-            </Text>
-
-            <Flex gap="3" mt="8">
-                <Box
-                    as="button"
-                    onClick={() => {
-                        if (typeof window !== 'undefined') window.location.reload();
-                    }}
-                    {...labelStyle}
-                    fontSize="xs"
-                    color="bg"
-                    bg="fg"
-                    px="5"
-                    py="3"
-                    borderRadius="6px"
-                    _hover={{ opacity: 0.85 }}
-                    transition="opacity 0.15s"
+        <div className={styles.page}>
+            <p className={styles.statusCode}>{status}</p>
+            <p className={styles.title}>{title}</p>
+            <p className={styles.message}>{message}</p>
+            <div className={styles.actions}>
+                <button
+                    className={styles.btnPrimary}
+                    onClick={() => { if (typeof window !== 'undefined') window.location.reload(); }}
                 >
                     Try again
-                </Box>
-
-                <Link to="/" style={{ textDecoration: 'none' }}>
-                    <Box
-                        {...labelStyle}
-                        fontSize="xs"
-                        color="fgMuted"
-                        px="5"
-                        py="3"
-                        borderRadius="6px"
-                        border="1px solid"
-                        borderColor="line"
-                        _hover={{ color: 'fg', borderColor: 'lineStrong' }}
-                        transition="color 0.15s, border-color 0.15s"
-                    >
-                        ← Schedule
-                    </Box>
+                </button>
+                <Link to="/" className={styles.btnSecondary}>
+                    ← Schedule
                 </Link>
-            </Flex>
-        </Flex>
+            </div>
+        </div>
     );
 };
 

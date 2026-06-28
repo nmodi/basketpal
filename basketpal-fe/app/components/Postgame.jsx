@@ -1,124 +1,84 @@
-import {
-    Flex,
-    Text,
-    Box,
-    HStack,
-    VStack,
-    SimpleGrid,
-    Skeleton,
-    SkeletonText,
-} from '@chakra-ui/react';
 import { getGameResult, getTopPlayers, evaluateKeysToTheWin } from '../util/gameUtils';
 import { getBestStats } from '../util/statFunctions';
 import TeamStatsComparison from './TeamStatsComparison';
 import PlayerImage from './common/PlayerImage';
+import styles from './Postgame.module.css';
 
-export default function Scoreboard({ gameData, summary, league }) {
+export default function Postgame({ gameData, summary, league }) {
     const gameResult = getGameResult(gameData);
     const potg = getTopPlayers(gameResult.winningTeam, 1)[0];
-
-
     const keysToTheWin = evaluateKeysToTheWin(gameResult.winningTeam, gameResult.losingTeam, 10);
 
     return (
-        <SimpleGrid templateColumns="2fr 3fr" gap="20px" width="80%">
-
-            {/** left column */}
-            <Box>
-                <VStack spacing="20px">
-                    {/** potg **/}
-                    <Box bg="gray.800" p="4" borderRadius="15px" alignSelf="start" width="100%">
-                        <Text
-                            fontSize="3xl"
-                            textTransform="uppercase"
-                            fontWeight="bold"
-                        >
-                            Player of the Game
-                        </Text>
-                        <VStack>
-                            <PlayerImage
-                                league={league}
-                                playerId={potg.playerId}
-                                w="250px"
-                                objectFit="contain"
-                            />
-                            <Text
-                                textTransform="uppercase"
-                                fontSize="4xl"
-                            >
-                                {potg.name}
-                            </Text>
-                            <HStack>
-                                {getBestStats(potg.stats, 4).map(stat => (
-                                    <VStack px="4">
-                                        <Text fontSize="2xl" mb="-3">{stat.value}</Text>
-                                        <Text>{stat.name}</Text>
-                                    </VStack>
-                                ))}
-                            </HStack>
-                        </VStack>
-                    </Box>
-
-                    {/** stats */}
-                    <Box bg="gray.800" p="4" borderRadius="15px" alignSelf="start" width="100%">
-                        <TeamStatsComparison
-                            leftTeam={gameResult.winningTeam}
-                            rightTeam={gameResult.losingTeam}
-                            leftTeamStats={keysToTheWin.winningTeamTopStats}
-                            rightTeamStats={keysToTheWin.losingTeamTopStats}
+        <div className={styles.grid}>
+            {/* left column */}
+            <div className={styles.left}>
+                {/* potg */}
+                <div className={styles.card}>
+                    <p className={styles.potgTitle}>Player of the Game</p>
+                    <div className={styles.potgBody}>
+                        <PlayerImage
                             league={league}
+                            playerId={potg.playerId}
+                            style={{ width: '250px', objectFit: 'contain' }}
                         />
-                    </Box>
-                </VStack>
+                        <p className={styles.potgName}>{potg.name}</p>
+                        <div className={styles.potgStats}>
+                            {getBestStats(potg.stats, 4).map(stat => (
+                                <div key={stat.name} className={styles.potgStat}>
+                                    <p className={styles.potgStatValue}>{stat.value}</p>
+                                    <p className={styles.potgStatName}>{stat.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
 
-            </Box>
+                {/* key stats */}
+                <div className={styles.card}>
+                    <TeamStatsComparison
+                        leftTeam={gameResult.winningTeam}
+                        rightTeam={gameResult.losingTeam}
+                        leftTeamStats={keysToTheWin.winningTeamTopStats}
+                        rightTeamStats={keysToTheWin.losingTeamTopStats}
+                        league={league}
+                    />
+                </div>
+            </div>
 
-            {/** right column */}
-            <Box>
-                {/** story */}
-                <Box bg="gray.800" p="4" borderRadius="15px">
+            {/* right column */}
+            <div>
+                <div className={styles.card}>
                     {summary === undefined ? (
                         <>
-                            <Skeleton height="36px" mb="4" borderRadius="6px" startColor="gray.700" endColor="gray.600" />
-                            <SkeletonText noOfLines={7} spacing="3" skeletonHeight="3" startColor="gray.700" endColor="gray.600" />
-                            <SkeletonText mt="6" noOfLines={3} spacing="2" skeletonHeight="2" startColor="gray.700" endColor="gray.600" />
+                            <div className={styles.skeletonTitle} />
+                            {Array.from({ length: 7 }).map((_, i) => (
+                                <div key={i} className={styles.skeletonLine} style={{ width: i % 3 === 2 ? '60%' : '100%' }} />
+                            ))}
                         </>
                     ) : summary ? (
                         <>
-                            <Text
-                                textTransform="uppercase"
-                                fontSize="3xl"
-                                mb="2"
-                                fontWeight="bold"
-                            >
-                                {summary.headline}
-                            </Text>
-
-                            <Flex direction="column" gap="2" fontFamily="soleil">
+                            <p className={styles.storyTitle}>{summary.headline}</p>
+                            <div className={styles.storyBody}>
                                 {summary.recap.split("\n").filter(Boolean).map((p, i) => (
-                                    <Text whiteSpace="pre-line" align="left" textIndent="2em" key={i}>
-                                        {p}
-                                    </Text>
+                                    <p key={i} className={styles.storyParagraph}>{p}</p>
                                 ))}
-                            </Flex>
-
+                            </div>
                             {summary.keyMoments?.length > 0 && (
-                                <VStack align="start" mt="4" spacing="1">
+                                <div className={styles.keyMoments}>
                                     {summary.keyMoments.map((moment, i) => (
-                                        <Text key={i} fontSize="sm" color="gray.400">
+                                        <p key={i} className={styles.keyMoment}>
                                             Q{moment.quarter}: {moment.description}
-                                        </Text>
+                                        </p>
                                     ))}
-                                </VStack>
+                                </div>
                             )}
                         </>
                     ) : (
-                        <Text color="gray.500" fontSize="sm">Article unavailable</Text>
+                        <p className={styles.unavailable}>Article unavailable</p>
                     )}
-                </Box>
-            </Box>
-
-
-        </SimpleGrid>
-    ); 
+                </div>
+            </div>
+        </div>
+    );
 }

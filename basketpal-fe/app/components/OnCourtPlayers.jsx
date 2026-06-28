@@ -1,97 +1,43 @@
-import {
-    Box,
-    Flex,
-    HStack,
-    Table,
-    Tbody,
-    Td,
-    Text,
-    Th,
-    Thead,
-    Tooltip,
-    Tr,
-} from '@chakra-ui/react';
 import { getTeamStyle } from '../util/teamColorStrategy';
-
 import { hasTripleDouble, tripleDoubleWatch, getTrueShootingPercentage } from '../util/statFunctions';
 import { getLeague } from '../util/league';
 import PlayerImage from './common/PlayerImage';
-
-function EmojiBadge({ emoji, label }) {
-    return (
-        <Tooltip label={label} aria-label={label}>
-            <span>{emoji}</span>
-        </Tooltip>
-    );
-}
+import styles from './OnCourtPlayers.module.css';
 
 function getEmojisForStats(stats, period, teamMargin) {
     const badges = [];
 
-    if (stats.points >= 30) {
-        badges.push(<EmojiBadge key="pts-hi" emoji="🚀" label={`${stats.points} points`} />);
-    } else if (stats.points >= 20) {
-        badges.push(<EmojiBadge key="pts-mid" emoji="📈" label={`${stats.points} points`} />);
-    }
+    if (stats.points >= 30) badges.push({ key: 'pts-hi', emoji: '🚀', label: `${stats.points} points` });
+    else if (stats.points >= 20) badges.push({ key: 'pts-mid', emoji: '📈', label: `${stats.points} points` });
 
-    if (stats.threePointersMade > 4) {
-        badges.push(<EmojiBadge key="3pt" emoji="💦" label={`${stats.threePointersMade} 3PT made`} />);
-    }
-
-    if (stats.assists >= 8) {
-        badges.push(<EmojiBadge key="ast" emoji="🤝" label={`${stats.assists} assists`} />);
-    }
-
-    if (stats.reboundsTotal >= 8) {
-        badges.push(<EmojiBadge key="reb" emoji="💪" label={`${stats.reboundsTotal} rebounds`} />);
-    }
+    if (stats.threePointersMade > 4) badges.push({ key: '3pt', emoji: '💦', label: `${stats.threePointersMade} 3PT made` });
+    if (stats.assists >= 8) badges.push({ key: 'ast', emoji: '🤝', label: `${stats.assists} assists` });
+    if (stats.reboundsTotal >= 8) badges.push({ key: 'reb', emoji: '💪', label: `${stats.reboundsTotal} rebounds` });
 
     if (stats.foulsPersonal >= period + 1 || stats.foulsPersonal >= 4 || stats.foulsTechnical > 0) {
-        badges.push(<EmojiBadge key="foul" emoji="🚨" label={`Foul trouble – ${stats.foulsPersonal} fouls, ${stats.foulsTechnical} technical`} />);
+        badges.push({ key: 'foul', emoji: '🚨', label: `Foul trouble – ${stats.foulsPersonal} fouls, ${stats.foulsTechnical} technical` });
     }
 
-    if (stats.turnovers > 5) {
-        badges.push(<EmojiBadge key="to" emoji="😵‍💫" label={`${stats.turnovers} turnovers`} />);
-    }
+    if (stats.turnovers > 5) badges.push({ key: 'to', emoji: '😵‍💫', label: `${stats.turnovers} turnovers` });
 
     const ts = getTrueShootingPercentage(stats);
-    if (stats.fieldGoalsAttempted > 3 && ts > 0.6) {
-        badges.push(<EmojiBadge key="hot" emoji="🔥" label={`${Math.round(ts * 100)}% True Shooting`} />);
-    }
-    if (stats.fieldGoalsAttempted > 3 && ts < 0.45) {
-        badges.push(<EmojiBadge key="cold" emoji="🧊" label={`${Math.round(ts * 100)}% True Shooting`} />);
-    }
+    if (stats.fieldGoalsAttempted > 3 && ts > 0.6) badges.push({ key: 'hot', emoji: '🔥', label: `${Math.round(ts * 100)}% True Shooting` });
+    if (stats.fieldGoalsAttempted > 3 && ts < 0.45) badges.push({ key: 'cold', emoji: '🧊', label: `${Math.round(ts * 100)}% True Shooting` });
 
-    if (stats.blocks + stats.steals >= 4) {
-        badges.push(<EmojiBadge key="def" emoji="🔒" label={`${stats.blocks} blocks + ${stats.steals} steals`} />);
-    }
+    if (stats.blocks + stats.steals >= 4) badges.push({ key: 'def', emoji: '🔒', label: `${stats.blocks} blocks + ${stats.steals} steals` });
 
-    if (hasTripleDouble(stats)) {
-        badges.push(<EmojiBadge key="td" emoji="📊" label="Triple double" />);
-    } else if (tripleDoubleWatch(stats)) {
-        badges.push(<EmojiBadge key="tdw" emoji="👀" label="Triple double watch" />);
-    }
+    if (hasTripleDouble(stats)) badges.push({ key: 'td', emoji: '📊', label: 'Triple double' });
+    else if (tripleDoubleWatch(stats)) badges.push({ key: 'tdw', emoji: '👀', label: 'Triple double watch' });
 
     if (stats.plusMinusPoints > 5 && stats.plusMinusPoints > teamMargin + 3) {
-        badges.push(<EmojiBadge key="pm-hi" emoji="🔺" label={`+${stats.plusMinusPoints} in a ${teamMargin} point game`} />);
+        badges.push({ key: 'pm-hi', emoji: '🔺', label: `+${stats.plusMinusPoints} in a ${teamMargin} point game` });
     }
     if (stats.plusMinusPoints < -5 && stats.plusMinusPoints < teamMargin - 3) {
-        badges.push(<EmojiBadge key="pm-lo" emoji="🔻" label={`${stats.plusMinusPoints} in a ${teamMargin} point game`} />);
+        badges.push({ key: 'pm-lo', emoji: '🔻', label: `${stats.plusMinusPoints} in a ${teamMargin} point game` });
     }
 
     return badges;
 }
-
-const thProps = {
-    color: 'fgDim',
-    fontSize: 'sm',
-    letterSpacing: '0.14em',
-    textTransform: 'uppercase',
-    fontWeight: 'medium',
-    px: '4',
-    py: '3',
-    bg: 'surface',
-};
 
 export default function OnCourtPlayers({ gameData, isHome }) {
     const league = getLeague(gameData.gameId);
@@ -102,101 +48,58 @@ export default function OnCourtPlayers({ gameData, isHome }) {
     const teamMargin = (team.score ?? 0) - (otherTeam.score ?? 0);
 
     return (
-        <Box
-            bg="bgRaised"
-            border="1px solid"
-            borderColor="line"
-            borderRadius="lg"
-            overflow="hidden"
-            flex="1"
-            boxShadow="0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03)"
-        >
-            {/* Header */}
-            <Flex
-                px="5"
-                py="4"
-                style={{ background: teamStyle.getGradient('right') }}
-                align="center"
-            >
-                <Text
-                    fontSize="md"
-                    fontWeight="bold"
-                    letterSpacing="0.12em"
-                    textTransform="uppercase"
-                    color={teamStyle.nameColor}
-                >
+        <div className={styles.container}>
+            <div className={styles.teamHeader} style={{ background: teamStyle.getGradient('right') }}>
+                <p className={styles.teamHeaderTitle} style={{ color: teamStyle.nameColor }}>
                     {team.teamName} · On Court
-                </Text>
-            </Flex>
-            <Box h="4px" bg={teamStyle.barColor} />
+                </p>
+            </div>
+            <div className={styles.colorBar} style={{ background: teamStyle.barColor }} />
 
-            <Table variant="unstyled" size="sm">
-                <Thead>
-                    <Tr>
-                        <Th {...thProps} textAlign="left">Player</Th>
-                        <Th {...thProps} isNumeric>PTS</Th>
-                        <Th {...thProps} isNumeric>REB</Th>
-                        <Th {...thProps} isNumeric>AST</Th>
-                    </Tr>
-                </Thead>
-                <Tbody>
+            <table className={styles.table}>
+                <thead>
+                    <tr>
+                        <th className={`${styles.th} ${styles.thLeft}`}>Player</th>
+                        <th className={`${styles.th} ${styles.thRight}`}>PTS</th>
+                        <th className={`${styles.th} ${styles.thRight}`}>REB</th>
+                        <th className={`${styles.th} ${styles.thRight}`}>AST</th>
+                    </tr>
+                </thead>
+                <tbody>
                     {onCourtPlayers.map((player) => {
                         const emojis = player.stats
                             ? getEmojisForStats(player.stats, gameData.period ?? 1, teamMargin)
                             : [];
                         return (
-                            <Tr key={player.playerId}>
-                                <Td
-                                    px="4"
-                                    py="1.5"
-                                    borderBottom="1px solid"
-                                    borderColor="line"
-                                >
-                                    <Flex align="center" gap="3">
-                                        <Box w="64px" flexShrink={0} overflow="hidden">
+                            <tr key={player.playerId}>
+                                <td className={styles.tdPlayer}>
+                                    <div className={styles.playerCell}>
+                                        <div className={styles.playerImg}>
                                             <PlayerImage league={league} playerId={player.playerId} />
-                                        </Box>
-                                        <Box minW="0">
-                                            <Text
-                                                fontSize="sm"
-                                                fontWeight="bold"
-                                                letterSpacing="0.06em"
-                                                textTransform="uppercase"
-                                                color="fg"
-                                                lineHeight="tight"
-                                            >
+                                        </div>
+                                        <div className={styles.playerInfo}>
+                                            <p className={styles.playerName}>
                                                 {player.name}
-                                                <Text
-                                                    as="span"
-                                                    color="fgDim"
-                                                    fontWeight="normal"
-                                                    ml="1.5"
-                                                >
-                                                    #{player.jerseyNum}
-                                                </Text>
-                                            </Text>
+                                                <span className={styles.jerseyNum}>#{player.jerseyNum}</span>
+                                            </p>
                                             {emojis.length > 0 && (
-                                                <HStack mt="1.5" spacing="1" flexWrap="wrap">
-                                                    {emojis}
-                                                </HStack>
+                                                <div className={styles.emojis}>
+                                                    {emojis.map(({ key, emoji, label }) => (
+                                                        <span key={key} title={label}>{emoji}</span>
+                                                    ))}
+                                                </div>
                                             )}
-                                        </Box>
-                                    </Flex>
-                                </Td>
-                                <Td isNumeric px="4" py="1.5" color="fg" fontSize="lg" fontWeight="semibold" borderBottom="1px solid" borderColor="line">
-                                    {player.stats?.points ?? '–'}
-                                </Td>
-                                <Td isNumeric px="4" py="1.5" color="fg" fontSize="lg" borderBottom="1px solid" borderColor="line">
-                                    {player.stats?.reboundsTotal ?? '–'}
-                                </Td>
-                                <Td isNumeric px="4" py="1.5" color="fg" fontSize="lg" borderBottom="1px solid" borderColor="line">
-                                    {player.stats?.assists ?? '–'}
-                                </Td>
-                            </Tr>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className={styles.tdStat}>{player.stats?.points ?? '–'}</td>
+                                <td className={`${styles.tdStat} ${styles.tdStatNormal}`}>{player.stats?.reboundsTotal ?? '–'}</td>
+                                <td className={`${styles.tdStat} ${styles.tdStatNormal}`}>{player.stats?.assists ?? '–'}</td>
+                            </tr>
                         );
                     })}
-                </Tbody>
-            </Table>
-        </Box>
+                </tbody>
+            </table>
+        </div>
     );
 }

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { Box, Flex, Text } from '@chakra-ui/react';
 import Microtron from '../components/Microtron';
 import { ScheduleHeader } from '../components/Header';
 import { json } from "@remix-run/node";
@@ -7,6 +6,7 @@ import { useLoaderData, useFetcher } from "@remix-run/react";
 import axios from "../util/axios";
 import { toRouteError } from "../util/loaderError";
 import dayjs from 'dayjs';
+import styles from '../styles/ScheduleIndex.module.css';
 
 export const meta = () => {
     return [
@@ -46,26 +46,9 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
     }, []);
 
     return (
-        <Box
-            position="fixed"
-            top="53px"
-            left={0}
-            right={0}
-            zIndex={99}
-            bg="bg"
-            borderBottom="1px solid"
-            borderColor="line"
-        >
-            <Box
-                ref={scrollRef}
-                overflowX="auto"
-                sx={{
-                    '&::-webkit-scrollbar': { display: 'none' },
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                }}
-            >
-                <Flex px="4" py="2.5" gap="2" display="inline-flex">
+        <div className={styles.dateBar}>
+            <div ref={scrollRef} className={styles.dateScroll}>
+                <div className={styles.dateInner}>
                     {dates.map(d => {
                         const dateStr = d.format('YYYY-MM-DD');
                         const isToday = dateStr === todayStr;
@@ -73,56 +56,27 @@ function DateBar({ gameDates, selectedDate, onSelectDate }) {
                         const hasGames = datesWithGames.has(dateStr);
 
                         return (
-                            <Box
+                            <div
                                 key={dateStr}
                                 ref={isToday ? todayRef : undefined}
                                 onClick={() => onSelectDate(dateStr)}
-                                cursor="pointer"
-                                px="4"
-                                py="2.5"
-                                borderRadius="6px"
-                                bg={isSelected ? 'fg' : 'transparent'}
-                                textAlign="center"
-                                w="65px"
-                                userSelect="none"
-                                _hover={{ bg: isSelected ? 'fg' : 'surface' }}
-                                transition="background 0.12s"
+                                className={`${styles.dateItem} ${isSelected ? styles.dateItemSelected : ''}`}
                             >
-                                <Text
-                                    fontSize="11px"
-                                    fontWeight="bold"
-                                    letterSpacing="0.08em"
-                                    fontFamily="tt-autonomous-mono"
-                                    color={isSelected ? 'bg' : 'fgDim'}
-                                    lineHeight="1"
-                                >
+                                <span className={`${styles.dateDow} ${isSelected ? styles.dateDowSelected : ''}`}>
                                     {d.format('ddd').toUpperCase()}
-                                </Text>
-                                <Text
-                                    fontSize="xl"
-                                    fontWeight="bold"
-                                    color={isSelected ? 'bg' : 'fg'}
-                                    lineHeight="1.3"
-                                    mt="1"
-                                >
+                                </span>
+                                <span className={`${styles.dateNum} ${isSelected ? styles.dateNumSelected : ''}`}>
                                     {d.format('D')}
-                                </Text>
-                                <Box h="8px" display="flex" alignItems="center" justifyContent="center" mt="1">
-                                    {hasGames && (
-                                        <Box
-                                            w="5px"
-                                            h="5px"
-                                            borderRadius="full"
-                                            bg={isSelected ? 'bg' : 'fgDim'}
-                                        />
-                                    )}
-                                </Box>
-                            </Box>
+                                </span>
+                                <div className={styles.dateDot}>
+                                    {hasGames && <div className={`${styles.dot} ${isSelected ? styles.dotSelected : ''}`} />}
+                                </div>
+                            </div>
                         );
                     })}
-                </Flex>
-            </Box>
-        </Box>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -145,33 +99,20 @@ export default function WnbaIndex() {
     }, [hasLiveGames]);
 
     return (
-        <Flex
-            direction="column"
-            align="center"
-            w="100%"
-            minH="100vh"
-            bg="bg"
-            px="3"
-            pb="12"
-            pt="133px"
-        >
+        <div className={styles.page}>
             <ScheduleHeader league="WNBA" />
             <DateBar gameDates={data} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
             {visibleGames.length === 0 ? (
-                <Box mt="16" textAlign="center">
-                    <Text fontSize="sm" color="fgDim" letterSpacing="wide">
-                        No games scheduled
-                    </Text>
-                </Box>
+                <p className={styles.empty}>No games scheduled</p>
             ) : (
                 visibleGames.map(({ gameDate, games }) => (
-                    <Box key={gameDate} w="100%" maxW="600px" mt="6">
+                    <div key={gameDate} className={styles.gamesGroup}>
                         {games.map(g => (
                             <Microtron key={g.gameId} game={g} />
                         ))}
-                    </Box>
+                    </div>
                 ))
             )}
-        </Flex>
+        </div>
     );
 }

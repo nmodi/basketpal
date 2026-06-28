@@ -1,5 +1,5 @@
-import { Box, Flex, Text } from '@chakra-ui/react';
 import { getTeamStyle, STRATEGY_NAMES, WNBA_TRICODES, WNBA_TEAM_OVERRIDES } from '../util/teamColorStrategy';
+import styles from '../styles/DevColors.module.css';
 
 const WNBA_NAMES = {
     ATL: 'Dream', CHI: 'Sky', CON: 'Sun', DAL: 'Wings',
@@ -13,63 +13,40 @@ function StrategyCard({ tricode, strategy }) {
     const isActive = current === strategy || (!current && strategy === 'bold');
 
     return (
-        <Box
-            position="relative"
-            overflow="hidden"
-            borderRadius="md"
-            border="1px solid"
-            borderColor={isActive ? 'lineStrong' : 'line'}
-            bg="surface"
-            outline={isActive ? `2px solid ${style.barColor}` : 'none'}
-            outlineOffset="2px"
+        <div
+            className={`${styles.card} ${isActive ? styles.cardActive : ''}`}
+            style={isActive ? { outline: `2px solid ${style.barColor}`, outlineOffset: '2px' } : undefined}
         >
-            <Box
-                position="absolute"
-                inset="0"
-                pointerEvents="none"
-                style={{ background: style.getGradient('right') }}
-            />
-            <Box position="absolute" left="0" top="0" bottom="0" w="4px" bg={style.barColor} />
-            <Flex direction="column" px="3" py="2.5" pl="4" position="relative" gap="0.5">
-                <Text fontSize="10px" color="fgDim" letterSpacing="0.1em" fontFamily="tt-autonomous-mono">
-                    {strategy}{isActive ? ' ★' : ''}
-                </Text>
-                <Text fontSize="sm" fontWeight="bold" color={style.nameColor} fontFamily="monte-stella" letterSpacing="0.05em">
-                    {WNBA_NAMES[tricode]}
-                </Text>
-                <Text fontSize="10px" color="fgDim" fontFamily="tt-autonomous-mono">
-                    bar: {style.barColor} · name: {style.nameColor}
-                </Text>
-            </Flex>
-        </Box>
+            <div className={styles.gradient} style={{ background: style.getGradient('right') }} />
+            <div className={styles.colorBar} style={{ background: style.barColor }} />
+            <div className={styles.cardBody}>
+                <span className={styles.strategyLabel}>{strategy}{isActive ? ' ★' : ''}</span>
+                <span className={styles.teamName} style={{ color: style.nameColor }}>{WNBA_NAMES[tricode]}</span>
+                <span className={styles.colorInfo}>bar: {style.barColor} · name: {style.nameColor}</span>
+            </div>
+        </div>
     );
 }
 
 export default function ColorPreview() {
     return (
-        <Box bg="bg" minH="100vh" px="6" py="8">
-            <Text fontSize="lg" fontWeight="bold" color="fg" mb="1" fontFamily="monte-stella" letterSpacing="0.08em">
-                WNBA GRADIENT PREVIEW
-            </Text>
-            <Text fontSize="sm" color="fgMuted" mb="8">
-                ★ = current override (or default 'bold'). Update TEAM_OVERRIDES in teamColorStrategy.js.
-            </Text>
-            <Flex direction="column" gap="10">
+        <div className={styles.page}>
+            <p className={styles.pageTitle}>WNBA GRADIENT PREVIEW</p>
+            <p className={styles.pageSubtitle}>★ = current override (or default 'bold'). Update TEAM_OVERRIDES in teamColorStrategy.js.</p>
+            <div className={styles.teamList}>
                 {WNBA_TRICODES.map(tricode => (
-                    <Box key={tricode} id={tricode}>
-                        <Text fontSize="xs" color="fgDim" letterSpacing="0.14em" mb="3" fontFamily="tt-autonomous-mono">
-                            {tricode} — {WNBA_NAMES[tricode]}
-                        </Text>
-                        <Flex gap="3" wrap="wrap">
+                    <div key={tricode} id={tricode}>
+                        <p className={styles.teamLabel}>{tricode} — {WNBA_NAMES[tricode]}</p>
+                        <div className={styles.strategyGrid}>
                             {STRATEGY_NAMES.map(strategy => (
-                                <Box key={strategy} flex="1" minW="200px" maxW="280px">
+                                <div key={strategy} className={styles.strategyWrap}>
                                     <StrategyCard tricode={tricode} strategy={strategy} />
-                                </Box>
+                                </div>
                             ))}
-                        </Flex>
-                    </Box>
+                        </div>
+                    </div>
                 ))}
-            </Flex>
-        </Box>
+            </div>
+        </div>
     );
 }

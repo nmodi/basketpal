@@ -1,8 +1,8 @@
-import { Badge, Box, Flex, Text } from '@chakra-ui/react';
 import { useNavigate } from "@remix-run/react";
 import dayjs from 'dayjs';
 import { getTeamStyle } from '../util/teamColorStrategy';
 import { getLeague } from '../util/league';
+import styles from './Microtron.module.css';
 
 function getCountdownLabel(gameTimeUTC) {
     const gameTime = new Date(gameTimeUTC);
@@ -20,16 +20,12 @@ function getCountdownLabel(gameTimeUTC) {
 
 function formatGameClock(gameClock) {
     if (!gameClock) return null;
-
     const match = /^PT(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(gameClock);
     if (!match) return null;
-
     const minutes = Number.parseInt(match[1] ?? '0', 10);
     const seconds = Math.floor(Number.parseFloat(match[2] ?? '0'));
-
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
-
 
 function getScoreOpacity(teamScore, otherTeamScore) {
     if (teamScore == null || otherTeamScore == null) return 1;
@@ -39,101 +35,33 @@ function getScoreOpacity(teamScore, otherTeamScore) {
 }
 
 function getScoreColor(teamScore, otherTeamScore, isFinal) {
-    if (!isFinal) return 'chyronFg';
-    if (teamScore == null || otherTeamScore == null) return 'chyronFg';
-    if (teamScore > otherTeamScore) return 'highlight';
-    if (teamScore < otherTeamScore) return 'fgMuted';
-    return 'chyronFg';
+    if (!isFinal) return 'var(--chyron-fg)';
+    if (teamScore == null || otherTeamScore == null) return 'var(--chyron-fg)';
+    if (teamScore > otherTeamScore) return 'var(--highlight)';
+    if (teamScore < otherTeamScore) return 'var(--fg-muted)';
+    return 'var(--chyron-fg)';
 }
 
 function TeamPanel({ team, align, isScheduled, scoreColor, scoreOpacity, teamStyle }) {
     const isRight = align === 'right';
     const dir = isRight ? 'left' : 'right';
+    const isLong = team.teamName.length > 8;
 
     return (
-        <Flex
-            direction="column"
-            justify="flex-start"
-            align={isRight ? 'flex-end' : 'flex-start'}
-            textAlign={isRight ? 'right' : 'left'}
-            flex="1"
-            minW="0"
-            position="relative"
-            overflow="hidden"
-            px={{ base: '4', md: '6' }}
-            py={{ base: '4', md: '5' }}
-            bg="surface"
-            boxShadow="inset 0 1px 0 rgba(255,255,255,0.03)"
-        >
-            <Box
-                position="absolute"
-                inset="0"
-                pointerEvents="none"
-                style={{ background: teamStyle.getGradient(dir) }}
-            />
-
-            <Box position="relative">
-                <Text
-                    fontSize="sm"
-                    fontWeight="bold"
-                    color="fgMuted"
-                    letterSpacing="0.08em"
-                    textTransform="uppercase"
-                >
-                    {team.teamTricode}
-                </Text>
-                <Text
-                    mt="1"
-                    fontFamily="monte-stella"
-                    fontSize={team.teamName.length > 8 ? { base: 'xl', md: '2xl' } : { base: '2xl', md: '3xl' }}
-                    fontWeight="black"
-                    lineHeight="0.95"
-                    letterSpacing="0.07em"
-                    textTransform="uppercase"
-                    color={teamStyle.nameColor}
-                    noOfLines={1}
-                >
+        <div className={`${styles.teamPanel} ${isRight ? styles.teamPanelRight : styles.teamPanelLeft}`}>
+            <div className={styles.gradient} style={{ background: teamStyle.getGradient(dir) }} />
+            <div className={styles.teamContent}>
+                <p className={styles.tricode}>{team.teamTricode}</p>
+                <p className={`${styles.teamName} ${isLong ? styles.teamNameLong : ''}`} style={{ color: teamStyle.nameColor }}>
                     {team.teamName}
-                </Text>
-            </Box>
-
-            {isScheduled ? (
-                <Text
-                    position="relative"
-                    mt="3"
-                    fontFamily="tt-autonomous-mono"
-                    fontSize={{ base: '3.125rem', md: '3.75rem' }}
-                    lineHeight="0.82"
-                    color={scoreColor}
-                    opacity="0.7"
-                >
-                    —
-                </Text>
-            ) : (
-                <Box
-                    position="relative"
-                    mt="3"
-                    bg="bgSunken"
-                    borderRadius="md"
-                    px="3"
-                    py="1.5"
-                    border="1px solid"
-                    borderColor="lineStrong"
-                    width="fit-content"
-                    alignSelf={isRight ? 'flex-end' : 'flex-start'}
-                >
-                    <Text
-                        fontFamily="tt-autonomous-mono"
-                        fontSize={{ base: '3.125rem', md: '3.75rem' }}
-                        lineHeight="0.9"
-                        color={scoreColor}
-                        opacity={scoreOpacity}
-                    >
-                        {team.score ?? '--'}
-                    </Text>
-                </Box>
-            )}
-        </Flex>
+                </p>
+            </div>
+            <div className={`${styles.scoreBox} ${isRight ? styles.scoreBoxRight : styles.scoreBoxLeft}`}>
+                <p className={styles.scoreText} style={{ color: scoreColor, opacity: isScheduled ? 0.4 : scoreOpacity }}>
+                    {isScheduled ? '—' : (team.score ?? '--')}
+                </p>
+            </div>
+        </div>
     );
 }
 
@@ -152,29 +80,14 @@ export default function Microtron({ game }) {
     const homeScoreOpacity = isLive || isFinal ? 1 : getScoreOpacity(game.homeTeam.score, game.awayTeam.score);
 
     return (
-        <Box
-            position="relative"
-            bg="bgRaised"
-            border="1px solid"
-            borderColor="line"
-            borderRadius="lg"
-            overflow="hidden"
-            w="100%"
-            boxShadow="0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03)"
-            cursor="pointer"
+        <div
+            className={styles.card}
             onClick={() => navigate(`/${getLeague(game.gameId).toLowerCase()}/g/${game.gameId}`)}
-            _hover={{
-                borderColor: 'lineStrong',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 24px 48px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04)'
-            }}
-            transition="all 0.18s ease"
-            mb="3"
         >
-            <Box position="absolute" left="0" top="0" bottom="0" w="5px" bg={homeStyle.barColor} zIndex={1} />
-            <Box position="absolute" right="0" top="0" bottom="0" w="5px" bg={awayStyle.barColor} zIndex={1} />
+            <div className={`${styles.colorBar} ${styles.colorBarLeft}`} style={{ background: homeStyle.barColor }} />
+            <div className={`${styles.colorBar} ${styles.colorBarRight}`} style={{ background: awayStyle.barColor }} />
 
-            <Flex minH={{ base: '138px', md: '150px' }}>
+            <div className={styles.body}>
                 <TeamPanel
                     team={game.homeTeam}
                     align="left"
@@ -184,92 +97,29 @@ export default function Microtron({ game }) {
                     teamStyle={homeStyle}
                 />
 
-                <Flex
-                    direction="column"
-                    align="center"
-                    justify="center"
-                    flex="0 0 28%"
-                    px={{ base: '3', md: '4' }}
-                    py={{ base: '4', md: '5' }}
-                    borderLeft="1px solid"
-                    borderRight="1px solid"
-                    borderColor="line"
-                    bg="bgSunken"
-                >
+                <div className={styles.center}>
                     {isScheduled && (
                         <>
-                            <Text
-                                fontFamily="tt-autonomous-mono"
-                                fontSize={{ base: 'xl', md: '2xl' }}
-                                color="fg"
-                            >
-                                {gameTime.replace(/\s?(AM|PM)$/i, ' ET')}
-                            </Text>
-                            <Text
-                                mt="2"
-                                fontSize="sm"
-                                color="fgMuted"
-                                letterSpacing="0.14em"
-                                textAlign="center"
-                                textTransform="uppercase"
-                            >
-                                {getCountdownLabel(game.gameTimeUTC)}
-                            </Text>
+                            <p className={styles.gameTime}>{gameTime.replace(/\s?(AM|PM)$/i, ' ET')}</p>
+                            <p className={styles.countdown}>{getCountdownLabel(game.gameTimeUTC)}</p>
                         </>
                     )}
-
                     {isLive && (
                         <>
-                            <Badge
-                                bg="live500"
-                                color="fgInverse"
-                                px="4"
-                                py="1"
-                                borderRadius="sm"
-                                fontSize="sm"
-                                letterSpacing="0.16em"
-                            >
-                                LIVE
-                            </Badge>
-                            <Flex
-                                mt="3"
-                                align="center"
-                                gap="2"
-                                fontFamily="tt-autonomous-mono"
-                                fontSize={{ base: 'xl', md: '2xl' }}
-                                color="live400"
-                                lineHeight="1"
-                            >
-                                <Text>Q{game.period ?? '-'}</Text>
-                                <Text fontSize="md" transform="translateY(-1px)">•</Text>
-                                <Text>{formattedClock ?? 'LIVE'}</Text>
-                            </Flex>
+                            <span className={styles.liveBadge}>LIVE</span>
+                            <div className={styles.liveInfo}>
+                                <span>Q{game.period ?? '-'}</span>
+                                <span className={styles.liveSep}>•</span>
+                                <span>{formattedClock ?? 'LIVE'}</span>
+                            </div>
                         </>
                     )}
-
                     {isFinal && (
-                        <>
-                            <Box
-                                px="4"
-                                py="1.5"
-                                border="1px solid"
-                                borderColor="lineStrong"
-                                borderRadius="sm"
-                            >
-                                <Text
-                                    fontSize="sm"
-                                    fontWeight="medium"
-                                    color="fg"
-                                    letterSpacing="0.22em"
-                                    textTransform="uppercase"
-                                    lineHeight="1"
-                                >
-                                    Final
-                                </Text>
-                            </Box>
-                        </>
+                        <div className={styles.finalBox}>
+                            <p className={styles.finalLabel}>Final</p>
+                        </div>
                     )}
-                </Flex>
+                </div>
 
                 <TeamPanel
                     team={game.awayTeam}
@@ -279,7 +129,7 @@ export default function Microtron({ game }) {
                     scoreOpacity={awayScoreOpacity}
                     teamStyle={awayStyle}
                 />
-            </Flex>
-        </Box>
+            </div>
+        </div>
     );
 }

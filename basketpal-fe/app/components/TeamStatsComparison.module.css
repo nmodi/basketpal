@@ -1,0 +1,41 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: large;
+}
+
+.table th, .table td {
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.table td:not(:first-child) {
+  text-align: left;
+}
+
+.header th {
+  font-size: 12px;
+  color: var(--fg-dim);
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.better {
+  color: var(--highlight);
+  font-weight: bold;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}

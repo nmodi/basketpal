@@ -1,10 +1,8 @@
-import { Flex, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import { useLoaderData, useParams, useRouteError, isRouteErrorResponse } from '@remix-run/react';
 import ErrorPage from '../components/ErrorPage';
 import { GameHeader } from '../components/Header';
 import { json } from '@remix-run/node';
 import { useEffect, useState, useRef } from 'react';
-// import { getMainColor, getSecondaryColor } from 'nba-color';
 
 import OnCourtPlayers from '../components/OnCourtPlayers';
 import Scoreboard from '../components/Scoreboard/Scoreboard';
@@ -14,19 +12,15 @@ import Postgame from '../components/Postgame';
 import axios from '../util/axios';
 import { toRouteError } from '../util/loaderError';
 import { getLeague, League } from '../util/league';
+import styles from '../styles/GamePage.module.css';
 
 export const meta = ({ data }) => {
     const game = data?.boxscore;
-    if (!game) {
-        return [{ title: 'Basketpal' }];
-    }
-
+    if (!game) return [{ title: 'Basketpal' }];
     const away = game.awayTeam;
     const home = game.homeTeam;
-    const title = `${away.teamTricode} @ ${home.teamTricode} | Basketpal`;
-
     return [
-        { title },
+        { title: `${away.teamTricode} @ ${home.teamTricode} | Basketpal` },
         { name: 'description', content: `${away.teamCity} ${away.teamName} vs ${home.teamCity} ${home.teamName}` },
     ];
 };
@@ -56,44 +50,52 @@ const Minitron = () => {
     const params = useParams();
     const league = getLeague(params.gameId);
     const [uiDelay, setUiDelay] = useState(0);
-    const [summary, setSummary] = useState(undefined); // undefined=loading, null=failed
+    const [summary, setSummary] = useState(undefined);
     const [preview, setPreview] = useState(undefined);
+    const [activeTab, setActiveTab] = useState(0);
 
-    const fetchInterval = 5000; 
+    const fetchInterval = 5000;
 
     const isGameStarted = gameData.gameStatus !== 1;
     const isGameInProgress = gameData.gameStatus === 2;
     const isGameOver = gameData.gameStatus === 3;
-    // Old FINAL games fall back to a historical data source with no on-court
-    // info; recently-finished games still have it from the live feed.
     const hasOnCourtData = gameData.homeTeam.onCourtPlayers?.length > 0 || gameData.awayTeam.onCourtPlayers?.length > 0;
 
-    
+    const tabs = [
+        !isGameStarted && { label: 'Game Preview', panel: <GamePreview gameData={gameData} preview={preview} /> },
+        isGameOver && { label: 'Postgame Report', panel: <Postgame gameData={gameData} summary={summary} league={league} /> },
+        isGameStarted && hasOnCourtData && {
+            label: 'On Court',
+            panel: (
+                <div className={styles.onCourtGrid}>
+                    <OnCourtPlayers gameData={gameData} isHome />
+                    <OnCourtPlayers gameData={gameData} />
+                </div>
+            )
+        },
+        isGameStarted && { label: 'Team Stats', panel: <TeamStatsComparison leftTeam={gameData.homeTeam} rightTeam={gameData.awayTeam} league={league} /> },
+    ].filter(Boolean);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 let response;
-
                 if (!isGameStarted) {
                     response = await axios.get(`/games/${params.gameId}`);
                 } else {
-                    response = await axios.get(`/games/${params.gameId}/boxscore`)
+                    response = await axios.get(`/games/${params.gameId}/boxscore`);
                 }
 
                 if (!isGameOver) {
                     const newData = response.data;
-
                     if (isGameInProgress) {
                         queueRef.current.push(newData);
                         const queueLength = (uiDelay / fetchInterval) - 1;
-
                         let nextData;
                         while (queueRef.current.length > queueLength) {
                             nextData = queueRef.current.shift();
                         }
-                        if (nextData) {
-                            setGameData(nextData);
-                        }
+                        if (nextData) setGameData(nextData);
                     } else {
                         setGameData(newData);
                     }
@@ -104,7 +106,6 @@ const Minitron = () => {
         };
 
         const interval = setInterval(fetchData, isGameStarted ? fetchInterval : 30000);
-
         return () => clearInterval(interval);
     }, [uiDelay, isGameStarted, isGameInProgress, isGameOver, params.gameId]);
 
@@ -124,86 +125,27 @@ const Minitron = () => {
         }
     }, [isGameStarted, params.gameId]);
 
-    const tabStyle = {
-        fontSize: 'sm',
-        fontWeight: 'bold',
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        color: 'fgMuted',
-        pb: '3',
-        mr: '6',
-        px: '0',
-        _selected: {
-            color: 'fg',
-            borderBottom: '2px solid',
-            borderColor: 'highlight',
-            mb: '-1px',
-        },
-        _hover: { color: 'fg' },
-    };
+    const safeTab = Math.min(activeTab, tabs.length - 1);
 
     return (
-        <Flex
-            justify="space-around"
-            align="center"
-            direction="column"
-            color="white"
-            fontFamily="tt-autonomous-mono"
-            pt="53px"
-        >
+        <div className={styles.page}>
             <GameHeader back={league === League.WNBA ? '/wnba' : '/'} />
-                    <Scoreboard gameData={gameData} uiDelay={uiDelay} setUiDelay={setUiDelay} />
-                    <Tabs
-                        variant="unstyled"
-                        width="90%"
-                        mx="auto"
-                    >
-                        <TabList
-                            borderBottom="1px solid"
-                            borderColor="line"
-                            mb="4"
+            <Scoreboard gameData={gameData} uiDelay={uiDelay} setUiDelay={setUiDelay} />
+            <div className={styles.tabsWrap}>
+                <div className={styles.tabList}>
+                    {tabs.map((tab, i) => (
+                        <button
+                            key={tab.label}
+                            className={`${styles.tab} ${safeTab === i ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab(i)}
                         >
-                            {!isGameStarted && <Tab {...tabStyle}>Game Preview</Tab>}
-                            {isGameOver && <Tab {...tabStyle}>Postgame Report</Tab>}
-                            {isGameStarted && hasOnCourtData && <Tab {...tabStyle}>On Court</Tab>}
-                            {isGameStarted && <Tab {...tabStyle}>Team Stats</Tab>}
-                        </TabList>
-
-                        <TabPanels>
-                            {!isGameStarted && (
-                                <TabPanel>
-                                    <GamePreview gameData={gameData} preview={preview} />
-                                </TabPanel>
-                            )}
-
-                            {isGameOver && (
-                                <TabPanel>
-                                    <Postgame gameData={gameData} summary={summary} league={league} />
-                                </TabPanel>
-                            )}
-
-                            {isGameStarted && hasOnCourtData && (
-                                <TabPanel>
-                                    <Flex gap="4" width="100%" alignItems="stretch">
-                                        <OnCourtPlayers gameData={gameData} isHome />
-                                        <OnCourtPlayers gameData={gameData} />
-                                    </Flex>
-                                </TabPanel>
-                            )}
-
-                            {isGameStarted && (
-                                <TabPanel>
-                                    <TeamStatsComparison
-                                        leftTeam={gameData.homeTeam}
-                                        rightTeam={gameData.awayTeam}
-                                        league={league} />
-                                </TabPanel>
-                            )}
-
-                        </TabPanels>
-                    </Tabs>
-
-        </Flex>
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+                {tabs[safeTab]?.panel}
+            </div>
+        </div>
     );
 };
 

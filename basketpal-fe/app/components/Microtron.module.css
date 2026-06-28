@@ -1,0 +1,199 @@
+.card {
+  position: relative;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-bottom: 12px;
+}
+
+.card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.colorBar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  z-index: 1;
+}
+
+.colorBarLeft { left: 0; }
+.colorBarRight { right: 0; }
+
+.body {
+  display: flex;
+  min-height: 138px;
+}
+
+.teamPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.teamPanelRight {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.teamPanelLeft {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.teamContent {
+  position: relative;
+}
+
+.tricode {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--fg-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.teamName {
+  margin: 4px 0 0;
+  font-family: monte-stella, sans-serif;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-size: 24px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.teamNameLong {
+  font-size: 20px;
+}
+
+.scoreBox {
+  position: relative;
+  margin-top: 12px;
+  background: var(--bg-sunken);
+  border-radius: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  width: fit-content;
+}
+
+.scoreBoxRight {
+  align-self: flex-end;
+}
+
+.scoreBoxLeft {
+  align-self: flex-start;
+}
+
+.scoreText {
+  font-family: tt-autonomous-mono, monospace;
+  font-size: 50px;
+  line-height: 0.9;
+  margin: 0;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28%;
+  padding: 16px 12px;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  background: var(--bg-sunken);
+}
+
+.gameTime {
+  font-family: tt-autonomous-mono, monospace;
+  font-size: 20px;
+  color: var(--fg);
+  margin: 0;
+}
+
+.countdown {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--fg-muted);
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+  margin: 8px 0 0;
+}
+
+.liveBadge {
+  background: var(--live-500);
+  color: var(--fg-inverse);
+  padding: 4px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  font-weight: bold;
+}
+
+.liveInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-family: tt-autonomous-mono, monospace;
+  font-size: 20px;
+  color: var(--live-400);
+  line-height: 1;
+}
+
+.liveSep {
+  font-size: 16px;
+  transform: translateY(-1px);
+}
+
+.finalBox {
+  padding: 6px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+}
+
+.finalLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .body { min-height: 150px; }
+  .teamPanel { padding: 20px 24px; }
+  .teamName { font-size: 30px; }
+  .teamNameLong { font-size: 24px; }
+  .scoreText { font-size: 60px; }
+.center { padding: 20px 16px; }
+  .gameTime { font-size: 24px; }
+  .liveInfo { font-size: 24px; }
+}

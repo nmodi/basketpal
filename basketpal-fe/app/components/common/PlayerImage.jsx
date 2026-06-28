@@ -1,25 +1,22 @@
-import { Image } from "@chakra-ui/react";
-
 import { League } from '../../util/league';
 
-const PlayerImage = ({playerId, league, ...rest}) => {
+const PlayerImage = ({playerId, league, style}) => {
+    const src = league === League.NBA ?
+        `https://cdn.nba.com/headshots/nba/latest/260x190/${playerId}.png` :
+        `https://cdn.wnba.com/headshots/wnba/latest/260x190/${playerId}.png`;
 
-    let src = league === League.NBA ?
-    `https://cdn.nba.com/headshots/nba/latest/260x190/${playerId}.png` :
-    `https://cdn.wnba.com/headshots/wnba/latest/260x190/${playerId}.png`
-
-    let fallbackSrc = league === League.NBA ?
-    `https://cdn.nba.com/headshots/nba/latest/260x190/fallback.png` :
-    `https://cdn.wnba.com/headshots/wnba/latest/260x190/fallback.png`
+    const fallbackSrc = league === League.NBA ?
+        `https://cdn.nba.com/headshots/nba/latest/260x190/fallback.png` :
+        `https://cdn.wnba.com/headshots/wnba/latest/260x190/fallback.png`;
 
     return (
-        <Image
+        <img
             src={src}
-            fallbackSrc={fallbackSrc}
-            m="0 auto"
-            {...rest}
+            onError={(e) => { e.currentTarget.src = fallbackSrc; }}
+            style={{ display: 'block', margin: '0 auto', ...style }}
+            alt=""
         />
-    )
-}
+    );
+};
 
 export default PlayerImage;

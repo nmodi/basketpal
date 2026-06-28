@@ -1,0 +1,122 @@
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 20px;
+  width: 80%;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: 15px;
+}
+
+.potgTitle {
+  font-size: 30px;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin: 0 0 8px;
+}
+
+.potgBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.potgName {
+  font-size: 36px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.potgStats {
+  display: flex;
+  gap: 0;
+}
+
+.potgStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.potgStatValue {
+  font-size: 24px;
+  margin: 0 0 -4px;
+}
+
+.potgStatName {
+  font-size: 14px;
+  margin: 0;
+}
+
+.storyTitle {
+  font-size: 30px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  font-weight: bold;
+}
+
+.storyBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: soleil, sans-serif;
+}
+
+.storyParagraph {
+  white-space: pre-line;
+  text-align: left;
+  text-indent: 2em;
+  margin: 0;
+}
+
+.keyMoments {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  align-items: flex-start;
+}
+
+.keyMoment {
+  font-size: 14px;
+  color: var(--fg-dim);
+  margin: 0;
+}
+
+.unavailable {
+  font-size: 14px;
+  color: var(--fg-dim);
+}
+
+.skeletonTitle {
+  height: 36px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--line-strong) 50%, var(--surface2) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--line-strong) 50%, var(--surface2) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}

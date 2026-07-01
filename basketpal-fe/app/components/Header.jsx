@@ -1,5 +1,20 @@
+import { useState } from 'react';
 import { Link } from '@remix-run/react';
+import { GearSix } from '@phosphor-icons/react';
 import styles from './Header.module.css';
+import SettingsModal from './SettingsModal';
+
+function SettingsButton() {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <button className={styles.iconBtn} onClick={() => setOpen(true)} aria-label="Settings">
+                <GearSix size={18} />
+            </button>
+            <SettingsModal open={open} onClose={() => setOpen(false)} />
+        </>
+    );
+}
 
 export function ScheduleHeader({ league }) {
     return (
@@ -13,6 +28,7 @@ export function ScheduleHeader({ league }) {
                     WNBA
                 </Link>
             </nav>
+            <SettingsButton />
         </header>
     );
 }
@@ -23,6 +39,7 @@ export function GameHeader({ back = '/' }) {
             <Link to={back} className={styles.label}>
                 ← SCHEDULE
             </Link>
+            <SettingsButton />
         </header>
     );
 }

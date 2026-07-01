@@ -36,3 +36,18 @@
   display: flex;
   gap: 20px;
 }
+
+.iconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fg-muted);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+
+.iconBtn:hover {
+  color: var(--fg);
+  transition: color 0.15s;
+}

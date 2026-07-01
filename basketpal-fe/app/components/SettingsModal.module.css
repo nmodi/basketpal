@@ -1,0 +1,120 @@
+.dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    width: 360px;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0;
+    color: var(--fg);
+}
+
+.dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.title {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.15em;
+    font-family: tt-autonomous-mono, monospace;
+    color: var(--fg);
+}
+
+.close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--fg-muted);
+    padding: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.close:hover {
+    color: var(--fg);
+}
+
+.body {
+    padding: 8px 0 20px;
+}
+
+.section {
+    padding: 12px 20px;
+}
+
+.section + .section {
+    border-top: 1px solid var(--line);
+}
+
+.sectionTitle {
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: tt-autonomous-mono, monospace;
+    color: var(--fg-dim);
+    margin: 0 0 12px;
+}
+
+.field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--fg);
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.field:last-child {
+    margin-bottom: 0;
+}
+
+.select {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--fg);
+    font-size: 13px;
+    padding: 4px 8px;
+    cursor: pointer;
+    max-width: 180px;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--line-strong);
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--fg);
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.toggle:last-child {
+    margin-bottom: 0;
+}
+
+.toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--highlight);
+}

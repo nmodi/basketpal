@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import styles from './GamePreview.module.css';
 import { getTeamStyle } from '../util/teamColorStrategy';
-import { NBA_TEAMS, WNBA_TEAMS } from '../util/settings';
+import { getTeamByTricode } from '../util/settings';
 
 dayjs.extend(relativeTime);
 
@@ -18,7 +18,7 @@ function statusBadge(status) {
 
 function InjuryTeamSection({ tricode, players }) {
     const dotColor = getTeamStyle(tricode).barColor;
-    const team = [...NBA_TEAMS, ...WNBA_TEAMS].find(t => t.abbr === tricode);
+    const team = getTeamByTricode(tricode);
     const teamLabel = team ? team.name.split(' ').pop() : tricode;
     return (
         <div className={styles.teamSection}>

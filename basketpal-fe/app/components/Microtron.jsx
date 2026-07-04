@@ -2,6 +2,7 @@ import { Trophy } from '@phosphor-icons/react';
 import { useNavigate } from "@remix-run/react";
 import dayjs from 'dayjs';
 import { getTeamStyle } from '../util/teamColorStrategy';
+import { formatGameClock, getScoreColor } from '../util/gameUtils';
 import { getLeague } from '../util/league';
 import styles from './Microtron.module.css';
 
@@ -19,28 +20,11 @@ function getCountdownLabel(gameTimeUTC) {
     return h > 0 ? `STARTS IN ${h}H ${m}M` : `STARTS IN ${m}M`;
 }
 
-function formatGameClock(gameClock) {
-    if (!gameClock) return null;
-    const match = /^PT(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(gameClock);
-    if (!match) return null;
-    const minutes = Number.parseInt(match[1] ?? '0', 10);
-    const seconds = Math.floor(Number.parseFloat(match[2] ?? '0'));
-    return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
 function getScoreOpacity(teamScore, otherTeamScore) {
     if (teamScore == null || otherTeamScore == null) return 1;
     if (teamScore > otherTeamScore) return 1;
     if (teamScore < otherTeamScore) return 0.45;
     return 0.7;
-}
-
-function getScoreColor(teamScore, otherTeamScore, isFinal) {
-    if (!isFinal) return 'var(--chyron-fg)';
-    if (teamScore == null || otherTeamScore == null) return 'var(--chyron-fg)';
-    if (teamScore > otherTeamScore) return 'var(--highlight)';
-    if (teamScore < otherTeamScore) return 'var(--fg-muted)';
-    return 'var(--chyron-fg)';
 }
 
 function TeamPanel({ team, align, isScheduled, isWinner, scoreColor, scoreOpacity, teamStyle }) {

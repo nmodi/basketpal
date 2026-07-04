@@ -3,7 +3,7 @@ from datetime import date
 from typing import List
 
 from src.config.logger import get_logger
-from src.core.entities.game import GameSnapshot, GameStatus
+from src.core.entities.game import GameSnapshot
 from src.core.entities.leagues import League
 from src.core.ports import NBAStatsProvider, StorageClient
 
@@ -25,24 +25,17 @@ class NBAStatsService:
         return games_by_date[0]["games"]
 
     def get_boxscore(self, game_id: str, delay: int = None) -> GameSnapshot:
+        # Serve the delayed Redis snapshot without paying for a live fetch;
+        # only fall through to the provider when no fresh snapshot exists
+        # (game not in progress, poller behind, or delay window elapsed).
+        if delay is not None:
+            result = self._storage_client.get_snapshot(game_id, delay)
+            if result is not None:
+                snapshot, snapshot_unix_time = result
+                if time.time() - snapshot_unix_time < delay * 2:
+                    return snapshot
 
-        game = self.nba_stats_provider.get_boxscore(game_id)
-
-        if game.gameStatus == GameStatus.FINAL or delay is None:
-            return game
-
-        result = self._storage_client.get_snapshot(game_id, delay)
-
-        if result is None:
-            return game
-
-        snapshot, snapshot_unix_time = result
-        time_since_snapshot = time.time() - snapshot_unix_time
-
-        if time_since_snapshot < delay * 2:
-            return snapshot
-
-        return game
+        return self.nba_stats_provider.get_boxscore(game_id)
 
     def get_playbyplay(self, game_id: str) -> dict:
         return self.nba_stats_provider.get_playbyplay(game_id)

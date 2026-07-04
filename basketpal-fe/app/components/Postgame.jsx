@@ -1,8 +1,7 @@
 import { getGameResult, getTopPlayers, evaluateKeysToTheWin } from '../util/gameUtils';
 import { getBestStats } from '../util/statFunctions';
 import PlayerImage from './common/PlayerImage';
-import { NBA_TEAMS, WNBA_TEAMS } from '../util/settings';
-import { League } from '../util/league';
+import { getTeamById } from '../util/settings';
 import styles from './Postgame.module.css';
 
 const KEY_STAT_META = {
@@ -29,8 +28,7 @@ export default function Postgame({ gameData, summary, league }) {
     const s = potg.stats;
     const keys = evaluateKeysToTheWin(winningTeam, losingTeam, 4);
 
-    const teams = league === League.NBA ? NBA_TEAMS : WNBA_TEAMS;
-    const teamColors = teams.find(t => t.id === winningTeam.teamId);
+    const teamColors = getTeamById(league, winningTeam.teamId);
 
     const maxPoints = Math.max(
         ...[...gameData.homeTeam.players, ...gameData.awayTeam.players].map(p => p.stats?.points ?? 0)

@@ -6,7 +6,7 @@ import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, date
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -22,7 +22,7 @@ from src.adapters.prompts import (
 )
 from src.common.formatting_utils import format_team_roster, format_pbp, format_period_scores
 from src.config.logger import get_logger
-from src.core.entities.leagues import League
+from src.core.entities.leagues import League, current_season
 from src.core.ports import ContentProvider, InjuriesProvider, StorageClient, NBAStatsProvider
 
 # Dedicated channel for content-generation I/O so it can be toggled without
@@ -480,12 +480,6 @@ class OpenRouterContentProvider(ContentProvider):
     _ROSTER_CACHE_TTL = 86400       # rosters change slowly
     _INJURIES_CACHE_TTL = 900       # injuries shift day-to-day
 
-    @staticmethod
-    def _current_season() -> str:
-        today = date.today()
-        year = today.year if today.month >= 10 else today.year - 1
-        return f"{year}-{str(year + 1)[-2:]}"
-
     def _cached(self, key: str, ttl: int, fn) -> any:
         cached = self.storage_client.get(key)
         if cached is not None:
@@ -691,8 +685,8 @@ class OpenRouterContentProvider(ContentProvider):
         home_name = f"{home.teamCity} {home.teamName}"
         away_name = f"{away.teamCity} {away.teamName}"
 
-        league = League.NBA if game_id.startswith("00") else League.WNBA
-        season = self._current_season()
+        league = League.from_game_id(game_id)
+        season = current_season()
 
         # Fan out the data calls; each degrades to an empty default on failure
         # so a single flaky feed doesn't block preview generation. Records come

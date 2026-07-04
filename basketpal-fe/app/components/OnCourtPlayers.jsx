@@ -1,6 +1,6 @@
 import { hasTripleDouble, tripleDoubleWatch, getTrueShootingPercentage } from '../util/statFunctions';
-import { getLeague, League } from '../util/league';
-import { NBA_TEAMS, WNBA_TEAMS } from '../util/settings';
+import { getLeague } from '../util/league';
+import { getTeamById } from '../util/settings';
 import PlayerImage from './common/PlayerImage';
 import styles from './OnCourtPlayers.module.css';
 
@@ -45,8 +45,7 @@ export default function OnCourtPlayers({ gameData, isHome }) {
     const otherTeam = isHome ? gameData.awayTeam : gameData.homeTeam;
     const onCourtPlayers = team.onCourtPlayers;
     const teamMargin = (team.score ?? 0) - (otherTeam.score ?? 0);
-    const teams = league === League.NBA ? NBA_TEAMS : WNBA_TEAMS;
-    const teamColors = teams.find(t => t.id === team.teamId);
+    const teamColors = getTeamById(league, team.teamId);
 
     return (
         <div

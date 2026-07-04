@@ -2,6 +2,23 @@ import { calculateGameScore, calculatePIE, getTrueShootingPercentage } from '../
 
 import { League } from './league';
 
+export const formatGameClock = (gameClock) => {
+    if (!gameClock) return null;
+    const match = /^PT(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(gameClock);
+    if (!match) return null;
+    const minutes = Number.parseInt(match[1] ?? '0', 10);
+    const seconds = Math.floor(Number.parseFloat(match[2] ?? '0'));
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+export const getScoreColor = (teamScore, otherTeamScore, isFinal) => {
+    if (!isFinal) return 'var(--chyron-fg)';
+    if (teamScore == null || otherTeamScore == null) return 'var(--chyron-fg)';
+    if (teamScore > otherTeamScore) return 'var(--highlight)';
+    if (teamScore < otherTeamScore) return 'var(--fg-muted)';
+    return 'var(--chyron-fg)';
+}
+
 export const getGameResult = (gameData) => {
 
     if (gameData.homeTeam.score > gameData.awayTeam.score) {

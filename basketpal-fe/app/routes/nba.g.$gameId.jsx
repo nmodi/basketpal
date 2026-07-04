@@ -78,6 +78,7 @@ const Minitron = () => {
     ].filter(Boolean);
 
     useEffect(() => {
+        if (isGameOver) return;
         const fetchData = async () => {
             try {
                 let response;
@@ -87,19 +88,17 @@ const Minitron = () => {
                     response = await axios.get(`/games/${params.gameId}/boxscore`);
                 }
 
-                if (!isGameOver) {
-                    const newData = response.data;
-                    if (isGameInProgress) {
-                        queueRef.current.push(newData);
-                        const queueLength = (uiDelay / fetchInterval) - 1;
-                        let nextData;
-                        while (queueRef.current.length > queueLength) {
-                            nextData = queueRef.current.shift();
-                        }
-                        if (nextData) setGameData(nextData);
-                    } else {
-                        setGameData(newData);
+                const newData = response.data;
+                if (isGameInProgress) {
+                    queueRef.current.push(newData);
+                    const queueLength = Math.max(0, uiDelay / fetchInterval - 1);
+                    let nextData;
+                    while (queueRef.current.length > queueLength) {
+                        nextData = queueRef.current.shift();
                     }
+                    if (nextData) setGameData(nextData);
+                } else {
+                    setGameData(newData);
                 }
             } catch (error) {
                 console.error('Failed to poll game data', error);

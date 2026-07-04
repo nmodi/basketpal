@@ -1,6 +1,6 @@
 import logging
 import time
-from datetime import datetime, date
+from datetime import datetime
 from functools import lru_cache
 
 import requests
@@ -9,7 +9,7 @@ from requests.exceptions import RequestException
 logger = logging.getLogger(__name__)
 
 from src.core.entities.game import GameSnapshot, GameStatus
-from src.core.entities.leagues import League
+from src.core.entities.leagues import League, current_season
 from src.core.ports.nba_stats_provider import NBAStatsProvider
 
 
@@ -52,54 +52,39 @@ def _normalize_result_set(data: dict, name: str) -> list:
     return []
 
 
-def _current_season() -> str:
-    today = date.today()
-    year = today.year if today.month >= 10 else today.year - 1
-    return f"{year}-{str(year + 1)[-2:]}"
-
-
 class NBAAPIStatsProvider(NBAStatsProvider):
 
     # Only works for current season
     def get_games_dt_range(self, start_dt, end_dt, league: League):
 
-        url = _get_schedule_url(league)
+        game_dates = _load_schedule(league)
 
-        response = requests.get(url, timeout=10, headers=_CDN_HEADERS)
-        if response.status_code == 200:
-            data = response.json()["leagueSchedule"]
-            game_dates = data["gameDates"]
+        filtered = []
+        for entry in game_dates:
+            entry_date = datetime.strptime(entry["gameDate"], "%m/%d/%Y %H:%M:%S").date()
 
-            filtered = []
-            for entry in game_dates:
-                entry_date = datetime.strptime(entry["gameDate"], "%m/%d/%Y %H:%M:%S").date()
+            if start_dt and entry_date < start_dt:
+                continue
+            if end_dt and entry_date > end_dt:
+                continue
 
-                if start_dt and entry_date < start_dt:
-                    continue
-                if end_dt and entry_date > end_dt:
-                    continue
+            games_on_date = []
+            for game_json in entry["games"]:
+                game = GameSnapshot.from_api(game_json)
+                if game.gameStatus == GameStatus.IN_PROGRESS:
+                    try:
+                        game_dict = _fetch_live_boxscore(game.gameId)
+                        game = GameSnapshot.from_api(game_dict)
+                    except Exception:
+                        logger.warning(f"Failed to fetch live boxscore for {game.gameId}, using schedule data")
+                games_on_date.append(game)
 
-                games_on_date = []
-                for game_json in entry["games"]:
-                    game = GameSnapshot.from_api(game_json)
-                    if game.gameStatus == GameStatus.IN_PROGRESS:
-                        try:
-                            game_dict = _fetch_live_boxscore(game.gameId)
-                            game = GameSnapshot.from_api(game_dict)
-                        except Exception:
-                            logger.warning(f"Failed to fetch live boxscore for {game.gameId}, using schedule data")
-                    games_on_date.append(game)
+            filtered.append({
+                "gameDate": entry_date,
+                "games": games_on_date
+            })
 
-                filtered.append({
-                    "gameDate": entry_date,
-                    "games": games_on_date
-                })
-
-            return filtered
-
-        raise RequestException(
-            f"Failed to fetch schedule for {league}: HTTP {response.status_code}"
-        )
+        return filtered
 
     def get_boxscore(self, game_id: str):
 
@@ -142,7 +127,7 @@ class NBAAPIStatsProvider(NBAStatsProvider):
     def get_roster(self, team_id):
         resp = requests.get(
             "https://stats.nba.com/stats/commonteamroster",
-            params={"TeamID": team_id, "Season": _current_season()},
+            params={"TeamID": team_id, "Season": current_season()},
             headers=_STATS_HEADERS,
             timeout=30,
         )
@@ -211,7 +196,7 @@ class NBAAPIStatsProvider(NBAStatsProvider):
 
 
 def _fetch_live_boxscore(game_id: str) -> dict:
-    is_wnba = not game_id.startswith("00")
+    is_wnba = League.from_game_id(game_id) is League.WNBA
     if is_wnba:
         url = f"https://cdn.wnba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"
         headers = {**_CDN_HEADERS, "Referer": "https://www.wnba.com/", "Origin": "https://www.wnba.com"}
@@ -371,18 +356,41 @@ def _get_schedule_url(league: League):
     return url
 
 
+# The full-season schedule JSON is large and was being re-downloaded on every
+# boxscore poll (every 5s per client, plus once per game per poller cycle).
+# It also carries game status, so the TTL stays short: a game tipping off is
+# seen as SCHEDULED for at most _SCHEDULE_CACHE_TTL seconds.
+_SCHEDULE_CACHE_TTL = 60
+_schedule_cache: dict = {}  # league -> (fetched_at, game_dates)
+
+
+def _load_schedule(league: League) -> list:
+    cached = _schedule_cache.get(league)
+    if cached and time.time() - cached[0] < _SCHEDULE_CACHE_TTL:
+        return cached[1]
+
+    response = requests.get(_get_schedule_url(league), timeout=10, headers=_CDN_HEADERS)
+    if response.status_code != 200:
+        raise RequestException(
+            f"Failed to fetch schedule for {league}: HTTP {response.status_code}"
+        )
+
+    game_dates = response.json()["leagueSchedule"]["gameDates"]
+    _schedule_cache[league] = (time.time(), game_dates)
+    return game_dates
+
+
 def _get_boxscore_from_schedule(game_id):
-    league = League.NBA if game_id.startswith("00") else League.WNBA
-    url = _get_schedule_url(league)
+    league = League.from_game_id(game_id)
 
-    response = requests.get(url, timeout=10, headers=_CDN_HEADERS)
-    if response.status_code == 200:
-        data = response.json()["leagueSchedule"]
-        game_dates = data["gameDates"]
+    try:
+        game_dates = _load_schedule(league)
+    except RequestException:
+        return None
 
-        for entry in game_dates:
-            for game_dict in entry["games"]:
-                if game_dict.get("gameId") == game_id:
-                    return GameSnapshot.from_api(game_dict)
+    for entry in game_dates:
+        for game_dict in entry["games"]:
+            if game_dict.get("gameId") == game_id:
+                return GameSnapshot.from_api(game_dict)
 
     return None

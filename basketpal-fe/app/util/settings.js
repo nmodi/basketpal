@@ -1,3 +1,5 @@
+import { League } from './league';
+
 const KEY = 'basketpal_settings';
 
 const DEFAULTS = {
@@ -57,6 +59,14 @@ export const WNBA_TEAMS = [
     { id: 1611661329, name: 'Seattle Storm', abbr: 'SEA', c1: '#2C5234', c2: '#FBE122' },
     { id: 1611661330, name: 'Washington Mystics', abbr: 'WAS', c1: '#002B5C', c2: '#C8102E' },
 ];
+
+export function getTeamById(league, teamId) {
+    return (league === League.WNBA ? WNBA_TEAMS : NBA_TEAMS).find(t => t.id === teamId);
+}
+
+export function getTeamByTricode(tricode) {
+    return [...NBA_TEAMS, ...WNBA_TEAMS].find(t => t.abbr === tricode);
+}
 
 export function getSettings() {
     if (typeof window === 'undefined') return DEFAULTS;

@@ -10,7 +10,7 @@ router = APIRouter(prefix="/games", tags=["Games"])
 
 
 @router.get("/upcoming")
-async def get_upcoming_games(
+def get_upcoming_games(
     league: str = None,
     start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),

@@ -1,4 +1,5 @@
 import { getTeamStyle } from '../../util/teamColorStrategy';
+import { formatGameClock, getScoreColor } from '../../util/gameUtils';
 import ScoreBreakdown from './ScoreBreakdown';
 import TeamScore from './TeamScore';
 import styles from './Scoreboard.module.css';
@@ -7,27 +8,10 @@ const DELAY_STEPS = [0, 10000, 30000, 45000, 60000, 90000, 120000];
 const DELAY_LABELS = ['NONE', '10S', '30S', '45S', '60S', '90S', '2MIN'];
 const DELAY_DISPLAY = ['None', '10s', '30s', '45s', '60s', '90s', '2 min'];
 
-function formatGameClock(gameClock) {
-    if (!gameClock) return null;
-    const match = /^PT(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(gameClock);
-    if (!match) return null;
-    const minutes = Number.parseInt(match[1] ?? '0', 10);
-    const seconds = Math.floor(Number.parseFloat(match[2] ?? '0'));
-    return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
 function getPeriodLabel(period) {
     if (!period) return null;
     const labels = ['1st Quarter', '2nd Quarter', '3rd Quarter', '4th Quarter', 'Overtime'];
     return labels[period - 1] ?? `${period - 4}OT`;
-}
-
-function getScoreColor(teamScore, otherTeamScore, isFinal) {
-    if (!isFinal) return 'var(--chyron-fg)';
-    if (teamScore == null || otherTeamScore == null) return 'var(--chyron-fg)';
-    if (teamScore > otherTeamScore) return 'var(--highlight)';
-    if (teamScore < otherTeamScore) return 'var(--fg-muted)';
-    return 'var(--chyron-fg)';
 }
 
 export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {

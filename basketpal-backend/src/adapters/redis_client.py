@@ -32,7 +32,13 @@ class RedisClient(StorageClient):
         key = f"game:{game.gameId}:snapshots"
         now = int(time.time())
 
-        self.redis.zadd(key, {game.model_dump_json(exclude_none=False): now})
+        pipe = self.redis.pipeline()
+        pipe.zadd(key, {game.model_dump_json(exclude_none=False): now})
+        # Only the delay feature reads history (max 120s lookback); trim the
+        # rest and expire the key so finished games don't live in Redis forever.
+        pipe.zremrangebyscore(key, "-inf", now - 180)
+        pipe.expire(key, 86400)
+        pipe.execute()
 
     def get_snapshot(self, game_id: str, delay: int = 20) -> tuple[GameSnapshot, float] | None:
 

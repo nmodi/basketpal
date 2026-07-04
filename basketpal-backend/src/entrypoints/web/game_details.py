@@ -25,64 +25,61 @@ def _get_boxscore_or_error(game_id: str, delay: int = None):
 
 
 @router.get("/")
-async def get_game_by_id(game_id: str, delay: int = None):
+def get_game_by_id(game_id: str, delay: int = None):
     return _get_boxscore_or_error(game_id, delay)
 
 
 @router.get("/boxscore")
-async def get_boxscore(game_id: str, delay: int = None):
+def get_boxscore(game_id: str, delay: int = None):
     return _get_boxscore_or_error(game_id, delay)
 
 
 @router.get("/playbyplay")
-async def get_playbyplay(game_id: str):
+def get_playbyplay(game_id: str):
     return nba_service.get_playbyplay(game_id)
 
 
-@router.get("/summary")
-async def get_summary(game_id: str, background_tasks: BackgroundTasks, refresh: bool = False):
-    key = f"game:{game_id}:summary"
+def _cached_or_generate(game_id: str, key_suffix: str, generate, background_tasks: BackgroundTasks, refresh: bool):
+    """Serve the cached content blob, or kick off background generation (202)."""
     if not refresh:
-        cached = storage_client.get(key)
+        cached = storage_client.get(f"game:{game_id}:{key_suffix}")
         if cached:
             return cached
     if game_id not in _generating:
         _generating.add(game_id)
         def _run():
             try:
-                content_provider.get_game_summary(game_id, force_refresh=refresh)
+                generate()
             except Exception:
                 traceback.print_exc()
             finally:
                 _generating.discard(game_id)
         background_tasks.add_task(_run)
     return Response(status_code=202)
+
+
+@router.get("/summary")
+def get_summary(game_id: str, background_tasks: BackgroundTasks, refresh: bool = False):
+    return _cached_or_generate(
+        game_id, "summary",
+        lambda: content_provider.get_game_summary(game_id, force_refresh=refresh),
+        background_tasks, refresh,
+    )
 
 
 @router.get("/matchup-preview")
-async def get_matchup_preview(game_id: str, background_tasks: BackgroundTasks, refresh: bool = False):
-    key = f"game:{game_id}:matchup-preview"
-    if not refresh:
-        cached = storage_client.get(key)
-        if cached:
-            return cached
-    if game_id not in _generating:
-        _generating.add(game_id)
-        def _run():
-            try:
-                content_provider.get_matchup_preview(game_id, force_refresh=refresh)
-            except Exception:
-                traceback.print_exc()
-            finally:
-                _generating.discard(game_id)
-        background_tasks.add_task(_run)
-    return Response(status_code=202)
+def get_matchup_preview(game_id: str, background_tasks: BackgroundTasks, refresh: bool = False):
+    return _cached_or_generate(
+        game_id, "matchup-preview",
+        lambda: content_provider.get_matchup_preview(game_id, force_refresh=refresh),
+        background_tasks, refresh,
+    )
 
 
 @router.get("/injuries")
-async def get_injuries(game_id: str):
+def get_injuries(game_id: str):
     snapshot = _get_boxscore_or_error(game_id)
-    league = League.WNBA if game_id.startswith("10") else League.NBA
+    league = League.from_game_id(game_id)
     all_injuries = injuries_provider.get_injuries(league)
     home_tc = snapshot.homeTeam.teamTricode
     away_tc = snapshot.awayTeam.teamTricode
@@ -93,7 +90,7 @@ async def get_injuries(game_id: str):
 
 
 @router.get("/model-comparison")
-async def get_model_comparison(game_id: str, refresh: bool = False):
+def get_model_comparison(game_id: str, refresh: bool = False):
     try:
         return content_provider.get_model_comparison(game_id, force_refresh=refresh)
     except NotImplementedError:

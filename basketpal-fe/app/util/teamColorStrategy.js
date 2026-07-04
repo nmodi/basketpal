@@ -149,7 +149,15 @@ export const TEAM_OVERRIDES = {
 
 // ─── public API ──────────────────────────────────────────────────────────────
 
+// Pure function of (tricode, strategyOverride), but getAllColors/getMainColor
+// rebuild the full nba-color dataset per call and this runs several times per
+// 5s poll render — cache the results.
+const styleCache = new Map();
+
 export function getTeamStyle(tricode, strategyOverride) {
+    const cacheKey = `${tricode}|${strategyOverride ?? ''}`;
+    if (styleCache.has(cacheKey)) return styleCache.get(cacheKey);
+
     let mainHex, accentHex;
     const isWnba = !!WNBA_COLORS[tricode];
     if (isWnba) {
@@ -162,7 +170,9 @@ export function getTeamStyle(tricode, strategyOverride) {
         accentHex = getBestAccent(mainHex, allHexes);
     }
     const strategyName = strategyOverride ?? (isWnba ? WNBA_TEAM_OVERRIDES[tricode] : TEAM_OVERRIDES[tricode]) ?? DEFAULT_STRATEGY;
-    return STRATEGIES[strategyName](mainHex, accentHex);
+    const style = STRATEGIES[strategyName](mainHex, accentHex);
+    styleCache.set(cacheKey, style);
+    return style;
 }
 
 export const STRATEGY_NAMES = Object.keys(STRATEGIES);

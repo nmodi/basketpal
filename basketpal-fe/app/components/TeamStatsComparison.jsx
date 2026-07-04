@@ -1,6 +1,49 @@
 import TeamIcon from './common/TeamIcon';
 import styles from './TeamStatsComparison.module.css';
 
+const countingRow = (title, key, extra) => ({
+    title,
+    statKeys: [key],
+    statFunction: (stats) => ({ formatted: stats[key], value: stats[key] }),
+    ...extra,
+});
+
+const shootingRow = (title, madeKey, attemptedKey) => ({
+    title,
+    statKeys: [madeKey, attemptedKey],
+    statFunction: (stats) => {
+        const made = stats[madeKey];
+        const attempted = stats[attemptedKey];
+        const percentage = attempted ? ((made / attempted) * 100).toFixed(1) : '0.0';
+        return { formatted: `${made} / ${attempted} (${percentage}%)`, value: parseFloat(percentage) };
+    },
+});
+
+const percentageRow = (title, key) => ({
+    title,
+    statKeys: [key],
+    statFunction: (stats) => ({ formatted: `${(stats[key] * 100).toFixed(1)}%`, value: stats[key] }),
+});
+
+const gameStatRows = [
+    countingRow("Offensive Rebounds", 'reboundsOffensive'),
+    countingRow("Rebounds", 'reboundsTotal'),
+    countingRow("Assists", 'assists'),
+    countingRow("Blocks", 'blocks'),
+    countingRow("Steals", 'steals'),
+    countingRow("Turnovers", 'turnovers', { isPositiveStat: false }),
+    shootingRow("Shooting", 'fieldGoalsMade', 'fieldGoalsAttempted'),
+    shootingRow("Free Throws", 'freeThrowsMade', 'freeThrowsAttempted'),
+    shootingRow("3PT Shooting", 'threePointersMade', 'threePointersAttempted'),
+    percentageRow("Field Goal %", 'fieldGoalsPercentage'),
+    percentageRow("Free Throw %", 'freeThrowsPercentage'),
+    percentageRow("3PT %", 'threePointersPercentage'),
+    countingRow("Bench Points", 'benchPoints'),
+    countingRow("Biggest Lead", 'biggestLead'),
+    countingRow("Points in the Paint", 'pointsInThePaint'),
+    countingRow("Fast Break Points", 'fastBreakPointsMade'),
+];
+
 export default function TeamStatsComparison({
     leftTeam,
     rightTeam,
@@ -8,105 +51,6 @@ export default function TeamStatsComparison({
     rightTeamStats = rightTeam.statistics,
     league
 }) {
-    const gameStatRows = [
-        {
-            title: "Offensive Rebounds",
-            statKeys: ['reboundsOffensive'],
-            statFunction: (stats) => ({ formatted: stats.reboundsOffensive, value: stats.reboundsOffensive })
-        },
-        {
-            title: "Rebounds",
-            statKeys: ['reboundsTotal'],
-            statFunction: (stats) => ({ formatted: stats.reboundsTotal, value: stats.reboundsTotal })
-        },
-        {
-            title: "Assists",
-            statKeys: ['assists'],
-            statFunction: (stats) => ({ formatted: stats.assists, value: stats.assists })
-        },
-        {
-            title: "Blocks",
-            statKeys: ['blocks'],
-            statFunction: (stats) => ({ formatted: stats.blocks, value: stats.blocks })
-        },
-        {
-            title: "Steals",
-            statKeys: ['steals'],
-            statFunction: (stats) => ({ formatted: stats.steals, value: stats.steals })
-        },
-        {
-            title: "Turnovers",
-            statKeys: ['turnovers'],
-            isPositiveStat: false,
-            statFunction: (stats) => ({ formatted: stats.turnovers, value: stats.turnovers })
-        },
-        {
-            title: "Shooting",
-            statKeys: ['fieldGoalsMade', 'fieldGoalsAttempted'],
-            statFunction: (stats) => {
-                const made = stats.fieldGoalsMade;
-                const attempted = stats.fieldGoalsAttempted;
-                const percentage = attempted ? ((made / attempted) * 100).toFixed(1) : '0.0';
-                return { formatted: `${made} / ${attempted} (${percentage}%)`, value: parseFloat(percentage) };
-            }
-        },
-        {
-            title: "Free Throws",
-            statKeys: ['freeThrowsMade', 'freeThrowsAttempted'],
-            statFunction: (stats) => {
-                const made = stats.freeThrowsMade;
-                const attempted = stats.freeThrowsAttempted;
-                const percentage = attempted ? ((made / attempted) * 100).toFixed(1) : '0.0';
-                return { formatted: `${made} / ${attempted} (${percentage}%)`, value: parseFloat(percentage) };
-            }
-        },
-        {
-            title: "3PT Shooting",
-            statKeys: ['threePointersMade', 'threePointersAttempted'],
-            statFunction: (stats) => {
-                const made = stats.threePointersMade;
-                const attempted = stats.threePointersAttempted;
-                const percentage = attempted ? ((made / attempted) * 100).toFixed(1) : '0.0';
-                return { formatted: `${made} / ${attempted} (${percentage}%)`, value: parseFloat(percentage) };
-            }
-        },
-        {
-            title: "Field Goal %",
-            statKeys: ['fieldGoalsPercentage'],
-            statFunction: (stats) => ({ formatted: `${(stats.fieldGoalsPercentage * 100).toFixed(1)}%`, value: stats.fieldGoalsPercentage })
-        },
-        {
-            title: "Free Throw %",
-            statKeys: ['freeThrowsPercentage'],
-            statFunction: (stats) => ({ formatted: `${(stats.freeThrowsPercentage * 100).toFixed(1)}%`, value: stats.freeThrowsPercentage })
-        },
-        {
-            title: "3PT %",
-            statKeys: ['threePointersPercentage'],
-            statFunction: (stats) => ({ formatted: `${(stats.threePointersPercentage * 100).toFixed(1)}%`, value: stats.threePointersPercentage })
-        },
-        {
-            title: "Bench Points",
-            statKeys: ['benchPoints'],
-            statFunction: (stats) => ({ value: stats.benchPoints, formatted: stats.benchPoints })
-        },
-        {
-            title: "Biggest Lead",
-            statKeys: ['biggestLead'],
-            statFunction: (stats) => ({ value: stats.biggestLead, formatted: stats.biggestLead })
-        },
-        {
-            title: "Points in the Paint",
-            statKeys: ['pointsInThePaint'],
-            statFunction: (stats) => ({ value: stats.pointsInThePaint, formatted: stats.pointsInThePaint })
-        },
-        {
-            title: "Fast Break Points",
-            statKeys: ['fastBreakPointsMade'],
-            statFunction: (stats) => ({ value: stats.fastBreakPointsMade, formatted: stats.fastBreakPointsMade })
-        }
-    ];
-
     const filteredRows = gameStatRows.filter(
         row => row.statKeys.every(key => Object.prototype.hasOwnProperty.call(leftTeamStats, key) && Object.prototype.hasOwnProperty.call(rightTeamStats, key))
     );

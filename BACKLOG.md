@@ -1,8 +1,9 @@
 # Backlog
 
 ## Preferences
-- Favorite teams
-- AI preferences
+- wire Favorite teams
+- wire AI preferences
+
 
 ## Schedule Screen
 - filter by favorite team 
@@ -14,8 +15,6 @@
 - jump to today
 
 ## Pregame
-- update ui
-- injuries
 - keys to the game
 
 ## Game
@@ -28,5 +27,4 @@
 - show delay on live indicator maybe
 
 ## Postgame
-- update ui 
 

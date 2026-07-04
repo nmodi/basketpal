@@ -52,6 +52,7 @@ const Minitron = () => {
     const [uiDelay, setUiDelay] = useState(0);
     const [summary, setSummary] = useState(undefined);
     const [preview, setPreview] = useState(undefined);
+    const [injuries, setInjuries] = useState(undefined);
     const [activeTab, setActiveTab] = useState(0);
 
     const fetchInterval = 5000;
@@ -62,7 +63,7 @@ const Minitron = () => {
     const hasOnCourtData = gameData.homeTeam.onCourtPlayers?.length > 0 || gameData.awayTeam.onCourtPlayers?.length > 0;
 
     const tabs = [
-        !isGameStarted && { label: 'Game Preview', panel: <GamePreview gameData={gameData} preview={preview} /> },
+        !isGameStarted && { label: 'Game Preview', panel: <GamePreview gameData={gameData} preview={preview} injuries={injuries} /> },
         isGameOver && { label: 'Postgame Report', panel: <Postgame gameData={gameData} summary={summary} league={league} /> },
         isGameStarted && hasOnCourtData && {
             label: 'On Court',
@@ -141,6 +142,13 @@ const Minitron = () => {
         return () => { stopped = true; clearTimeout(timeoutId); };
     }, [isGameStarted, params.gameId]);
 
+    useEffect(() => {
+        if (isGameStarted) return;
+        axios.get(`/games/${params.gameId}/injuries`)
+            .then(r => setInjuries(r.data))
+            .catch(() => setInjuries(null));
+    }, [isGameStarted, params.gameId]);
+
     const safeTab = Math.min(activeTab, tabs.length - 1);
 
     return (
@@ -148,17 +156,19 @@ const Minitron = () => {
             <GameHeader back={league === League.WNBA ? '/wnba' : '/'} />
             <Scoreboard gameData={gameData} uiDelay={uiDelay} setUiDelay={setUiDelay} />
             <div className={styles.tabsWrap}>
-                <div className={styles.tabList}>
-                    {tabs.map((tab, i) => (
-                        <button
-                            key={tab.label}
-                            className={`${styles.tab} ${safeTab === i ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab(i)}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
+                {tabs.length > 1 && (
+                    <div className={styles.tabList}>
+                        {tabs.map((tab, i) => (
+                            <button
+                                key={tab.label}
+                                className={`${styles.tab} ${safeTab === i ? styles.tabActive : ''}`}
+                                onClick={() => setActiveTab(i)}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
                 {tabs[safeTab]?.panel}
             </div>
         </div>

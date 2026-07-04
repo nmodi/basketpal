@@ -1,6 +1,6 @@
-import { getTeamStyle } from '../util/teamColorStrategy';
 import { hasTripleDouble, tripleDoubleWatch, getTrueShootingPercentage } from '../util/statFunctions';
-import { getLeague } from '../util/league';
+import { getLeague, League } from '../util/league';
+import { NBA_TEAMS, WNBA_TEAMS } from '../util/settings';
 import PlayerImage from './common/PlayerImage';
 import styles from './OnCourtPlayers.module.css';
 
@@ -44,17 +44,24 @@ export default function OnCourtPlayers({ gameData, isHome }) {
     const team = isHome ? gameData.homeTeam : gameData.awayTeam;
     const otherTeam = isHome ? gameData.awayTeam : gameData.homeTeam;
     const onCourtPlayers = team.onCourtPlayers;
-    const teamStyle = getTeamStyle(team.teamTricode);
     const teamMargin = (team.score ?? 0) - (otherTeam.score ?? 0);
+    const teams = league === League.NBA ? NBA_TEAMS : WNBA_TEAMS;
+    const teamColors = teams.find(t => t.id === team.teamId);
 
     return (
-        <div className={styles.container}>
-            <div className={styles.teamHeader} style={{ background: teamStyle.getGradient('right') }}>
-                <p className={styles.teamHeaderTitle} style={{ color: teamStyle.nameColor }}>
-                    {team.teamName} · On Court
-                </p>
+        <div
+            className={styles.container}
+            style={teamColors && { '--team-c1': teamColors.c1, '--team-c2': teamColors.c2 }}
+        >
+            <div className={styles.teamHeader}>
+                <span
+                    className={styles.teamChip}
+                    style={teamColors && { background: teamColors.c1, color: teamColors.c2 }}
+                >
+                    {team.teamTricode}
+                </span>
+                <p className={styles.teamHeaderTitle}>On Court</p>
             </div>
-            <div className={styles.colorBar} style={{ background: teamStyle.barColor }} />
 
             <table className={styles.table}>
                 <thead>

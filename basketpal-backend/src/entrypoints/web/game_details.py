@@ -3,7 +3,8 @@ import traceback
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Response
 from requests.exceptions import RequestException
 
-from src.config.dependencies import content_provider, nba_service, storage_client
+from src.config.dependencies import content_provider, injuries_provider, nba_service, storage_client
+from src.core.entities.leagues import League
 
 _generating: set[str] = set()
 
@@ -76,6 +77,19 @@ async def get_matchup_preview(game_id: str, background_tasks: BackgroundTasks, r
                 _generating.discard(game_id)
         background_tasks.add_task(_run)
     return Response(status_code=202)
+
+
+@router.get("/injuries")
+async def get_injuries(game_id: str):
+    snapshot = _get_boxscore_or_error(game_id)
+    league = League.WNBA if game_id.startswith("10") else League.NBA
+    all_injuries = injuries_provider.get_injuries(league)
+    home_tc = snapshot.homeTeam.teamTricode
+    away_tc = snapshot.awayTeam.teamTricode
+    return {
+        "home": {"tricode": home_tc, "players": [i for i in all_injuries if i["team_tricode"] == home_tc]},
+        "away": {"tricode": away_tc, "players": [i for i in all_injuries if i["team_tricode"] == away_tc]},
+    }
 
 
 @router.get("/model-comparison")

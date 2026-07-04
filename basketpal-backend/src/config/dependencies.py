@@ -16,7 +16,7 @@ if os.environ.get("MOCK_DATA", "").lower() in ("1", "true", "yes"):
     storage_client: StorageClient = NullStorageClient()
     nba_stats_provider: NBAStatsProvider = MockNBAStatsProvider()
     injuries_provider: InjuriesProvider = MockInjuriesProvider()
-    content_provider: ContentProvider = MockContentProvider()
+    content_provider: ContentProvider = MockContentProvider(storage_client)
 else:
     from src.adapters import RedisClient, OpenRouterContentProvider, NBAAPIStatsProvider, ESPNInjuriesProvider
 

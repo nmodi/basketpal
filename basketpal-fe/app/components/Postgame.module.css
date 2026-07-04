@@ -1,81 +1,339 @@
 .grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.topRow {
   display: grid;
-  grid-template-columns: 2fr 3fr;
+  grid-template-columns: 3fr 2fr;
   gap: 20px;
-  width: 80%;
+  align-items: stretch;
 }
 
-.left {
+.keysRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* --- player of the game --- */
+
+.potgCard {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.potgCard::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--team-c1, #1d428a), var(--team-c2, #f58426));
+}
+
+.potgHeader {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.card {
-  background: var(--surface);
-  padding: 16px;
-  border-radius: 15px;
-}
-
-.potgTitle {
-  font-size: 30px;
-  text-transform: uppercase;
-  font-weight: bold;
-  margin: 0 0 8px;
-}
-
-.potgBody {
-  display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.teamChip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: tt-autonomous-mono, monospace;
+  background: var(--surface2);
+}
+
+.potgHeaderTitle {
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.potgHero {
+  display: flex;
+  gap: 20px;
+  padding: 20px 16px;
+}
+
+.potgPhoto {
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.potgMeta {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  margin: 4px 0 6px;
 }
 
 .potgName {
-  font-size: 36px;
+  font-size: 30px;
+  font-weight: bold;
   text-transform: uppercase;
-  margin: 0;
+  margin: 0 0 12px;
 }
 
-.potgStats {
-  display: flex;
-  gap: 0;
-}
-
-.potgStat {
+.badges {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 0 16px;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.potgStatValue {
-  font-size: 24px;
-  margin: 0 0 -4px;
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: tt-autonomous-mono, monospace;
 }
 
-.potgStatName {
-  font-size: 14px;
+.badgeHot {
+  border-color: #7c5a2b;
+  background: rgba(245, 132, 38, 0.08);
+}
+
+/* --- stat row --- */
+
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.statCell {
+  padding: 14px 8px;
+  text-align: center;
+}
+
+.statCell + .statCell {
+  border-left: 1px solid var(--line);
+}
+
+.statValue {
+  font-size: 26px;
   margin: 0;
+}
+
+.statLabel {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-dim);
+  margin: 2px 0 0;
+}
+
+.plusMinus {
+  color: var(--highlight);
+}
+
+/* --- shooting bars --- */
+
+.shooting {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 16px;
+}
+
+.shootingRow {
+  display: grid;
+  grid-template-columns: 72px 1fr 62px 46px;
+  align-items: center;
+  gap: 12px;
+}
+
+.shootingLabel {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-dim);
+}
+
+.shootingBar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+
+.shootingFill {
+  height: 100%;
+  border-radius: 3px;
+  background: #2f6fb3;
+}
+
+.shootingFrac {
+  font-size: 13px;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.shootingPct {
+  font-size: 14px;
+  font-family: tt-autonomous-mono, monospace;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* --- keys to the win --- */
+
+.keysHeading {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.keyCard {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.keyTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.keyTitle {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-muted);
+  padding-top: 4px;
+}
+
+.keyDiff {
+  text-align: right;
+}
+
+.keyDiffValue {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.keyDiffUnit {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-dim);
+  margin: 0;
+}
+
+.keyCompare {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.keyTeamWin {
+  font-size: 13px;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.keyTeamLose {
+  font-size: 13px;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
+
+.keyBar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+
+.keyBarFill {
+  height: 100%;
+  border-radius: 3px;
+  background: #2f6fb3;
+}
+
+/* --- game story --- */
+
+.storyCard {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 28px 32px;
+}
+
+.storyLabel {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-muted);
+  margin: 0 0 16px;
 }
 
 .storyTitle {
-  font-size: 30px;
-  text-transform: uppercase;
-  margin: 0 0 8px;
-  font-weight: bold;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 20px;
 }
 
 .storyBody {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   font-family: soleil, sans-serif;
 }
 
 .storyParagraph {
   white-space: pre-line;
   text-align: left;
-  text-indent: 2em;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-muted);
   margin: 0;
 }
 
@@ -83,7 +341,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 16px;
+  margin-top: 20px;
   align-items: flex-start;
 }
 
@@ -96,6 +354,7 @@
 .unavailable {
   font-size: 14px;
   color: var(--fg-dim);
+  margin: 0;
 }
 
 .skeletonTitle {

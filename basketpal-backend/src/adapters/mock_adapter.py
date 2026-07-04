@@ -111,13 +111,24 @@ class NullStorageClient:
 
 
 class MockInjuriesProvider:
-    """No-op injuries provider so MOCK_DATA mode wires cleanly."""
+    _INJURIES = [
+        {"team_tricode": "LAL", "player_name": "LeBron James", "status": "Questionable", "injury_type": "Ankle", "return_type": None},
+        {"team_tricode": "LAL", "player_name": "Anthony Davis", "status": "Probable", "injury_type": "Back", "return_type": None},
+        {"team_tricode": "GSW", "player_name": "Stephen Curry", "status": "Out", "injury_type": "Knee", "return_type": None},
+        {"team_tricode": "GSW", "player_name": "Draymond Green", "status": "Questionable", "injury_type": "Foot", "return_type": None},
+        {"team_tricode": "BOS", "player_name": "Kristaps Porzingis", "status": "Probable", "injury_type": "Right calf", "return_type": None},
+        {"team_tricode": "BOS", "player_name": "Jrue Holiday", "status": "Probable", "injury_type": "Shoulder", "return_type": None},
+        {"team_tricode": "MIA", "player_name": "Jimmy Butler", "status": "Out", "injury_type": "Knee", "return_type": None},
+    ]
 
     def get_injuries(self, league: League) -> list:
-        return []
+        return self._INJURIES
 
 
 class MockContentProvider:
+    def __init__(self, storage_client):
+        self._storage = storage_client
+
     _SUMMARIES = {
         _GAME_IDS["final"]: {
             "headline": "Jokic's triple-double powers Nuggets past Clippers",
@@ -148,12 +159,14 @@ class MockContentProvider:
     }
 
     def get_game_summary(self, game_id: str, force_refresh: bool = False) -> dict:
-        return self._SUMMARIES.get(game_id, {
+        result = self._SUMMARIES.get(game_id, {
             "headline": "Summary unavailable.",
             "recap": "Summary unavailable.",
             "keyMoments": [],
             "playerOfTheGame": None,
         })
+        self._storage.save(f"game:{game_id}:summary", result)
+        return result
 
     def get_model_comparison(self, game_id: str, force_refresh: bool = False) -> list[dict]:
         raise NotImplementedError("Model comparison is not supported by MockContentProvider")
@@ -199,9 +212,11 @@ class MockContentProvider:
     }
 
     def get_matchup_preview(self, game_id: str, force_refresh: bool = False) -> dict:
-        return self._PREVIEWS.get(game_id, {
+        result = self._PREVIEWS.get(game_id, {
             "headline": "Preview unavailable in mock mode.",
             "preview": "Preview unavailable in mock mode.",
             "playersToWatch": [],
             "storylines": [],
         })
+        self._storage.save(f"game:{game_id}:matchup-preview", result)
+        return result

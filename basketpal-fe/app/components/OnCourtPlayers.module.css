@@ -7,22 +7,41 @@
   box-shadow: 0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
+.container::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--team-c1, var(--line-strong)), var(--team-c2, var(--line-strong)));
+}
+
 .teamHeader {
   padding: 16px 20px;
   display: flex;
   align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.teamChip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: tt-autonomous-mono, monospace;
+  background: var(--surface2);
+  flex-shrink: 0;
 }
 
 .teamHeaderTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: bold;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin: 0;
-}
-
-.colorBar {
-  height: 4px;
 }
 
 .table {
@@ -94,7 +113,7 @@
 }
 
 .tdStat {
-  padding: 6px 16px;
+  padding: 3px 16px;
   color: var(--fg);
   font-size: 18px;
   font-weight: 600;

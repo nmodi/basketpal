@@ -4,7 +4,8 @@
     left: 50%;
     transform: translate(-50%, -50%);
     margin: 0;
-    width: 360px;
+    width: 480px;
+    max-width: calc(100vw - 32px);
     background: var(--bg-raised);
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -20,14 +21,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
+    padding: 24px;
     border-bottom: 1px solid var(--line);
 }
 
 .title {
-    font-size: 12px;
+    font-size: 24px;
     font-weight: bold;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.12em;
     font-family: tt-autonomous-mono, monospace;
     color: var(--fg);
 }
@@ -46,12 +47,8 @@
     color: var(--fg);
 }
 
-.body {
-    padding: 8px 0 20px;
-}
-
 .section {
-    padding: 12px 20px;
+    padding: 20px 24px;
 }
 
 .section + .section {
@@ -59,62 +56,211 @@
 }
 
 .sectionTitle {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: bold;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     font-family: tt-autonomous-mono, monospace;
     color: var(--fg-dim);
-    margin: 0 0 12px;
+    margin: 0 0 16px;
 }
 
-.field {
+.teamRow {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    font-size: 14px;
-    color: var(--fg);
-    cursor: pointer;
-    margin-bottom: 10px;
+    gap: 16px;
+    margin-bottom: 12px;
 }
 
-.field:last-child {
+.teamRow:last-child {
     margin-bottom: 0;
 }
 
-.select {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    color: var(--fg);
-    font-size: 13px;
-    padding: 4px 8px;
-    cursor: pointer;
-    max-width: 180px;
+.leagueLabel {
+    width: 56px;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    font-family: tt-autonomous-mono, monospace;
 }
 
-.select:focus {
+.teamSelect {
+    position: relative;
+    flex: 1;
+}
+
+.selectButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--fg);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.selectButton:focus-visible {
     outline: none;
     border-color: var(--line-strong);
 }
 
-.toggle {
+.chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    font-family: tt-autonomous-mono, monospace;
+    flex-shrink: 0;
+}
+
+.teamName {
+    font-size: 16px;
+    color: var(--fg);
+}
+
+.teamNone {
+    font-size: 16px;
+    color: var(--fg-dim);
+    line-height: 40px;
+}
+
+.caret {
+    margin-left: auto;
+    color: var(--fg-dim);
+    flex-shrink: 0;
+}
+
+.options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 8px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: var(--fg);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.option:hover,
+.option:focus-visible {
+    background: var(--surface2);
+    outline: none;
+}
+
+.optionSelected {
+    background: var(--surface2);
+}
+
+.option .chip {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+}
+
+.option .teamNone {
+    line-height: 28px;
+}
+
+.feature {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 24px;
+    padding: 14px 0;
+    cursor: pointer;
+}
+
+.feature + .feature {
+    border-top: 1px solid var(--line);
+}
+
+.featureTitle {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.featureDesc {
     font-size: 14px;
-    color: var(--fg);
-    cursor: pointer;
-    margin-bottom: 10px;
+    color: var(--fg-muted);
+    line-height: 1.4;
 }
 
-.toggle:last-child {
-    margin-bottom: 0;
+.checkbox {
+    appearance: none;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0;
 }
 
-.toggle input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+.checkbox:checked {
+    background: var(--highlight);
+    border-color: var(--highlight);
+}
+
+.checkbox:checked::after {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 11px;
+    border: solid var(--bg);
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+    margin: 4px auto 0;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 24px 24px;
+}
+
+.save {
+    background: var(--fg);
+    color: var(--bg);
+    border: none;
+    border-radius: 4px;
+    padding: 12px 32px;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 0.15em;
+    font-family: tt-autonomous-mono, monospace;
     cursor: pointer;
-    accent-color: var(--highlight);
+}
+
+.save:hover {
+    background: var(--fg-inverse);
 }

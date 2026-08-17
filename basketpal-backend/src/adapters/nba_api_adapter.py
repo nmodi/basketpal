@@ -130,7 +130,7 @@ class NBAAPIStatsProvider(NBAStatsProvider):
     def get_roster(self, team_id):
         resp = requests.get(
             "https://stats.nba.com/stats/commonteamroster",
-            params={"TeamID": team_id, "Season": current_season()},
+            params={"TeamID": team_id, "Season": current_season(League.from_team_id(team_id))},
             headers=_STATS_HEADERS,
             timeout=30,
         )
@@ -183,19 +183,28 @@ class NBAAPIStatsProvider(NBAStatsProvider):
         return _normalize_result_set(data, "LeagueDashPlayerStats")
 
     def get_team_game_log(self, team_id, season, league_id):
-        # teamgamelog — that team's game-by-game log (WL, matchup, margin). The
-        # MATCHUP field ("BOS vs. LAL" / "BOS @ LAL") lets the caller pull both
-        # recent form and the season head-to-head from a single fetch per team.
+        # teamgamelogs — that team's game-by-game log. Unlike the older
+        # teamgamelog endpoint it includes PLUS_MINUS, so callers can recover
+        # the opponent's score (PTS - PLUS_MINUS). The MATCHUP field
+        # ("BOS vs. LAL" / "BOS @ LAL") carries opponent and venue. Like the
+        # league*dash* family, it 500s unless the full filter param set is sent.
         data = _stats_get(
-            "teamgamelog",
+            "teamgamelogs",
             {
                 "TeamID": team_id,
                 "Season": season,
                 "LeagueID": league_id,
                 "SeasonType": "Regular Season",
+                "MeasureType": "", "PerMode": "", "DateFrom": "", "DateTo": "",
+                "GameSegment": "", "LastNGames": "", "Location": "", "Month": "",
+                "OppTeamID": "", "Outcome": "", "PORound": "", "Period": "",
+                "PlayerID": "", "SeasonSegment": "", "ShotClockRange": "",
+                "VsConference": "", "VsDivision": "",
             },
         )
-        return _normalize_result_set(data, "TeamGameLog")
+        rows = _normalize_result_set(data, "TeamGameLogs")
+        # Endpoint returns newest→oldest; callers expect oldest→newest.
+        return list(reversed(rows))
 
 
 def _fetch_live_boxscore(game_id: str) -> dict:

@@ -622,37 +622,41 @@ class OpenRouterContentProvider(ContentProvider):
         return "; ".join(parts)
 
     @staticmethod
-    def _form(gamelog: list) -> str:
+    def _opp_pts(g: dict) -> int | None:
+        pts, pm = g.get("PTS"), g.get("PLUS_MINUS")
+        if pts is None or pm is None:
+            return None
+        return int(pts - pm)
+
+    @classmethod
+    def _form(cls, gamelog: list) -> str:
         if not gamelog:
             return "No data"
-        # teamgamelog is oldest→newest; surface most recent first.
+        # gamelog is oldest→newest; surface most recent first.
         recent = list(reversed(gamelog))[:5]
         parts = []
         for g in recent:
             wl = g.get("WL", "?")
             matchup = g.get("MATCHUP", "")
             pts = g.get("PTS")
-            parts.append(f"{wl} {matchup} {pts}" if pts is not None else f"{wl} {matchup}")
+            opp = cls._opp_pts(g)
+            if pts is not None and opp is not None:
+                parts.append(f"{wl} {matchup} {pts}-{opp}")
+            else:
+                parts.append(f"{wl} {matchup}")
         return ", ".join(parts)
 
-    @staticmethod
-    def _h2h(home_gamelog: list, away_gamelog: list, away_tri: str, home_tri: str,
+    @classmethod
+    def _h2h(cls, home_gamelog: list, away_tri: str, home_tri: str,
              home_name: str, away_name: str) -> str:
-        # teamgamelog carries only the logging team's PTS (no margin/opponent
-        # score), so join the two teams' logs on Game_ID to recover both scores.
-        home_meetings = {g.get("Game_ID"): g for g in home_gamelog
-                         if away_tri in (g.get("MATCHUP") or "")}
-        if not home_meetings:
+        meetings = [g for g in home_gamelog if away_tri in (g.get("MATCHUP") or "")]
+        if not meetings:
             return f"{home_name} and {away_name} have not met this season."
-        away_by_gid = {g.get("Game_ID"): g for g in away_gamelog
-                       if home_tri in (g.get("MATCHUP") or "")}
-        wins = sum(1 for g in home_meetings.values() if g.get("WL") == "W")
-        losses = len(home_meetings) - wins
-        # home_meetings preserves gamelog (oldest→newest) order, so the last key
-        # is the most recent meeting.
-        last_gid = list(home_meetings)[-1]
-        hp = home_meetings[last_gid].get("PTS")
-        ap = away_by_gid.get(last_gid, {}).get("PTS")
+        wins = sum(1 for g in meetings if g.get("WL") == "W")
+        losses = len(meetings) - wins
+        # gamelog is oldest→newest, so the last entry is the most recent meeting.
+        last = meetings[-1]
+        hp, ap = last.get("PTS"), cls._opp_pts(last)
         score = "score unavailable"
         if hp is not None and ap is not None:
             score = f"{home_tri} {hp}, {away_tri} {ap}"
@@ -686,7 +690,7 @@ class OpenRouterContentProvider(ContentProvider):
         away_name = f"{away.teamCity} {away.teamName}"
 
         league = League.from_game_id(game_id)
-        season = current_season()
+        season = current_season(league)
 
         # Fan out the data calls; each degrades to an empty default on failure
         # so a single flaky feed doesn't block preview generation. Records come
@@ -737,7 +741,7 @@ class OpenRouterContentProvider(ContentProvider):
             "away_road_record": self._gamelog_venue_record(away_gamelog, is_home=False),
             "home_form": self._form(home_gamelog),
             "away_form": self._form(away_gamelog),
-            "h2h": self._h2h(home_gamelog, away_gamelog, away_tri, home_tri, home_name, away_name),
+            "h2h": self._h2h(home_gamelog, away_tri, home_tri, home_name, away_name),
             "home_team_stats": self._team_stats_line(home_ts),
             "away_team_stats": self._team_stats_line(away_ts),
             "home_leaders": self._leaders(home_players),

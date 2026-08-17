@@ -32,8 +32,8 @@ _STATS_HEADERS = {
 }
 
 # cdn.nba.com (schedule + live boxscore feeds) rejects bare requests with HTTP
-# 403 — it needs a browser fingerprint too. A lighter set than _STATS_HEADERS
-# suffices; keep it in sync with the stats one if blocks reappear.
+# 403 — it needs a browser fingerprint too. The Sec-Fetch-* trio is the part
+# Akamai actually enforces here; without it every cdn.nba.com request 403s.
 _CDN_HEADERS = {
     "User-Agent": _STATS_HEADERS["User-Agent"],
     "Accept": "application/json, text/plain, */*",
@@ -41,6 +41,9 @@ _CDN_HEADERS = {
     "Accept-Encoding": "gzip, deflate, br",
     "Referer": "https://www.nba.com/",
     "Origin": "https://www.nba.com",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-site",
 }
 
 

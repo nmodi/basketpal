@@ -5,6 +5,7 @@ import random
 import re
 import threading
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
@@ -16,9 +17,13 @@ from src.adapters.prompts import (
     SYSTEM_PROMPT,
     KEY_MOMENTS_SYSTEM_PROMPT,
     MATCHUP_PREVIEW_SYSTEM_PROMPT,
+    AGENT_PREVIEW_SYSTEM_PROMPT,
+    AGENT_RECAP_SYSTEM_PROMPT,
     build_key_moments_prompt,
     build_story_prompt,
     build_matchup_preview_prompt,
+    build_agent_preview_prompt,
+    build_agent_recap_prompt,
 )
 from src.common.formatting_utils import format_team_roster, format_pbp, format_period_scores
 from src.config.logger import get_logger
@@ -162,6 +167,117 @@ COMPARISON_MODEL_SPECS = [
     ("Qwen", "qwen/qwen3.7-plus"),
 ]
 
+# --- Agentic generation -----------------------------------------------------
+# Pregame previews and postgame recaps run as a tool-calling loop: the model
+# researches the game through the tools below, then submits the report via the
+# terminal submit_report tool (whose parameter schema IS the output schema).
+# If the loop fails for every model in AGENT_MODELS, the caller falls back to
+# the original single-shot pipeline. The static pipeline has its own 3-model
+# fallback chain, so the default here is a single tool-reliable model.
+AGENT_MODELS = [
+    m.strip()
+    for m in os.environ.get("AGENT_MODELS", "anthropic/claude-haiku-4.5").split(",")
+    if m.strip()
+]
+AGENT_MAX_ITERATIONS = 10
+AGENT_MAX_FACT_CHECK_RETRIES = 2
+
+
+def _tool_spec(name: str, description: str, per_team: bool = False) -> dict:
+    params: dict = {"type": "object", "properties": {}, "required": []}
+    if per_team:
+        params["properties"]["team"] = {
+            "type": "string",
+            "enum": ["home", "away"],
+            "description": "Which side of this game.",
+        }
+        params["required"] = ["team"]
+    return {"type": "function", "function": {"name": name, "description": description, "parameters": params}}
+
+
+_PREVIEW_SUBMIT_SPEC = {
+    "type": "function",
+    "function": {
+        "name": "submit_report",
+        "description": "Submit the final game preview. Call exactly once, after researching.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "headline": {"type": "string"},
+                "preview": {"type": "string"},
+                "playersToWatch": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string"}, "reason": {"type": "string"}},
+                        "required": ["name", "reason"],
+                    },
+                },
+                "storylines": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["headline", "preview", "playersToWatch", "storylines"],
+        },
+    },
+}
+
+_RECAP_SUBMIT_SPEC = {
+    "type": "function",
+    "function": {
+        "name": "submit_report",
+        "description": "Submit the final game recap. Call exactly once, after researching.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "headline": {"type": "string"},
+                "recap": {"type": "string"},
+                "playerOfTheGame": {
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}, "reason": {"type": "string"}},
+                    "required": ["name", "reason"],
+                },
+            },
+            "required": ["headline", "recap", "playerOfTheGame"],
+        },
+    },
+}
+
+PREVIEW_TOOLS = [
+    _tool_spec("get_team_season_stats", "Season record, win %, and per-game team stat line.", per_team=True),
+    _tool_spec("get_recent_form", "Last-10 record, current streak, home/road record, and last-5 results.", per_team=True),
+    _tool_spec("get_head_to_head", "This season's series between the two teams and the last meeting's score."),
+    _tool_spec("get_team_leaders", "Top three scorers with season averages.", per_team=True),
+    _tool_spec("get_roster", "Player names on the roster.", per_team=True),
+    _tool_spec("get_injuries", "Current injury report.", per_team=True),
+    _PREVIEW_SUBMIT_SPEC,
+]
+
+RECAP_TOOLS = [
+    _tool_spec("get_period_scores", "Quarter-by-quarter scoring for this game."),
+    _tool_spec("get_scoring_runs", "Runs of 8+ unanswered points in this game (ground truth)."),
+    _tool_spec("get_key_moments", "The most narratively significant plays of this game."),
+    _tool_spec("get_roster", "Player names on the roster.", per_team=True),
+    _tool_spec("get_recent_form", "Recent form entering this game.", per_team=True),
+    _RECAP_SUBMIT_SPEC,
+]
+
+# Fact-check regexes. Score pairs only count when both numbers look like
+# full-game totals, so run scores ("a 10-2 run") pass through.
+_SCORE_PAIR_RE = re.compile(r"\b(\d{2,3})\s*[-–]\s*(\d{2,3})\b")
+_NAME_RUN_RE = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+")
+_STAT_CLAIM_RE = re.compile(r"(\d+)\s+(?:\w+\s+)?(points|rebounds|assists)\b", re.IGNORECASE)
+_GENERIC_CAP_WORDS = {
+    "The", "A", "An", "In", "Of", "And", "On", "At", "To", "For", "With",
+    "Player", "Game", "Games", "Quarter", "Half", "Finals", "Playoff", "Playoffs",
+    "MVP", "NBA", "WNBA", "All", "Star", "Conference", "Season", "Series",
+    "Play", "Tournament", "Regular", "Preseason", "Jr", "Sr", "II", "III", "IV",
+}
+
+
+def _ascii(s: str) -> str:
+    # Roster names carry accents ("Dončić") that models often drop; normalize
+    # both sides so that doesn't read as an invented player.
+    return unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode()
+
 
 class OpenRouterContentProvider(ContentProvider):
     def __init__(
@@ -191,20 +307,30 @@ class OpenRouterContentProvider(ContentProvider):
 
         context = self._build_game_context(game_id)
         records = []
-        key_moments = self._extract_key_moments(
-            context["cleaned_pbp"], context["scoring_runs"], records=records
-        )
-        prompt = build_story_prompt(context, key_moments)
-
-        recap = self._call_with_fallback(
-            system=SYSTEM_PROMPT,
-            prompt=prompt,
-            models=[self.model, *STORY_FALLBACK_MODELS],
-            validate=lambda r: r.get("headline") and r.get("recap"),
-            label="story",
-            records=records,
-        )
-        recap["keyMoments"] = key_moments
+        memo = {}
+        try:
+            recap, log = self._agent_recap(game_id, context, records, memo)
+            recap["researchLog"] = log
+        except Exception:
+            content_logger.warning("agent story failed for %s, using static path", game_id, exc_info=True)
+            if "key_moments" not in memo:
+                memo["key_moments"] = self._extract_key_moments(
+                    context["cleaned_pbp"], context["scoring_runs"], records=records
+                )
+            prompt = build_story_prompt(context, memo["key_moments"])
+            recap = self._call_with_fallback(
+                system=SYSTEM_PROMPT,
+                prompt=prompt,
+                models=[self.model, *STORY_FALLBACK_MODELS],
+                validate=lambda r: r.get("headline") and r.get("recap"),
+                label="story",
+                records=records,
+            )
+        if "key_moments" not in memo:
+            memo["key_moments"] = self._extract_key_moments(
+                context["cleaned_pbp"], context["scoring_runs"], records=records
+            )
+        recap["keyMoments"] = memo["key_moments"]
 
         _write_io_file(game_id, "summary", records)
         self.storage_client.save(key, recap)
@@ -218,18 +344,22 @@ class OpenRouterContentProvider(ContentProvider):
             if cached:
                 return cached
 
-        context = self._build_preview_context(game_id)
         records = []
-        prompt = build_matchup_preview_prompt(context)
-
-        preview = self._call_with_fallback(
-            system=MATCHUP_PREVIEW_SYSTEM_PROMPT,
-            prompt=prompt,
-            models=[self.model, *STORY_FALLBACK_MODELS],
-            validate=lambda r: r.get("headline") and r.get("preview") and r.get("playersToWatch") is not None,
-            label="preview",
-            records=records,
-        )
+        try:
+            preview, log = self._agent_preview(game_id, records)
+            preview["researchLog"] = log
+        except Exception:
+            content_logger.warning("agent preview failed for %s, using static path", game_id, exc_info=True)
+            context = self._build_preview_context(game_id)
+            prompt = build_matchup_preview_prompt(context)
+            preview = self._call_with_fallback(
+                system=MATCHUP_PREVIEW_SYSTEM_PROMPT,
+                prompt=prompt,
+                models=[self.model, *STORY_FALLBACK_MODELS],
+                validate=lambda r: r.get("headline") and r.get("preview") and r.get("playersToWatch") is not None,
+                label="preview",
+                records=records,
+            )
 
         _write_io_file(game_id, "matchup-preview", records)
         self.storage_client.save(key, preview)
@@ -342,6 +472,7 @@ class OpenRouterContentProvider(ContentProvider):
         cleaned_pbp, scoring_runs = format_pbp(pbp)
 
         return {
+            "game": game,
             "home_team": home_team,
             "away_team": away_team,
             "home_team_score": home_team_score,
@@ -440,6 +571,361 @@ class OpenRouterContentProvider(ContentProvider):
             if status == "ok":
                 return result
         raise last_exc or RuntimeError(f"All {label} generation models failed")
+
+    # --- Agent loop -------------------------------------------------------
+
+    def _run_agent(
+        self,
+        *,
+        system: str,
+        user_prompt: str,
+        tools: list[dict],
+        tool_impls: dict,
+        models: list[str],
+        validate,
+        fact_check,
+        label: str,
+        records: list | None = None,
+        max_iterations: int = AGENT_MAX_ITERATIONS,
+    ) -> tuple[dict, list]:
+        """Tool-calling research loop. Returns (report, research_log); raises
+        if every model fails, in which case the caller falls back to the
+        single-shot pipeline."""
+        last_exc = None
+        for model in models:
+            try:
+                return self._run_agent_once(
+                    model=model, system=system, user_prompt=user_prompt,
+                    tools=tools, tool_impls=tool_impls, validate=validate,
+                    fact_check=fact_check, label=label, records=records,
+                    max_iterations=max_iterations,
+                )
+            except Exception as exc:
+                last_exc = exc
+                content_logger.warning("agent %s failed with %s: %s", label, model, exc)
+        raise last_exc or RuntimeError(f"All agent models failed for {label}")
+
+    def _run_agent_once(
+        self, *, model, system, user_prompt, tools, tool_impls,
+        validate, fact_check, label, records, max_iterations,
+    ) -> tuple[dict, list]:
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_prompt},
+        ]
+        research_log = []
+        nudged = False
+        rejected_reports = 0
+
+        for step in range(1, max_iterations + 1):
+            start = time.perf_counter()
+            response = self.client.chat.completions.create(
+                model=model,
+                temperature=0.5,
+                max_tokens=2000,
+                tools=tools,
+                messages=messages,
+            )
+            latency = time.perf_counter() - start
+            msg = response.choices[0].message
+            if records is not None:
+                if msg.tool_calls:
+                    raw = json.dumps([
+                        {"name": tc.function.name, "arguments": tc.function.arguments}
+                        for tc in msg.tool_calls
+                    ])
+                else:
+                    raw = msg.content
+                records.append(_make_call_record(
+                    f"agent {label} step {step}", model, system,
+                    user_prompt if step == 1 else f"<agent conversation, step {step}>",
+                    raw_output=raw, parsed=None, latency_s=latency,
+                    usage=getattr(response, "usage", None), status="ok",
+                    finish_reason=getattr(response.choices[0], "finish_reason", None),
+                ))
+            messages.append(msg)
+
+            if not msg.tool_calls:
+                if nudged:
+                    raise RuntimeError(f"{model} stopped calling tools during {label}")
+                nudged = True
+                messages.append({
+                    "role": "user",
+                    "content": "Use the tools to research, then call submit_report with the final report.",
+                })
+                continue
+
+            for tc in msg.tool_calls:
+                name = tc.function.name
+                try:
+                    args = json.loads(tc.function.arguments or "{}")
+                except Exception as exc:
+                    self._append_tool_result(messages, tc, f"error: invalid arguments: {exc}")
+                    continue
+
+                if name == "submit_report":
+                    problems = [] if validate(args) else ["report is missing required fields"]
+                    if not problems and fact_check is not None:
+                        problems = fact_check(args)
+                    if not problems:
+                        content_logger.info(
+                            "Agent %s: %s submitted report after %d steps, %d tool calls",
+                            label, model, step, len(research_log),
+                        )
+                        return args, research_log
+                    rejected_reports += 1
+                    research_log.append({
+                        "tool": "fact_check", "args": {},
+                        "summary": "; ".join(problems)[:140], "ms": 0,
+                    })
+                    content_logger.info("Agent %s: report rejected → %s", label, "; ".join(problems))
+                    if rejected_reports > AGENT_MAX_FACT_CHECK_RETRIES:
+                        raise RuntimeError(
+                            f"{model} failed report validation {rejected_reports} times during {label}"
+                        )
+                    self._append_tool_result(
+                        messages, tc, "error: fix these and resubmit: " + "; ".join(problems)
+                    )
+                    continue
+
+                impl = tool_impls.get(name)
+                tool_start = time.perf_counter()
+                if impl is None:
+                    result = f"error: unknown tool {name}"
+                else:
+                    try:
+                        result = str(impl(**args))
+                    except Exception as exc:
+                        result = f"error: {exc}"
+                ms = int((time.perf_counter() - tool_start) * 1000)
+                self._append_tool_result(messages, tc, result)
+                summary = result.replace("\n", " ")[:140]
+                research_log.append({"tool": name, "args": args, "summary": summary, "ms": ms})
+                content_logger.info("Agent %s: %s(%s) → %s", label, name, args, summary[:80])
+
+        raise RuntimeError(f"{model} hit the {max_iterations}-step cap during {label}")
+
+    @staticmethod
+    def _append_tool_result(messages: list, tc, content: str) -> None:
+        messages.append({"role": "tool", "tool_call_id": tc.id, "content": content})
+
+    def _recent_form_line(self, team_id, is_home: bool, season, league) -> str:
+        gl = self._fetch_game_log(team_id, season, league)
+        venue_label = "Home" if is_home else "Road"
+        return (
+            f"Last 10: {self._gamelog_last10(gl)} | Streak: {self._gamelog_streak(gl)} | "
+            f"{venue_label}: {self._gamelog_venue_record(gl, is_home=is_home)} | "
+            f"Recent: {self._form(gl)}"
+        )
+
+    def _agent_preview(self, game_id, records: list) -> tuple[dict, list]:
+        game = self.nba_stats_provider.get_boxscore(game_id)
+        home, away = game.homeTeam, game.awayTeam
+        home_name = f"{home.teamCity} {home.teamName}"
+        away_name = f"{away.teamCity} {away.teamName}"
+        league = League.from_game_id(game_id)
+        season = current_season(league)
+        teams = {"home": home, "away": away}
+
+        def season_stats(team):
+            ts = self._find_row(self._fetch_team_stats(season, league), "TEAM_ID", teams[team].teamId)
+            return f"{self._dash_record(ts)} ({self._dash_winpct(ts)}) — {self._team_stats_line(ts)}"
+
+        def recent_form(team):
+            return self._recent_form_line(teams[team].teamId, team == "home", season, league)
+
+        def head_to_head():
+            home_gl = self._fetch_game_log(home.teamId, season, league)
+            return self._h2h(home_gl, away.teamTricode, home.teamTricode, home_name, away_name)
+
+        def team_leaders(team):
+            rows = [
+                r for r in self._fetch_player_stats(season, league)
+                if str(r.get("TEAM_ID")) == str(teams[team].teamId)
+            ]
+            return self._leaders(rows)
+
+        def roster(team):
+            names = format_team_roster(self._fetch_roster(teams[team].teamId))
+            return ", ".join(names) if names else "No roster data"
+
+        def injuries(team):
+            rows = [
+                r for r in self._fetch_injuries(league)
+                if r.get("team_tricode") == teams[team].teamTricode
+            ]
+            return self._injuries_line(rows)
+
+        roster_names = set(
+            format_team_roster(self._fetch_roster(home.teamId))
+            + format_team_roster(self._fetch_roster(away.teamId))
+        )
+        context = {
+            "home_team": home_name,
+            "away_team": away_name,
+            "game_type": self._get_game_type(game_id),
+            "series_line": f"\nSERIES: {game.seriesText}" if game.seriesText else "",
+            "game_time": game.gameTimeUTC or "",
+        }
+        return self._run_agent(
+            system=AGENT_PREVIEW_SYSTEM_PROMPT,
+            user_prompt=build_agent_preview_prompt(context),
+            tools=PREVIEW_TOOLS,
+            tool_impls={
+                "get_team_season_stats": season_stats,
+                "get_recent_form": recent_form,
+                "get_head_to_head": head_to_head,
+                "get_team_leaders": team_leaders,
+                "get_roster": roster,
+                "get_injuries": injuries,
+            },
+            models=AGENT_MODELS,
+            validate=lambda r: r.get("headline") and r.get("preview") and r.get("playersToWatch") is not None,
+            fact_check=lambda r: self._check_preview_facts(r, roster_names),
+            label="preview",
+            records=records,
+        )
+
+    def _agent_recap(self, game_id, context: dict, records: list, memo: dict) -> tuple[dict, list]:
+        game = context["game"]
+        league = League.from_game_id(game_id)
+        season = current_season(league)
+        teams = {"home": game.homeTeam, "away": game.awayTeam}
+
+        def key_moments():
+            if "key_moments" not in memo:
+                memo["key_moments"] = self._extract_key_moments(
+                    context["cleaned_pbp"], context["scoring_runs"], records=records
+                )
+            lines = [
+                f"Q{m.get('quarter')} {m.get('time')} — {m.get('player')}: {m.get('description')}"
+                for m in memo["key_moments"]
+            ]
+            return "\n".join(lines) or "No key moments identified"
+
+        def roster(team):
+            names = context["cleaned_home_roster"] if team == "home" else context["cleaned_visitor_roster"]
+            return ", ".join(names) if names else "No roster data"
+
+        def recent_form(team):
+            return self._recent_form_line(teams[team].teamId, team == "home", season, league)
+
+        roster_names = set(context["cleaned_home_roster"]) | set(context["cleaned_visitor_roster"])
+        return self._run_agent(
+            system=AGENT_RECAP_SYSTEM_PROMPT,
+            user_prompt=build_agent_recap_prompt(context),
+            tools=RECAP_TOOLS,
+            tool_impls={
+                "get_period_scores": lambda: context["cleaned_period_scores"],
+                "get_scoring_runs": lambda: json.dumps(context["scoring_runs"]),
+                "get_key_moments": key_moments,
+                "get_roster": roster,
+                "get_recent_form": recent_form,
+            },
+            models=AGENT_MODELS,
+            validate=lambda r: r.get("headline") and r.get("recap"),
+            fact_check=lambda r: self._check_recap_facts(r, game, roster_names),
+            label="story",
+            records=records,
+        )
+
+    # --- Deterministic fact-checking ---------------------------------------
+    # Pure-Python checks run on every submit_report; failures go back to the
+    # model as a tool result so it can correct and resubmit.
+
+    @classmethod
+    def _check_recap_facts(cls, report: dict, game, roster_names: set) -> list[str]:
+        problems = []
+        text = _ascii(f"{report.get('headline') or ''} {report.get('recap') or ''}")
+        home, away = game.homeTeam, game.awayTeam
+        home_score = home.score if home.score is not None else sum(home.periodScores)
+        away_score = away.score if away.score is not None else sum(away.periodScores)
+
+        final = {home_score, away_score}
+        for a, b in _SCORE_PAIR_RE.findall(text):
+            a, b = int(a), int(b)
+            if a >= 50 and b >= 50 and {a, b} != final:
+                problems.append(
+                    f"score {a}-{b} does not match the final score {home_score}-{away_score}"
+                )
+        if str(home_score) not in text or str(away_score) not in text:
+            problems.append(f"the recap must state the final score {home_score}-{away_score}")
+
+        problems += cls._invented_name_problems(text, roster_names, game)
+
+        players = {
+            _ascii(p.name): p
+            for team in (home, away) for p in team.players if p.name
+        }
+        potg_field = report.get("playerOfTheGame")
+        if potg_field is not None and not isinstance(potg_field, dict):
+            problems.append("playerOfTheGame must be an object with 'name' and 'reason' fields")
+            potg_field = None
+        potg = _ascii((potg_field or {}).get("name") or "")
+        if potg:
+            player = players.get(potg)
+            if player is None:
+                if roster_names and potg not in {_ascii(n) for n in roster_names}:
+                    problems.append(f"playerOfTheGame '{potg}' is not on either roster")
+            elif not re.search(r"[1-9]", (player.stats.minutes if player.stats else "") or ""):
+                problems.append(f"playerOfTheGame '{potg}' did not play in this game")
+
+        # ponytail: stat claims only checked when exactly one player is named in
+        # the sentence; multi-player sentences are skipped as ambiguous.
+        stat_fields = {"points": "points", "rebounds": "reboundsTotal", "assists": "assists"}
+        for sentence in re.split(r"[.\n]", text):
+            named = [
+                p for name, p in players.items()
+                if p.stats and name.split()[-1] in sentence
+            ]
+            if len(named) != 1:
+                continue
+            for value, stat in _STAT_CLAIM_RE.findall(sentence):
+                actual = getattr(named[0].stats, stat_fields[stat.lower()])
+                if int(value) != actual:
+                    problems.append(
+                        f"the recap says {named[0].name} had {value} {stat.lower()} "
+                        f"but the boxscore shows {actual}"
+                    )
+        return problems
+
+    @staticmethod
+    def _invented_name_problems(text: str, roster_names: set, game) -> list[str]:
+        if not roster_names:
+            return []  # no roster data — can't judge names
+        allowed = set(_GENERIC_CAP_WORDS)
+        for name in roster_names:
+            allowed.update(w.strip(".,") for w in _ascii(name).split())
+        for team in (game.homeTeam, game.awayTeam):
+            allowed.update(_ascii(team.teamCity).split())
+            allowed.update(_ascii(team.teamName).split())
+            allowed.add(team.teamTricode)
+        problems = []
+        for run in _NAME_RUN_RE.findall(text):
+            # ponytail: token-level check — a fabricated pairing of two real
+            # surnames slips through; full-phrase matching if that ever matters.
+            if any(w.strip(".,") not in allowed for w in run.split()):
+                problems.append(f"'{run}' is not a player on either roster")
+        return problems
+
+    @staticmethod
+    def _check_preview_facts(report: dict, roster_names: set) -> list[str]:
+        problems = []
+        allowed = {_ascii(n) for n in roster_names}
+        for p in report.get("playersToWatch") or []:
+            if not isinstance(p, dict):
+                problems.append("each playersToWatch entry must be an object with 'name' and 'reason' fields")
+                continue
+            name = p.get("name") or ""
+            if name and allowed and _ascii(name) not in allowed:
+                problems.append(f"playersToWatch '{name}' is not on either roster")
+        text = _ascii(f"{report.get('headline') or ''} {report.get('preview') or ''}")
+        for a, b in _SCORE_PAIR_RE.findall(text):
+            if int(a) >= 50 and int(b) >= 50:
+                problems.append(
+                    f"the preview states a score ({a}-{b}) but the game has not been played"
+                )
+        return problems
 
     @staticmethod
     def _get_game_type(game_id: str) -> str:

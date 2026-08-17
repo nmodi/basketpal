@@ -1,6 +1,7 @@
 import { getGameResult, getTopPlayers, evaluateKeysToTheWin } from '../util/gameUtils';
 import { getBestStats } from '../util/statFunctions';
 import PlayerImage from './common/PlayerImage';
+import ResearchLog from './ResearchLog';
 import { getTeamById } from '../util/settings';
 import styles from './Postgame.module.css';
 
@@ -71,6 +72,7 @@ export default function Postgame({ gameData, summary, league }) {
                                     ))}
                                 </div>
                             )}
+                            {summary.researchLog?.length > 0 && <ResearchLog log={summary.researchLog} />}
                         </>
                     ) : (
                         <p className={styles.unavailable}>Article unavailable</p>

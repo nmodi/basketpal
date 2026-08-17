@@ -149,6 +149,12 @@ class MockContentProvider:
                 "name": "Nikola Jokic",
                 "reason": "Recorded a triple-double and controlled the game on both ends.",
             },
+            "researchLog": [
+                {"tool": "get_period_scores", "args": {}, "summary": "Q1: DEN 32, LAC 28 | Q2: DEN 30, LAC 22 | Q3: DEN 28, LAC 26 | Q4: DEN 28, LAC 28", "ms": 2},
+                {"tool": "get_scoring_runs", "args": {}, "summary": '[{"team": "DEN", "points": 12, "startQ": 2, "endQ": 2}]', "ms": 1},
+                {"tool": "get_key_moments", "args": {}, "summary": "Q2 04:12 — Jamal Murray: Back-to-back threes cap a 12-0 Denver run", "ms": 3814},
+                {"tool": "get_roster", "args": {"team": "home"}, "summary": "Nikola Jokic, Jamal Murray, Michael Porter Jr., Aaron Gordon, ...", "ms": 2},
+            ],
         },
         _GAME_IDS["in_progress"]: {
             "headline": "Game is still in progress.",
@@ -207,6 +213,12 @@ class MockContentProvider:
                 "Three-point volume vs. paint efficiency — can the Warriors outscore the Lakers' size?",
                 "Home-court edge: the Lakers have been tough to beat in their building.",
                 "Fourth-quarter execution — which star closes under pressure?",
+            ],
+            "researchLog": [
+                {"tool": "get_team_season_stats", "args": {"team": "home"}, "summary": "32-14 (.696) — 116.8 PTS, 45.2 REB, 27.1 AST, 0.492 FG%, 0.371 3P%, 13.2 TOV", "ms": 214},
+                {"tool": "get_recent_form", "args": {"team": "away"}, "summary": "Last 10: 6-4 | Streak: W2 | Road: 12-11 | Recent: W GSW @ PHX 121-113, L GSW @ DEN 98-110", "ms": 187},
+                {"tool": "get_head_to_head", "args": {}, "summary": "Season series: LAL 2-1 GSW. Last meeting: LAL 124, GSW 118.", "ms": 156},
+                {"tool": "get_injuries", "args": {"team": "away"}, "summary": "Stephen Curry (Out, Knee); Draymond Green (Questionable, Foot)", "ms": 98},
             ],
         },
     }

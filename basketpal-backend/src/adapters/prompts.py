@@ -41,6 +41,31 @@ Rules you must follow:
 """
 
 
+_AGENT_RESEARCH_ADDENDUM = """
+You have research tools. Call the tools you need to gather facts before writing —
+do not invent data you have not fetched. Do not repeat a call with identical arguments.
+When you are done researching, call submit_report exactly once with the final report.
+"""
+
+AGENT_PREVIEW_SYSTEM_PROMPT = MATCHUP_PREVIEW_SYSTEM_PROMPT + _AGENT_RESEARCH_ADDENDUM
+AGENT_RECAP_SYSTEM_PROMPT = SYSTEM_PROMPT + _AGENT_RESEARCH_ADDENDUM
+
+# Shared field constraints so the static prompts and the agent prompts can't drift.
+HEADLINE_RULE = "punchy, specific, under 80 characters"
+RECAP_BODY_RULE = (
+    "exactly 3 short paragraphs (4-6 sentences total, under 600 characters). "
+    "Para 1: game summary and winner. Para 2: key turning point or run. "
+    "Para 3: standout player and closing thought. Do NOT repeat yourself or "
+    "restate the same point; stop once the recap is complete."
+)
+PREVIEW_BODY_RULE = (
+    "exactly 3 short paragraphs (4-6 sentences total, under 600 characters). "
+    "Para 1: matchup stakes and records. Para 2: recent form and head-to-head "
+    "storyline. Para 3: players to watch and what to expect. Do not repeat "
+    "yourself; stop once complete."
+)
+
+
 def build_key_moments_prompt(cleaned_pbp: list[dict], scoring_runs: list[dict]) -> str:
     lead_change_plays = [e for e in cleaned_pbp if "lead_change" in e["tags"] or "tie" in e["tags"]]
     run_plays = [e for e in cleaned_pbp if "run" in e["tags"]]
@@ -100,8 +125,8 @@ KEY MOMENTS:
 OUTPUT FORMAT:
 Return a JSON object with exactly these fields:
 {{
-  "headline": "string — punchy, specific, under 80 characters",
-  "recap": "string — exactly 3 short paragraphs (4-6 sentences total, under 600 characters). Para 1: game summary and winner. Para 2: key turning point or run. Para 3: standout player and closing thought. Do NOT repeat yourself or restate the same point; stop once the recap is complete.",
+  "headline": "string — {HEADLINE_RULE}",
+  "recap": "string — {RECAP_BODY_RULE}",
   "playerOfTheGame": {{
     "name": "string — must appear in roster above",
     "reason": "string — one sentence, no unverifiable stats"
@@ -150,8 +175,8 @@ INJURIES:
 OUTPUT FORMAT:
 Return a JSON object with exactly these fields:
 {{
-  "headline": "string — punchy, specific, under 80 characters",
-  "preview": "string — exactly 3 short paragraphs (4-6 sentences total, under 600 characters). Para 1: matchup stakes and records. Para 2: recent form and head-to-head storyline. Para 3: players to watch and what to expect. Do not repeat yourself; stop once complete.",
+  "headline": "string — {HEADLINE_RULE}",
+  "preview": "string — {PREVIEW_BODY_RULE}",
   "playersToWatch": [
     {{ "name": "string — must appear in rosters above", "reason": "string — one sentence, no unverifiable stats" }}
   ],
@@ -161,4 +186,40 @@ Return a JSON object with exactly these fields:
 }}
 
 Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
+"""
+
+
+def build_agent_preview_prompt(context: dict) -> str:
+    return f"""
+Research and write a game preview for the following matchup.
+
+GAME: {context['home_team']} (home) vs {context['away_team']} (away)
+GAME TYPE: {context['game_type']}{context['series_line']}
+TIPOFF: {context['game_time']}
+
+Use the tools to research records, form, head-to-head, leaders, rosters,
+and injuries before writing.
+
+When you call submit_report:
+- headline: {HEADLINE_RULE}
+- preview: {PREVIEW_BODY_RULE}
+- playersToWatch: names must appear in a roster you fetched; each reason is one sentence with no unverifiable stats
+- storylines: narrative threads worth watching
+"""
+
+
+def build_agent_recap_prompt(context: dict) -> str:
+    return f"""
+Research and write a game recap for the following game.
+
+GAME TYPE: {context['game_type']}{context['series_line']}
+FINAL SCORE: {context['home_team']} {context['home_team_score']}, {context['away_team']} {context['away_team_score']}
+
+Use the tools to research period scores, scoring runs, key moments,
+and rosters before writing.
+
+When you call submit_report:
+- headline: {HEADLINE_RULE}
+- recap: {RECAP_BODY_RULE}
+- playerOfTheGame: name must appear in a roster you fetched; reason is one sentence with no unverifiable stats
 """

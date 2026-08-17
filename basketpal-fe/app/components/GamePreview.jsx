@@ -3,6 +3,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import styles from './GamePreview.module.css';
 import { getTeamStyle } from '../util/teamColorStrategy';
 import { getTeamByTricode } from '../util/settings';
+import ResearchLog from './ResearchLog';
 
 dayjs.extend(relativeTime);
 
@@ -86,6 +87,7 @@ export default function GamePreview({ gameData, preview, injuries }) {
                                     ))}
                                 </div>
                             )}
+                            {preview.researchLog?.length > 0 && <ResearchLog log={preview.researchLog} />}
                         </div>
                     )}
                 </div>

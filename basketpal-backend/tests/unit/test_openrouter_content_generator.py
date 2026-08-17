@@ -1,87 +1,258 @@
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 
 from src.adapters.openrouter_content_generator import OpenRouterContentProvider
+from src.core.entities.game import BBallIndivStats, BBallPlayer, GameSnapshot, TeamSummary
 
 
 @pytest.fixture
 def provider(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
-    return OpenRouterContentProvider(storage_client=MagicMock(), nba_stats_provider=MagicMock())
-
-
-_FAKE_CATALOG = [
-    {"id": "openai/gpt-4o", "created": 1},
-    {"id": "openai/gpt-5", "created": 30},
-    {"id": "openai/gpt-5-mini", "created": 20},
-    {"id": "anthropic/claude-sonnet-4-6", "created": 25},
-    {"id": "anthropic/claude-haiku-4-5", "created": 15},
-    {"id": "google/gemini-pro-2.5", "created": 10},
-    {"id": "z-ai/glm-4.6", "created": 5},
-    {"id": "deepseek/deepseek-v3", "created": 8},
-    {"id": "qwen/qwen3-max", "created": 6},
-]
-
-
-def _mock_catalog_response(monkeypatch):
-    response = MagicMock()
-    response.json.return_value = {"data": _FAKE_CATALOG}
-    response.raise_for_status.return_value = None
-    get = MagicMock(return_value=response)
-    monkeypatch.setattr("src.adapters.openrouter_content_generator.requests.get", get)
-    return get
-
-
-def test_resolve_comparison_models_strips_tilde_prefix(provider, monkeypatch):
-    """Regression for H3: tilde-prefixed specs were appended to the resolved
-    list verbatim (e.g. "~openai/gpt-latest"), which isn't a valid OpenRouter
-    slug and made every request for that model fail."""
-    _mock_catalog_response(monkeypatch)
-
-    resolved = provider._resolve_comparison_models()
-
-    resolved_ids = [model_id for _, model_id in resolved]
-    assert not any(model_id.startswith("~") for model_id in resolved_ids)
-
-
-def test_resolve_comparison_models_picks_most_recently_created(provider, monkeypatch):
-    _mock_catalog_response(monkeypatch)
-
-    resolved = dict(provider._resolve_comparison_models())
-
-    assert resolved["GPT (latest)"] == "openai/gpt-5"
-    assert resolved["Claude Sonnet (latest)"] == "anthropic/claude-sonnet-4-6"
-    assert resolved["Claude Haiku (latest)"] == "anthropic/claude-haiku-4-5"
-    assert resolved["Gemini (latest)"] == "google/gemini-pro-2.5"
-    assert resolved["GLM (latest)"] == "z-ai/glm-4.6"
-
-
-def test_resolve_comparison_models_keeps_plain_strings_pinned(provider, monkeypatch):
-    _mock_catalog_response(monkeypatch)
-
-    resolved = dict(provider._resolve_comparison_models())
-
-    assert resolved["GPT-4o"] == "openai/gpt-4o"
-
-
-def test_resolve_comparison_models_fetches_catalog_with_timeout(provider, monkeypatch):
-    get = _mock_catalog_response(monkeypatch)
-
-    provider._resolve_comparison_models()
-
-    _, kwargs = get.call_args
-    assert kwargs.get("timeout") is not None
-
-
-def test_resolve_comparison_models_raises_when_no_match(provider, monkeypatch):
-    response = MagicMock()
-    response.json.return_value = {"data": []}
-    response.raise_for_status.return_value = None
-    monkeypatch.setattr(
-        "src.adapters.openrouter_content_generator.requests.get",
-        MagicMock(return_value=response),
+    return OpenRouterContentProvider(
+        storage_client=MagicMock(),
+        nba_stats_provider=MagicMock(),
+        injuries_provider=MagicMock(),
     )
 
-    with pytest.raises(RuntimeError):
-        provider._resolve_comparison_models()
+
+# --- scripted fake OpenAI client -------------------------------------------
+
+def _msg(content=None, tool_calls=None):
+    return SimpleNamespace(role="assistant", content=content, tool_calls=tool_calls)
+
+
+def _tc(call_id, name, arguments):
+    return SimpleNamespace(id=call_id, function=SimpleNamespace(name=name, arguments=arguments))
+
+
+class ScriptedClient:
+    """chat.completions.create pops one scripted message per call and records
+    the kwargs of every call."""
+
+    def __init__(self, messages):
+        self._script = list(messages)
+        self.calls = []
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
+
+    def _create(self, **kwargs):
+        self.calls.append(kwargs)
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=self._script.pop(0), finish_reason="stop")],
+            usage=None,
+        )
+
+
+def _run(provider, script, impls=None, validate=None, fact_check=None, models=("m1",)):
+    provider.client = ScriptedClient(script)
+    return provider._run_agent(
+        system="sys",
+        user_prompt="prompt",
+        tools=[],
+        tool_impls=impls or {},
+        models=list(models),
+        validate=validate or (lambda r: r.get("headline")),
+        fact_check=fact_check,
+        label="test",
+        records=None,
+    )
+
+
+# --- agent loop -------------------------------------------------------------
+
+def test_happy_path_tools_then_submit(provider):
+    seen = []
+    impls = {
+        "get_recent_form": lambda team: seen.append(("form", team)) or "Last 10: 7-3",
+        "get_head_to_head": lambda: seen.append(("h2h",)) or "Series tied 1-1.",
+    }
+    report, log = _run(provider, [
+        _msg(tool_calls=[
+            _tc("1", "get_recent_form", '{"team": "home"}'),
+            _tc("2", "get_head_to_head", "{}"),
+        ]),
+        _msg(tool_calls=[_tc("3", "submit_report", '{"headline": "H", "preview": "P"}')]),
+    ], impls=impls)
+
+    assert report == {"headline": "H", "preview": "P"}
+    assert [e["tool"] for e in log] == ["get_recent_form", "get_head_to_head"]
+    assert log[0]["args"] == {"team": "home"}
+    assert log[0]["summary"] == "Last 10: 7-3"
+    assert seen == [("form", "home"), ("h2h",)]
+
+
+def test_tool_error_is_returned_to_model_not_raised(provider):
+    def boom(team):
+        raise ValueError("upstream down")
+
+    report, log = _run(provider, [
+        _msg(tool_calls=[_tc("1", "get_recent_form", '{"team": "away"}')]),
+        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
+    ], impls={"get_recent_form": boom})
+
+    assert report["headline"] == "H"
+    second_call_messages = provider.client.calls[1]["messages"]
+    tool_msgs = [m for m in second_call_messages if isinstance(m, dict) and m.get("role") == "tool"]
+    assert tool_msgs[0]["content"].startswith("error:")
+
+
+def test_malformed_arguments_do_not_raise(provider):
+    report, _ = _run(provider, [
+        _msg(tool_calls=[_tc("1", "get_recent_form", "not json")]),
+        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
+    ], impls={"get_recent_form": lambda team: "ok"})
+
+    assert report["headline"] == "H"
+    tool_msgs = [m for m in provider.client.calls[1]["messages"]
+                 if isinstance(m, dict) and m.get("role") == "tool"]
+    assert tool_msgs[0]["content"].startswith("error: invalid arguments")
+
+
+def test_invalid_submit_then_valid_resubmit(provider):
+    report, log = _run(provider, [
+        _msg(tool_calls=[_tc("1", "submit_report", "{}")]),
+        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
+    ])
+    assert report["headline"] == "H"
+    assert [e["tool"] for e in log] == ["fact_check"]
+
+
+def test_fact_check_rejection_then_corrected_resubmit(provider):
+    fact_check = lambda r: [] if r["headline"] == "Good" else ["'Jalen Green' is not on either roster"]
+    report, log = _run(provider, [
+        _msg(tool_calls=[_tc("1", "submit_report", '{"headline": "Bad"}')]),
+        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "Good"}')]),
+    ], fact_check=fact_check)
+
+    assert report["headline"] == "Good"
+    assert log[0]["tool"] == "fact_check"
+    assert "Jalen Green" in log[0]["summary"]
+    tool_msgs = [m for m in provider.client.calls[1]["messages"]
+                 if isinstance(m, dict) and m.get("role") == "tool"]
+    assert "fix these and resubmit" in tool_msgs[0]["content"]
+
+
+def test_repeated_fact_check_failures_abandon_model(provider):
+    bad = _msg(tool_calls=[_tc("1", "submit_report", '{"headline": "Bad"}')])
+    with pytest.raises(RuntimeError, match="failed report validation"):
+        _run(provider, [bad, bad, bad], fact_check=lambda r: ["wrong"])
+
+
+def test_prose_only_model_is_abandoned_after_one_nudge(provider):
+    with pytest.raises(RuntimeError, match="stopped calling tools"):
+        _run(provider, [_msg(content="Here is my report."), _msg(content="More prose.")])
+
+
+def test_agent_failure_falls_back_to_static_path(provider, monkeypatch):
+    provider.storage_client.get.return_value = None
+    static_result = {"headline": "Static", "preview": "P", "playersToWatch": []}
+    monkeypatch.setattr(provider, "_agent_preview", MagicMock(side_effect=RuntimeError("no tools")))
+    monkeypatch.setattr(provider, "_build_preview_context", MagicMock(return_value={}))
+    monkeypatch.setattr(
+        "src.adapters.openrouter_content_generator.build_matchup_preview_prompt", lambda ctx: "p"
+    )
+    monkeypatch.setattr(provider, "_call_with_fallback", MagicMock(return_value=static_result))
+
+    result = provider.get_matchup_preview("0022400001")
+
+    assert result == static_result
+    assert "researchLog" not in result
+    provider.storage_client.save.assert_called_once()
+
+
+# --- deterministic fact checks ----------------------------------------------
+
+def _stats(points=0, rebounds=0, assists=0, minutes="PT32M10.00S"):
+    return BBallIndivStats(
+        points=points, assists=assists, reboundsDefensive=0, reboundsOffensive=0,
+        reboundsTotal=rebounds, steals=0, blocks=0, foulsPersonal=0, foulsTechnical=0,
+        fieldGoalsAttempted=0, fieldGoalsMade=0, threePointersAttempted=0,
+        threePointersMade=0, freeThrowsAttempted=0, freeThrowsMade=0,
+        plusMinusPoints=0, minutes=minutes, pointsInThePaint=0, turnovers=0,
+    )
+
+
+def _game():
+    return GameSnapshot(
+        gameId="0022400001", gameStatus=3, gameTimeUTC="2026-01-01T00:00:00Z",
+        gameCode="20260101/LALGSW",
+        homeTeam=TeamSummary(
+            teamId=1, teamTricode="LAL", teamCity="Los Angeles", teamName="Lakers",
+            score=110,
+            players=[
+                BBallPlayer(name="LeBron James", stats=_stats(points=28, rebounds=8, assists=11)),
+                BBallPlayer(name="Austin Reaves", stats=_stats(points=0, minutes="PT00M00.00S")),
+            ],
+        ),
+        awayTeam=TeamSummary(
+            teamId=2, teamTricode="GSW", teamCity="Golden State", teamName="Warriors",
+            score=104,
+            players=[BBallPlayer(name="Stephen Curry", stats=_stats(points=35, rebounds=5, assists=6))],
+        ),
+    )
+
+
+ROSTER = {"LeBron James", "Austin Reaves", "Stephen Curry"}
+
+CLEAN_RECAP = {
+    "headline": "Lakers hold off Warriors",
+    "recap": "The Los Angeles Lakers beat the Golden State Warriors 110-104. "
+             "LeBron James finished with 28 points. Stephen Curry scored 35 points in the loss.",
+    "playerOfTheGame": {"name": "LeBron James", "reason": "Controlled the game."},
+}
+
+
+def test_clean_recap_passes():
+    assert OpenRouterContentProvider._check_recap_facts(CLEAN_RECAP, _game(), ROSTER) == []
+
+
+def test_wrong_score_caught():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"].replace("110-104", "112-104"))
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("112-104" in p for p in problems)
+
+
+def test_invented_player_caught():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] + " Jalen Green added 20.")
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("Jalen Green" in p for p in problems)
+
+
+def test_wrong_stat_line_caught():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"].replace("28 points", "38 points"))
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("38 points" in p and "28" in p for p in problems)
+
+
+def test_potg_who_did_not_play_caught():
+    report = dict(CLEAN_RECAP, playerOfTheGame={"name": "Austin Reaves", "reason": "?"})
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("did not play" in p for p in problems)
+
+
+def test_string_potg_flagged_not_crashed():
+    report = dict(CLEAN_RECAP, playerOfTheGame="LeBron James")
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("must be an object" in p for p in problems)
+
+
+def test_string_players_to_watch_entry_flagged_not_crashed():
+    report = {"headline": "H", "preview": "P", "playersToWatch": ["Stephen Curry"]}
+    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER)
+    assert any("must be an object" in p for p in problems)
+
+
+def test_preview_with_non_roster_player_caught():
+    report = {
+        "headline": "H", "preview": "A big matchup.",
+        "playersToWatch": [{"name": "Victor Wembanyama", "reason": "?"}],
+    }
+    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER)
+    assert any("Victor Wembanyama" in p for p in problems)
+
+
+def test_preview_stating_a_score_caught():
+    report = {"headline": "H", "preview": "Expect a repeat of the 121-113 result.", "playersToWatch": []}
+    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER)
+    assert any("has not been played" in p for p in problems)

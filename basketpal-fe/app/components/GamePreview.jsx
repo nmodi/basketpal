@@ -3,7 +3,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import styles from './GamePreview.module.css';
 import { getTeamStyle } from '../util/teamColorStrategy';
 import { getTeamByTricode } from '../util/settings';
-import ResearchLog from './ResearchLog';
+import ReportCard from './ReportCard';
 
 dayjs.extend(relativeTime);
 
@@ -54,42 +54,13 @@ export default function GamePreview({ gameData, preview, injuries }) {
         <div className={styles.container}>
             <div className={styles.layout}>
                 <div className={styles.summaryCol}>
-                    {preview === undefined && (
-                        <div className={styles.card}>
-                            <p className={styles.previewLabel}>Pregame Summary</p>
-                            <div className={styles.skeletonTitle} />
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className={styles.skeletonLine} style={{ width: i % 3 === 2 ? '60%' : '100%' }} />
-                            ))}
-                        </div>
-                    )}
-
-                    {preview?.headline && (
-                        <div className={styles.card}>
-                            <p className={styles.previewLabel}>Pregame Summary</p>
-                            <h2 className={styles.headline}>{preview.headline}</h2>
-                            <div className={styles.body}>
-                                {preview.preview.split('\n').filter(Boolean).map((p, i) => (
-                                    <p key={i} className={styles.paragraph}>{p}</p>
-                                ))}
-                            </div>
-                            {preview.playersToWatch?.length > 0 && (
-                                <div className={styles.playerList}>
-                                    {preview.playersToWatch.map((player, i) => (
-                                        <p key={i} className={styles.playerNote}>{player.name} — {player.reason}</p>
-                                    ))}
-                                </div>
-                            )}
-                            {preview.storylines?.length > 0 && (
-                                <div className={styles.storylines}>
-                                    {preview.storylines.map((storyline, i) => (
-                                        <p key={i} className={styles.playerNote}>• {storyline}</p>
-                                    ))}
-                                </div>
-                            )}
-                            {preview.researchLog?.length > 0 && <ResearchLog log={preview.researchLog} />}
-                        </div>
-                    )}
+                    <ReportCard
+                        label="Pregame Summary"
+                        report={preview}
+                        body={preview?.preview}
+                        skeletonLines={5}
+                        unavailable="Preview unavailable"
+                    />
                 </div>
 
                 {showInjuries && (

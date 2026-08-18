@@ -1,7 +1,7 @@
 import { getGameResult, getTopPlayers, evaluateKeysToTheWin } from '../util/gameUtils';
 import { getBestStats } from '../util/statFunctions';
 import PlayerImage from './common/PlayerImage';
-import ResearchLog from './ResearchLog';
+import ReportCard from './ReportCard';
 import { getTeamById } from '../util/settings';
 import styles from './Postgame.module.css';
 
@@ -46,38 +46,23 @@ export default function Postgame({ gameData, summary, league }) {
         <div className={styles.grid}>
             <div className={styles.topRow}>
                 {/* left: game story */}
-                <div className={styles.storyCard}>
-                    <p className={styles.storyLabel}>Game Story</p>
-                    {summary === undefined ? (
-                        <>
-                            <div className={styles.skeletonTitle} />
-                            {Array.from({ length: 7 }).map((_, i) => (
-                                <div key={i} className={styles.skeletonLine} style={{ width: i % 3 === 2 ? '60%' : '100%' }} />
+                <ReportCard
+                    label="Game Story"
+                    report={summary}
+                    body={summary?.recap}
+                    skeletonLines={7}
+                    unavailable="Article unavailable"
+                >
+                    {summary?.keyMoments?.length > 0 && (
+                        <div className={styles.keyMoments}>
+                            {summary.keyMoments.map((moment, i) => (
+                                <p key={i} className={styles.keyMoment}>
+                                    Q{moment.quarter}: {moment.description}
+                                </p>
                             ))}
-                        </>
-                    ) : summary ? (
-                        <>
-                            <h2 className={styles.storyTitle}>{summary.headline}</h2>
-                            <div className={styles.storyBody}>
-                                {summary.recap.split("\n").filter(Boolean).map((p, i) => (
-                                    <p key={i} className={styles.storyParagraph}>{p}</p>
-                                ))}
-                            </div>
-                            {summary.keyMoments?.length > 0 && (
-                                <div className={styles.keyMoments}>
-                                    {summary.keyMoments.map((moment, i) => (
-                                        <p key={i} className={styles.keyMoment}>
-                                            Q{moment.quarter}: {moment.description}
-                                        </p>
-                                    ))}
-                                </div>
-                            )}
-                            {summary.researchLog?.length > 0 && <ResearchLog log={summary.researchLog} />}
-                        </>
-                    ) : (
-                        <p className={styles.unavailable}>Article unavailable</p>
+                        </div>
                     )}
-                </div>
+                </ReportCard>
 
                 {/* right: potg */}
                 <div

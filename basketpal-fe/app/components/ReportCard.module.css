@@ -1,0 +1,68 @@
+.card {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 28px 32px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-family: tt-autonomous-mono, monospace;
+  color: var(--fg-muted);
+  margin: 0 0 16px;
+}
+
+.headline {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 20px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: soleil, sans-serif;
+}
+
+.paragraph {
+  white-space: pre-line;
+  text-align: left;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.unavailable {
+  font-size: 14px;
+  color: var(--fg-dim);
+  margin: 0;
+}
+
+.skeletonTitle {
+  height: 36px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--line-strong) 50%, var(--surface2) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--line-strong) 50%, var(--surface2) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}

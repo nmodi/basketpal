@@ -17,8 +17,7 @@ from src.adapters.prompts import (
     SYSTEM_PROMPT,
     KEY_MOMENTS_SYSTEM_PROMPT,
     MATCHUP_PREVIEW_SYSTEM_PROMPT,
-    AGENT_PREVIEW_SYSTEM_PROMPT,
-    AGENT_RECAP_SYSTEM_PROMPT,
+    AGENT_RESEARCHER_SYSTEM_PROMPT,
     JUDGE_SYSTEM_PROMPT,
     build_judge_prompt,
     build_key_moments_prompt,
@@ -26,6 +25,8 @@ from src.adapters.prompts import (
     build_matchup_preview_prompt,
     build_agent_preview_prompt,
     build_agent_recap_prompt,
+    build_writer_preview_prompt,
+    build_writer_recap_prompt,
 )
 from src.common.formatting_utils import format_team_roster, format_pbp, format_period_scores
 from src.config.logger import get_logger
@@ -171,16 +172,24 @@ COMPARISON_MODEL_SPECS = [
 ]
 
 # --- Agentic generation -----------------------------------------------------
-# Pregame previews and postgame recaps run as a tool-calling loop: the model
-# researches the game through the tools below, then submits the report via the
-# terminal submit_report tool (whose parameter schema IS the output schema).
-# Models are tried in order; if the loop fails for every model in
-# AGENT_MODELS, the caller falls back to the original single-shot pipeline,
-# which has its own fallback chain — so this list only needs tool-reliable
-# models, not exhaustive coverage.
+# Pregame previews and postgame recaps are split into two roles: a researcher
+# model (AGENT_MODELS, picked for tool reliability) gathers facts through the
+# tools below and ends with the terminal finish_research tool, then a writer
+# model (WRITER_MODELS, picked for prose quality) produces the report from the
+# gathered dossier in a single JSON call. Fact-check failures re-prompt the
+# writer. Models in each list are tried in order; if research fails for every
+# model in AGENT_MODELS (or the writer for every model in WRITER_MODELS), the
+# caller falls back to the original single-shot pipeline, which has its own
+# fallback chain — so these lists only need reliable models, not exhaustive
+# coverage.
 AGENT_MODELS = [
     m.strip()
     for m in os.environ.get("AGENT_MODELS", "google/gemini-3.7-flash,anthropic/claude-haiku-4.5").split(",")
+    if m.strip()
+]
+WRITER_MODELS = [
+    m.strip()
+    for m in os.environ.get("WRITER_MODELS", "anthropic/claude-sonnet-4.6,qwen/qwen3.7-plus").split(",")
     if m.strip()
 ]
 AGENT_MAX_ITERATIONS = 10
@@ -206,48 +215,20 @@ def _tool_spec(name: str, description: str, per_team: bool = False) -> dict:
     return {"type": "function", "function": {"name": name, "description": description, "parameters": params}}
 
 
-_PREVIEW_SUBMIT_SPEC = {
+_FINISH_RESEARCH_SPEC = {
     "type": "function",
     "function": {
-        "name": "submit_report",
-        "description": "Submit the final game preview. Call exactly once, after researching.",
+        "name": "finish_research",
+        "description": "Call exactly once when you have gathered enough facts. A separate writer produces the report from your research.",
         "parameters": {
             "type": "object",
             "properties": {
-                "headline": {"type": "string"},
-                "preview": {"type": "string"},
-                "playersToWatch": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {"name": {"type": "string"}, "reason": {"type": "string"}},
-                        "required": ["name", "reason"],
-                    },
-                },
-                "storylines": {"type": "array", "items": {"type": "string"}},
+                "notes": {
+                    "type": "string",
+                    "description": "Optional suggested angle or storyline for the writer.",
+                }
             },
-            "required": ["headline", "preview", "playersToWatch", "storylines"],
-        },
-    },
-}
-
-_RECAP_SUBMIT_SPEC = {
-    "type": "function",
-    "function": {
-        "name": "submit_report",
-        "description": "Submit the final game recap. Call exactly once, after researching.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "headline": {"type": "string"},
-                "recap": {"type": "string"},
-                "playerOfTheGame": {
-                    "type": "object",
-                    "properties": {"name": {"type": "string"}, "reason": {"type": "string"}},
-                    "required": ["name", "reason"],
-                },
-            },
-            "required": ["headline", "recap", "playerOfTheGame"],
+            "required": [],
         },
     },
 }
@@ -259,7 +240,7 @@ PREVIEW_TOOLS = [
     _tool_spec("get_team_leaders", "Top three scorers with season averages.", per_team=True),
     _tool_spec("get_roster", "Player names on the roster.", per_team=True),
     _tool_spec("get_injuries", "Current injury report.", per_team=True),
-    _PREVIEW_SUBMIT_SPEC,
+    _FINISH_RESEARCH_SPEC,
 ]
 
 RECAP_TOOLS = [
@@ -271,7 +252,7 @@ RECAP_TOOLS = [
     _tool_spec("get_key_moments", "The most narratively significant plays of this game."),
     _tool_spec("get_roster", "Player names on the roster.", per_team=True),
     _tool_spec("get_recent_form", "Recent form entering this game.", per_team=True),
-    _RECAP_SUBMIT_SPEC,
+    _FINISH_RESEARCH_SPEC,
 ]
 
 # Fact-check regexes. Score pairs only count when both numbers look like
@@ -711,23 +692,21 @@ class OpenRouterContentProvider(ContentProvider):
         tools: list[dict],
         tool_impls: dict,
         models: list[str],
-        validate,
-        fact_check,
         label: str,
         records: list | None = None,
         max_iterations: int = AGENT_MAX_ITERATIONS,
-    ) -> tuple[dict, list]:
-        """Tool-calling research loop. Returns (report, research_log); raises
-        if every model fails, in which case the caller falls back to the
-        single-shot pipeline."""
+    ) -> tuple[list, str, list]:
+        """Tool-calling research loop. Returns (dossier, notes, research_log),
+        where dossier is [(tool, args, full_result), ...]; raises if every
+        model fails, in which case the caller falls back to the single-shot
+        pipeline. Prose is written afterwards by _write_report."""
         last_exc = None
         for model in models:
             try:
                 return self._run_agent_once(
                     model=model, system=system, user_prompt=user_prompt,
-                    tools=tools, tool_impls=tool_impls, validate=validate,
-                    fact_check=fact_check, label=label, records=records,
-                    max_iterations=max_iterations,
+                    tools=tools, tool_impls=tool_impls, label=label,
+                    records=records, max_iterations=max_iterations,
                 )
             except Exception as exc:
                 last_exc = exc
@@ -736,15 +715,15 @@ class OpenRouterContentProvider(ContentProvider):
 
     def _run_agent_once(
         self, *, model, system, user_prompt, tools, tool_impls,
-        validate, fact_check, label, records, max_iterations,
-    ) -> tuple[dict, list]:
+        label, records, max_iterations,
+    ) -> tuple[list, str, list]:
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": user_prompt},
         ]
         research_log = []
+        dossier = []
         nudged = False
-        rejected_reports = 0
 
         for step in range(1, max_iterations + 1):
             start = time.perf_counter()
@@ -780,7 +759,7 @@ class OpenRouterContentProvider(ContentProvider):
                 nudged = True
                 messages.append({
                     "role": "user",
-                    "content": "Use the tools to research, then call submit_report with the final report.",
+                    "content": "Use the tools to research, then call finish_research.",
                 })
                 continue
             nudged = False
@@ -793,30 +772,22 @@ class OpenRouterContentProvider(ContentProvider):
                     self._append_tool_result(messages, tc, f"error: invalid arguments: {exc}")
                     continue
 
-                if name == "submit_report":
-                    problems = [] if validate(args) else ["report is missing required fields"]
-                    if not problems and fact_check is not None:
-                        problems = fact_check(args)
-                    if not problems:
-                        content_logger.info(
-                            "Agent %s: %s submitted report after %d steps, %d tool calls",
-                            label, model, step, len(research_log),
+                if name == "finish_research":
+                    if not dossier:
+                        self._append_tool_result(
+                            messages, tc, "error: call research tools before finishing"
                         )
-                        return args, research_log
-                    rejected_reports += 1
+                        continue
+                    notes = str(args.get("notes") or "")
                     research_log.append({
-                        "tool": "fact_check", "args": {},
-                        "summary": "; ".join(problems)[:140], "ms": 0,
+                        "tool": "finish_research", "args": {},
+                        "summary": notes[:140], "ms": 0,
                     })
-                    content_logger.info("Agent %s: report rejected → %s", label, "; ".join(problems))
-                    if rejected_reports > AGENT_MAX_FACT_CHECK_RETRIES:
-                        raise RuntimeError(
-                            f"{model} failed report validation {rejected_reports} times during {label}"
-                        )
-                    self._append_tool_result(
-                        messages, tc, "error: fix these and resubmit: " + "; ".join(problems)
+                    content_logger.info(
+                        "Agent %s: %s finished research after %d steps, %d tool calls",
+                        label, model, step, len(dossier),
                     )
-                    continue
+                    return dossier, notes, research_log
 
                 impl = tool_impls.get(name)
                 tool_start = time.perf_counter()
@@ -829,6 +800,8 @@ class OpenRouterContentProvider(ContentProvider):
                         result = f"error: {exc}"
                 ms = int((time.perf_counter() - tool_start) * 1000)
                 self._append_tool_result(messages, tc, result)
+                if impl is not None and not result.startswith("error:"):
+                    dossier.append((name, args, result))
                 summary = result.replace("\n", " ")[:140]
                 research_log.append({"tool": name, "args": args, "summary": summary, "ms": ms})
                 content_logger.info("Agent %s: %s(%s) → %s", label, name, args, summary[:80])
@@ -838,6 +811,48 @@ class OpenRouterContentProvider(ContentProvider):
     @staticmethod
     def _append_tool_result(messages: list, tc, content: str) -> None:
         messages.append({"role": "tool", "tool_call_id": tc.id, "content": content})
+
+    def _write_report(
+        self, *, system, base_prompt, validate, fact_check, label,
+        research_log, records,
+    ) -> dict:
+        """Single-shot writer over the research dossier. Fact-check failures
+        re-prompt the writer with the problems; raises after the retry cap or
+        if every model in WRITER_MODELS fails, in which case the caller falls
+        back to the single-shot static pipeline."""
+        prompt = base_prompt
+        for _ in range(AGENT_MAX_FACT_CHECK_RETRIES + 1):
+            start = time.perf_counter()
+            report = self._call_with_fallback(
+                system=system,
+                prompt=prompt,
+                models=WRITER_MODELS,
+                validate=validate,
+                label=f"{label} writer",
+                records=records,
+            )
+            ms = int((time.perf_counter() - start) * 1000)
+            problems = fact_check(report)
+            if not problems:
+                research_log.append({
+                    "tool": "write_report", "args": {},
+                    "summary": (report.get("headline") or "")[:140], "ms": ms,
+                })
+                return report
+            research_log.append({
+                "tool": "fact_check", "args": {},
+                "summary": "; ".join(problems)[:140], "ms": 0,
+            })
+            content_logger.info("Agent %s: writer draft rejected → %s", label, "; ".join(problems))
+            prompt = (
+                base_prompt
+                + "\n\nPROBLEMS WITH YOUR PREVIOUS DRAFT (fix these):\n- "
+                + "\n- ".join(problems)
+                + "\n\nPREVIOUS DRAFT:\n" + json.dumps(report)
+            )
+        raise RuntimeError(
+            f"writer failed fact-checks {AGENT_MAX_FACT_CHECK_RETRIES + 1} times during {label}"
+        )
 
     def _recent_form_line(self, team_id, is_home: bool, season, league) -> str:
         gl = self._fetch_game_log(team_id, season, league)
@@ -897,8 +912,8 @@ class OpenRouterContentProvider(ContentProvider):
             "series_line": f"\nSERIES: {game.seriesText}" if game.seriesText else "",
             "game_time": game.gameTimeUTC or "",
         }
-        return self._run_agent(
-            system=AGENT_PREVIEW_SYSTEM_PROMPT,
+        dossier, notes, research_log = self._run_agent(
+            system=AGENT_RESEARCHER_SYSTEM_PROMPT,
             user_prompt=build_agent_preview_prompt(context),
             tools=PREVIEW_TOOLS,
             tool_impls={
@@ -910,11 +925,19 @@ class OpenRouterContentProvider(ContentProvider):
                 "get_injuries": injuries,
             },
             models=AGENT_MODELS,
-            validate=lambda r: r.get("headline") and r.get("preview") and r.get("playersToWatch") is not None,
-            fact_check=lambda r: self._check_preview_facts(r, roster_names, game),
             label="preview",
             records=records,
         )
+        report = self._write_report(
+            system=MATCHUP_PREVIEW_SYSTEM_PROMPT,
+            base_prompt=build_writer_preview_prompt(context, dossier, notes),
+            validate=lambda r: r.get("headline") and r.get("preview") and r.get("playersToWatch") is not None,
+            fact_check=lambda r: self._check_preview_facts(r, roster_names, game),
+            label="preview",
+            research_log=research_log,
+            records=records,
+        )
+        return report, research_log
 
     def _agent_recap(self, game_id, context: dict, records: list, memo: dict) -> tuple[dict, list]:
         game = context["game"]
@@ -955,8 +978,8 @@ class OpenRouterContentProvider(ContentProvider):
             )
 
         roster_names = set(context["cleaned_home_roster"]) | set(context["cleaned_visitor_roster"])
-        return self._run_agent(
-            system=AGENT_RECAP_SYSTEM_PROMPT,
+        dossier, notes, research_log = self._run_agent(
+            system=AGENT_RESEARCHER_SYSTEM_PROMPT,
             user_prompt=build_agent_recap_prompt(context),
             tools=RECAP_TOOLS,
             tool_impls={
@@ -970,11 +993,19 @@ class OpenRouterContentProvider(ContentProvider):
                 "get_recent_form": recent_form,
             },
             models=AGENT_MODELS,
-            validate=lambda r: r.get("headline") and r.get("recap"),
-            fact_check=lambda r: self._check_recap_facts(r, game, roster_names),
             label="story",
             records=records,
         )
+        report = self._write_report(
+            system=SYSTEM_PROMPT,
+            base_prompt=build_writer_recap_prompt(context, dossier, notes),
+            validate=lambda r: r.get("headline") and r.get("recap"),
+            fact_check=lambda r: self._check_recap_facts(r, game, roster_names),
+            label="story",
+            research_log=research_log,
+            records=records,
+        )
+        return report, research_log
 
     def _shadow_judge_recap(self, game_id, recap: dict, context: dict, records: list) -> None:
         """LLM judge for narrative claims the deterministic checks can't reach
@@ -1012,8 +1043,8 @@ class OpenRouterContentProvider(ContentProvider):
             content_logger.warning("shadow judge failed for %s", game_id, exc_info=True)
 
     # --- Deterministic fact-checking ---------------------------------------
-    # Pure-Python checks run on every submit_report; failures go back to the
-    # model as a tool result so it can correct and resubmit.
+    # Pure-Python checks run on every writer draft; failures re-prompt the
+    # writer so it can correct and redraft.
 
     @classmethod
     def _check_recap_facts(cls, report: dict, game, roster_names: set) -> list[str]:

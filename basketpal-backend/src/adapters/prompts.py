@@ -41,16 +41,16 @@ Rules you must follow:
 """
 
 
-_AGENT_RESEARCH_ADDENDUM = """
-You have research tools. Call the tools you need to gather facts before writing —
-do not invent data you have not fetched. Do not repeat a call with identical arguments.
-When you are done researching, call submit_report exactly once with the final report.
+AGENT_RESEARCHER_SYSTEM_PROMPT = """
+You are a research assistant gathering verified facts for a basketball report.
+Call the tools you need to gather facts — do not invent data you have not
+fetched, and do not repeat a call with identical arguments. Do NOT write the
+report yourself; a separate writer produces the prose from your research.
+When you have gathered enough, call finish_research exactly once, optionally
+with notes suggesting the angle or storyline the writer should take.
 """
 
-AGENT_PREVIEW_SYSTEM_PROMPT = MATCHUP_PREVIEW_SYSTEM_PROMPT + _AGENT_RESEARCH_ADDENDUM
-AGENT_RECAP_SYSTEM_PROMPT = SYSTEM_PROMPT + _AGENT_RESEARCH_ADDENDUM
-
-# Shared field constraints so the static prompts and the agent prompts can't drift.
+# Shared field constraints so the static prompts and the writer prompts can't drift.
 HEADLINE_RULE = "punchy, specific, under 80 characters"
 RECAP_BODY_RULE = (
     "exactly 3 short paragraphs (4-6 sentences total, under 600 characters). "
@@ -64,6 +64,34 @@ PREVIEW_BODY_RULE = (
     "storyline. Para 3: players to watch and what to expect. Do not repeat "
     "yourself; stop once complete."
 )
+
+RECAP_OUTPUT_FORMAT = f"""OUTPUT FORMAT:
+Return a JSON object with exactly these fields:
+{{
+  "headline": "string — {HEADLINE_RULE}",
+  "recap": "string — {RECAP_BODY_RULE}",
+  "playerOfTheGame": {{
+    "name": "string — must appear in the rosters provided",
+    "reason": "string — one sentence, no unverifiable stats"
+  }}
+}}
+
+Return ONLY the JSON object. No preamble, no explanation, no markdown fencing."""
+
+PREVIEW_OUTPUT_FORMAT = f"""OUTPUT FORMAT:
+Return a JSON object with exactly these fields:
+{{
+  "headline": "string — {HEADLINE_RULE}",
+  "preview": "string — {PREVIEW_BODY_RULE}",
+  "playersToWatch": [
+    {{ "name": "string — must appear in the rosters provided", "reason": "string — one sentence, no unverifiable stats" }}
+  ],
+  "storylines": [
+    "string — one narrative thread worth watching"
+  ]
+}}
+
+Return ONLY the JSON object. No preamble, no explanation, no markdown fencing."""
 
 
 def build_key_moments_prompt(cleaned_pbp: list[dict], scoring_runs: list[dict]) -> str:
@@ -122,18 +150,7 @@ SCORING RUNS (8+ unanswered points — ground truth, cite these figures directly
 KEY MOMENTS:
 {key_moments}
 
-OUTPUT FORMAT:
-Return a JSON object with exactly these fields:
-{{
-  "headline": "string — {HEADLINE_RULE}",
-  "recap": "string — {RECAP_BODY_RULE}",
-  "playerOfTheGame": {{
-    "name": "string — must appear in roster above",
-    "reason": "string — one sentence, no unverifiable stats"
-  }}
-}}
-
-Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
+{RECAP_OUTPUT_FORMAT}
 """
 
 
@@ -172,56 +189,71 @@ INJURIES:
 - {context['home_team']}: {context['home_injuries']}
 - {context['away_team']}: {context['away_injuries']}
 
-OUTPUT FORMAT:
-Return a JSON object with exactly these fields:
-{{
-  "headline": "string — {HEADLINE_RULE}",
-  "preview": "string — {PREVIEW_BODY_RULE}",
-  "playersToWatch": [
-    {{ "name": "string — must appear in rosters above", "reason": "string — one sentence, no unverifiable stats" }}
-  ],
-  "storylines": [
-    "string — one narrative thread worth watching"
-  ]
-}}
-
-Return ONLY the JSON object. No preamble, no explanation, no markdown fencing.
+{PREVIEW_OUTPUT_FORMAT}
 """
 
 
 def build_agent_preview_prompt(context: dict) -> str:
     return f"""
-Research and write a game preview for the following matchup.
+Research the following matchup for a game preview.
 
 GAME: {context['home_team']} (home) vs {context['away_team']} (away)
 GAME TYPE: {context['game_type']}{context['series_line']}
 TIPOFF: {context['game_time']}
 
 Use the tools to research records, form, head-to-head, leaders, rosters,
-and injuries before writing.
-
-When you call submit_report:
-- headline: {HEADLINE_RULE}
-- preview: {PREVIEW_BODY_RULE}
-- playersToWatch: names must appear in a roster you fetched; each reason is one sentence with no unverifiable stats
-- storylines: narrative threads worth watching
+and injuries, then call finish_research.
 """
 
 
 def build_agent_recap_prompt(context: dict) -> str:
     return f"""
-Research and write a game recap for the following game.
+Research the following game for a recap.
 
 GAME TYPE: {context['game_type']}{context['series_line']}
 FINAL SCORE: {context['home_team']} {context['home_team_score']}, {context['away_team']} {context['away_team_score']}
 
 Use the tools to research top performers, team stat lines, period scores,
-scoring runs, key moments, head-to-head, and rosters before writing.
+scoring runs, key moments, head-to-head, and rosters, then call finish_research.
+"""
 
-When you call submit_report:
-- headline: {HEADLINE_RULE}
-- recap: {RECAP_BODY_RULE}
-- playerOfTheGame: name must appear in a roster you fetched; reason is one sentence citing only stats from get_top_performers
+
+def _dossier_lines(dossier: list) -> str:
+    parts = []
+    for tool, args, result in dossier:
+        arg = f" ({args['team']})" if isinstance(args, dict) and args.get("team") else ""
+        parts.append(f"### {tool}{arg}\n{result}")
+    return "\n\n".join(parts) or "No research gathered."
+
+
+def build_writer_preview_prompt(context: dict, dossier: list, notes: str) -> str:
+    notes_line = f"\nRESEARCHER NOTES (suggested angle): {notes}\n" if notes else ""
+    return f"""
+Write a game preview for the following matchup.
+
+GAME: {context['home_team']} (home) vs {context['away_team']} (away)
+GAME TYPE: {context['game_type']}{context['series_line']}
+TIPOFF: {context['game_time']}
+{notes_line}
+RESEARCH DOSSIER (use ONLY facts from this dossier and the header above):
+{_dossier_lines(dossier)}
+
+{PREVIEW_OUTPUT_FORMAT}
+"""
+
+
+def build_writer_recap_prompt(context: dict, dossier: list, notes: str) -> str:
+    notes_line = f"\nRESEARCHER NOTES (suggested angle): {notes}\n" if notes else ""
+    return f"""
+Write a game recap for the following game.
+
+GAME TYPE: {context['game_type']}{context['series_line']}
+FINAL SCORE: {context['home_team']} {context['home_team_score']}, {context['away_team']} {context['away_team_score']}
+{notes_line}
+RESEARCH DOSSIER (use ONLY facts from this dossier and the header above):
+{_dossier_lines(dossier)}
+
+{RECAP_OUTPUT_FORMAT}
 """
 
 

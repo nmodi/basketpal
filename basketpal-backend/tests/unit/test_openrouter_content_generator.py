@@ -45,7 +45,7 @@ class ScriptedClient:
         )
 
 
-def _run(provider, script, impls=None, validate=None, fact_check=None, models=("m1",)):
+def _run(provider, script, impls=None, models=("m1",)):
     provider.client = ScriptedClient(script)
     return provider._run_agent(
         system="sys",
@@ -53,33 +53,36 @@ def _run(provider, script, impls=None, validate=None, fact_check=None, models=("
         tools=[],
         tool_impls=impls or {},
         models=list(models),
-        validate=validate or (lambda r: r.get("headline")),
-        fact_check=fact_check,
         label="test",
         records=None,
     )
 
 
-# --- agent loop -------------------------------------------------------------
+# --- researcher loop ---------------------------------------------------------
 
-def test_happy_path_tools_then_submit(provider):
+def test_happy_path_tools_then_finish(provider):
     seen = []
     impls = {
         "get_recent_form": lambda team: seen.append(("form", team)) or "Last 10: 7-3",
         "get_head_to_head": lambda: seen.append(("h2h",)) or "Series tied 1-1.",
     }
-    report, log = _run(provider, [
+    dossier, notes, log = _run(provider, [
         _msg(tool_calls=[
             _tc("1", "get_recent_form", '{"team": "home"}'),
             _tc("2", "get_head_to_head", "{}"),
         ]),
-        _msg(tool_calls=[_tc("3", "submit_report", '{"headline": "H", "preview": "P"}')]),
+        _msg(tool_calls=[_tc("3", "finish_research", '{"notes": "Angle: road win"}')]),
     ], impls=impls)
 
-    assert report == {"headline": "H", "preview": "P"}
-    assert [e["tool"] for e in log] == ["get_recent_form", "get_head_to_head"]
+    assert dossier == [
+        ("get_recent_form", {"team": "home"}, "Last 10: 7-3"),
+        ("get_head_to_head", {}, "Series tied 1-1."),
+    ]
+    assert notes == "Angle: road win"
+    assert [e["tool"] for e in log] == ["get_recent_form", "get_head_to_head", "finish_research"]
     assert log[0]["args"] == {"team": "home"}
     assert log[0]["summary"] == "Last 10: 7-3"
+    assert log[2]["summary"] == "Angle: road win"
     assert seen == [("form", "home"), ("h2h",)]
 
 
@@ -87,57 +90,43 @@ def test_tool_error_is_returned_to_model_not_raised(provider):
     def boom(team):
         raise ValueError("upstream down")
 
-    report, log = _run(provider, [
+    dossier, _, _ = _run(provider, [
         _msg(tool_calls=[_tc("1", "get_recent_form", '{"team": "away"}')]),
-        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
-    ], impls={"get_recent_form": boom})
+        _msg(tool_calls=[_tc("2", "get_head_to_head", "{}")]),
+        _msg(tool_calls=[_tc("3", "finish_research", "{}")]),
+    ], impls={"get_recent_form": boom, "get_head_to_head": lambda: "Series tied 1-1."})
 
-    assert report["headline"] == "H"
+    # errored calls go back to the model but stay out of the writer dossier
+    assert dossier == [("get_head_to_head", {}, "Series tied 1-1.")]
     second_call_messages = provider.client.calls[1]["messages"]
     tool_msgs = [m for m in second_call_messages if isinstance(m, dict) and m.get("role") == "tool"]
     assert tool_msgs[0]["content"].startswith("error:")
 
 
 def test_malformed_arguments_do_not_raise(provider):
-    report, _ = _run(provider, [
+    dossier, _, _ = _run(provider, [
         _msg(tool_calls=[_tc("1", "get_recent_form", "not json")]),
-        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
+        _msg(tool_calls=[_tc("2", "get_recent_form", '{"team": "home"}')]),
+        _msg(tool_calls=[_tc("3", "finish_research", "{}")]),
     ], impls={"get_recent_form": lambda team: "ok"})
 
-    assert report["headline"] == "H"
+    assert dossier == [("get_recent_form", {"team": "home"}, "ok")]
     tool_msgs = [m for m in provider.client.calls[1]["messages"]
                  if isinstance(m, dict) and m.get("role") == "tool"]
     assert tool_msgs[0]["content"].startswith("error: invalid arguments")
 
 
-def test_invalid_submit_then_valid_resubmit(provider):
-    report, log = _run(provider, [
-        _msg(tool_calls=[_tc("1", "submit_report", "{}")]),
-        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
-    ])
-    assert report["headline"] == "H"
-    assert [e["tool"] for e in log] == ["fact_check"]
+def test_finish_with_empty_dossier_is_rejected(provider):
+    dossier, _, log = _run(provider, [
+        _msg(tool_calls=[_tc("1", "finish_research", "{}")]),
+        _msg(tool_calls=[_tc("2", "get_recent_form", '{"team": "home"}')]),
+        _msg(tool_calls=[_tc("3", "finish_research", "{}")]),
+    ], impls={"get_recent_form": lambda team: "ok"})
 
-
-def test_fact_check_rejection_then_corrected_resubmit(provider):
-    fact_check = lambda r: [] if r["headline"] == "Good" else ["'Jalen Green' is not on either roster"]
-    report, log = _run(provider, [
-        _msg(tool_calls=[_tc("1", "submit_report", '{"headline": "Bad"}')]),
-        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "Good"}')]),
-    ], fact_check=fact_check)
-
-    assert report["headline"] == "Good"
-    assert log[0]["tool"] == "fact_check"
-    assert "Jalen Green" in log[0]["summary"]
+    assert dossier == [("get_recent_form", {"team": "home"}, "ok")]
     tool_msgs = [m for m in provider.client.calls[1]["messages"]
                  if isinstance(m, dict) and m.get("role") == "tool"]
-    assert "fix these and resubmit" in tool_msgs[0]["content"]
-
-
-def test_repeated_fact_check_failures_abandon_model(provider):
-    bad = _msg(tool_calls=[_tc("1", "submit_report", '{"headline": "Bad"}')])
-    with pytest.raises(RuntimeError, match="failed report validation"):
-        _run(provider, [bad, bad, bad], fact_check=lambda r: ["wrong"])
+    assert "call research tools before finishing" in tool_msgs[0]["content"]
 
 
 def test_prose_only_model_is_abandoned_after_one_nudge(provider):
@@ -146,13 +135,62 @@ def test_prose_only_model_is_abandoned_after_one_nudge(provider):
 
 
 def test_nudge_resets_after_productive_tool_step(provider):
-    report, _ = _run(provider, [
+    dossier, _, _ = _run(provider, [
         _msg(content="Let me think."),
         _msg(tool_calls=[_tc("1", "get_recent_form", '{"team": "home"}')]),
         _msg(content="Thinking again."),
-        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
+        _msg(tool_calls=[_tc("2", "finish_research", "{}")]),
     ], impls={"get_recent_form": lambda team: "ok"})
+    assert dossier == [("get_recent_form", {"team": "home"}, "ok")]
+
+
+# --- writer ------------------------------------------------------------------
+
+def _write(provider, fact_check, log=None):
+    return provider._write_report(
+        system="sys",
+        base_prompt="base",
+        validate=lambda r: r.get("headline"),
+        fact_check=fact_check,
+        label="test",
+        research_log=log if log is not None else [],
+        records=None,
+    )
+
+
+def test_writer_happy_path(provider):
+    provider._call_with_fallback = MagicMock(return_value={"headline": "H", "recap": "R"})
+    log = []
+    report = _write(provider, fact_check=lambda r: [], log=log)
     assert report["headline"] == "H"
+    assert [e["tool"] for e in log] == ["write_report"]
+    assert log[0]["summary"] == "H"
+    kwargs = provider._call_with_fallback.call_args.kwargs
+    assert kwargs["label"] == "test writer"
+
+
+def test_writer_fact_check_rejection_then_corrected_draft(provider):
+    provider._call_with_fallback = MagicMock(side_effect=[
+        {"headline": "Bad"}, {"headline": "Good"},
+    ])
+    fact_check = lambda r: [] if r["headline"] == "Good" else ["'Jalen Green' is not on either roster"]
+    log = []
+    report = _write(provider, fact_check=fact_check, log=log)
+
+    assert report["headline"] == "Good"
+    assert [e["tool"] for e in log] == ["fact_check", "write_report"]
+    assert "Jalen Green" in log[0]["summary"]
+    retry_prompt = provider._call_with_fallback.call_args_list[1].kwargs["prompt"]
+    assert "PROBLEMS WITH YOUR PREVIOUS DRAFT" in retry_prompt
+    assert "Jalen Green" in retry_prompt
+    assert '"Bad"' in retry_prompt  # rejected draft is echoed back
+
+
+def test_writer_repeated_fact_check_failures_raise(provider):
+    provider._call_with_fallback = MagicMock(return_value={"headline": "Bad"})
+    with pytest.raises(RuntimeError, match="failed fact-checks"):
+        _write(provider, fact_check=lambda r: ["wrong"])
+    assert provider._call_with_fallback.call_count == 3  # AGENT_MAX_FACT_CHECK_RETRIES + 1
 
 
 def test_agent_failure_falls_back_to_static_path(provider, monkeypatch):
@@ -172,6 +210,31 @@ def test_agent_failure_falls_back_to_static_path(provider, monkeypatch):
     assert result == static_result
     assert "researchLog" not in result
     provider.storage_client.save.assert_called_once()
+
+
+def test_writer_failure_falls_back_to_static_path(provider, monkeypatch):
+    provider.storage_client.get.return_value = None
+    provider.nba_stats_provider.get_boxscore.return_value = _game(status=1)
+    monkeypatch.setattr(provider, "_fetch_roster", lambda team_id: [])
+    monkeypatch.setattr(
+        provider, "_run_agent",
+        MagicMock(return_value=([("get_roster", {}, "ok")], "", [])),
+    )
+    monkeypatch.setattr(
+        provider, "_write_report",
+        MagicMock(side_effect=RuntimeError("writer failed fact-checks 3 times during preview")),
+    )
+    static_result = {"headline": "Static", "preview": "P", "playersToWatch": []}
+    monkeypatch.setattr(provider, "_build_preview_context", MagicMock(return_value={}))
+    monkeypatch.setattr(
+        "src.adapters.openrouter_content_generator.build_matchup_preview_prompt", lambda ctx: "p"
+    )
+    monkeypatch.setattr(provider, "_call_with_fallback", MagicMock(return_value=static_result))
+
+    result = provider.get_matchup_preview("0022400001")
+
+    assert result == static_result
+    assert "researchLog" not in result
 
 
 # --- deterministic fact checks ----------------------------------------------
@@ -304,8 +367,9 @@ def test_recap_agent_top_performers_tool(provider):
             _tc("1", "get_top_performers", '{"team": "away"}'),
             _tc("2", "get_team_stats_comparison", "{}"),
         ]),
-        _msg(tool_calls=[_tc("3", "submit_report", json.dumps(CLEAN_RECAP))]),
+        _msg(tool_calls=[_tc("3", "finish_research", "{}")]),
     ])
+    provider._call_with_fallback = MagicMock(return_value=dict(CLEAN_RECAP))
     report, log = provider._agent_recap("0022400001", context, [], {})
     assert report["headline"] == CLEAN_RECAP["headline"]
     assert log[0]["tool"] == "get_top_performers"
@@ -313,6 +377,11 @@ def test_recap_agent_top_performers_tool(provider):
     assert "35 pts, 5 reb, 6 ast" in log[0]["summary"]
     assert log[1]["tool"] == "get_team_stats_comparison"
     assert "LAL" in log[1]["summary"] and "GSW" in log[1]["summary"]
+    assert [e["tool"] for e in log[2:]] == ["finish_research", "write_report"]
+    # the writer prompt carries the full tool results, not the 140-char summaries
+    writer_prompt = provider._call_with_fallback.call_args.kwargs["prompt"]
+    assert "### get_top_performers (away)" in writer_prompt
+    assert "35 pts, 5 reb, 6 ast" in writer_prompt
 
 
 def test_recap_agent_head_to_head_excludes_this_game(provider):
@@ -336,8 +405,9 @@ def test_recap_agent_head_to_head_excludes_this_game(provider):
     ]
     provider.client = ScriptedClient([
         _msg(tool_calls=[_tc("1", "get_head_to_head", "{}")]),
-        _msg(tool_calls=[_tc("2", "submit_report", json.dumps(CLEAN_RECAP))]),
+        _msg(tool_calls=[_tc("2", "finish_research", "{}")]),
     ])
+    provider._call_with_fallback = MagicMock(return_value=dict(CLEAN_RECAP))
     _, log = provider._agent_recap("0022400001", context, [], {})
     assert log[0]["tool"] == "get_head_to_head"
     assert "LAL 1-0 GSW" in log[0]["summary"]

@@ -94,7 +94,7 @@ const RecapGrid = ({ recaps }) => {
 
 const RecapGridFallback = () => (
     <div className={styles.fallback}>
-        <div className={styles.spinner} />
+        <div className={`skeleton ${styles.loadingBar}`} />
         <p className={styles.fallbackText}>Generating recaps from multiple models…</p>
     </div>
 );

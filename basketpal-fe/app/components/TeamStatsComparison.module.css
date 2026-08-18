@@ -1,7 +1,8 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: large;
+  font-size: 16px;
+  font-family: tt-autonomous-mono, monospace;
 }
 
 .table th, .table td {
@@ -9,8 +10,8 @@
   text-align: left;
 }
 
-.table td:not(:first-child) {
-  text-align: left;
+.table td {
+  text-align: right;
 }
 
 .header th {
@@ -24,6 +25,7 @@
 .teamCell {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 

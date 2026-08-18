@@ -116,8 +116,8 @@
 }
 
 .badgeHot {
-  border-color: #7c5a2b;
-  background: rgba(245, 132, 38, 0.08);
+  border-color: rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.08);
 }
 
 /* --- stat row --- */
@@ -181,15 +181,15 @@
 
 .shootingBar {
   height: 6px;
-  border-radius: 3px;
+  border-radius: 9999px;
   background: var(--surface2);
   overflow: hidden;
 }
 
 .shootingFill {
   height: 100%;
-  border-radius: 3px;
-  background: #2f6fb3;
+  border-radius: 9999px;
+  background: var(--team-c1, var(--highlight));
 }
 
 .shootingFrac {
@@ -284,15 +284,15 @@
 
 .keyBar {
   height: 6px;
-  border-radius: 3px;
+  border-radius: 9999px;
   background: var(--surface2);
   overflow: hidden;
 }
 
 .keyBarFill {
   height: 100%;
-  border-radius: 3px;
-  background: #2f6fb3;
+  border-radius: 9999px;
+  background: var(--highlight);
 }
 
 /* --- game story --- */

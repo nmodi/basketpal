@@ -41,7 +41,7 @@
 .card {
   background: var(--surface);
   padding: 20px;
-  border-radius: 15px;
+  border-radius: 8px;
 }
 
 .cardHeader {
@@ -78,9 +78,13 @@
 
 .tag {
   display: inline-block;
-  background: #5b21b6;
-  color: #e9d5ff;
+  background: var(--surface2);
+  color: var(--fg);
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: tt-autonomous-mono, monospace;
   padding: 2px 10px;
   border-radius: 9999px;
   margin-bottom: 12px;
@@ -133,17 +137,9 @@
   padding: 80px 0;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--surface2);
-  border-top-color: #a78bfa;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.loadingBar {
+  width: 240px;
+  height: 10px;
 }
 
 .fallbackText {

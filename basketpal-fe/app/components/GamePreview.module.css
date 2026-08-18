@@ -120,13 +120,15 @@
 }
 
 .badgeOut {
-  background: #dc2626;
-  color: #fff;
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--fg);
 }
 
 .badgeQuest {
-  background: #d97706;
-  color: #fff;
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--fg-muted);
 }
 
 .badgeProbable {

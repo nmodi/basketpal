@@ -93,7 +93,7 @@ Snapshots are stored only for `IN_PROGRESS` games. The delay feature (`?delay=N`
 
 ### Frontend (`basketpal-fe/app/`)
 
-Remix (SSR + client polling). Chakra UI for components. No charting library — SVG drawn directly.
+Remix (SSR + client polling). CSS modules for styling — no component library. No charting library — SVG drawn directly.
 
 ```
 routes/

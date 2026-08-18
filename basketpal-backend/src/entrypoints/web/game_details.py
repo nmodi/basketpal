@@ -39,21 +39,37 @@ def get_playbyplay(game_id: str):
     return nba_service.get_playbyplay(game_id)
 
 
+def _refresh_allowed(game_id: str, key_suffix: str) -> bool:
+    """Per-game cooldown so the public refresh=true can't be looped to burn
+    model credits. ponytail: get-then-set isn't atomic — worst case a couple
+    of racing refreshes get through, which _generating already limits."""
+    cooldown_key = f"game:{game_id}:{key_suffix}:refresh-cooldown"
+    if storage_client.get(cooldown_key):
+        return False
+    storage_client.save_with_ttl(cooldown_key, 1, 60)
+    return True
+
+
 def _cached_or_generate(game_id: str, key_suffix: str, generate, background_tasks: BackgroundTasks, refresh: bool):
     """Serve the cached content blob, or kick off background generation (202)."""
+    if refresh and not _refresh_allowed(game_id, key_suffix):
+        refresh = False
     if not refresh:
         cached = storage_client.get(f"game:{game_id}:{key_suffix}")
         if cached:
             return cached
-    if game_id not in _generating:
-        _generating.add(game_id)
+    # Keyed by game + blob so a summary generation doesn't block a preview
+    # generation for the same game.
+    gen_key = f"{game_id}:{key_suffix}"
+    if gen_key not in _generating:
+        _generating.add(gen_key)
         def _run():
             try:
                 generate()
             except Exception:
                 traceback.print_exc()
             finally:
-                _generating.discard(game_id)
+                _generating.discard(gen_key)
         background_tasks.add_task(_run)
     return Response(status_code=202)
 
@@ -91,6 +107,8 @@ def get_injuries(game_id: str):
 
 @router.get("/model-comparison")
 def get_model_comparison(game_id: str, refresh: bool = False):
+    if refresh and not _refresh_allowed(game_id, "model-comparison"):
+        refresh = False
     try:
         return content_provider.get_model_comparison(game_id, force_refresh=refresh)
     except NotImplementedError:

@@ -157,6 +157,8 @@ def test_nudge_resets_after_productive_tool_step(provider):
 
 def test_agent_failure_falls_back_to_static_path(provider, monkeypatch):
     provider.storage_client.get.return_value = None
+    provider.nba_stats_provider.get_boxscore.return_value = _game(status=1)
+    monkeypatch.setattr(provider, "_fetch_roster", lambda team_id: [])
     static_result = {"headline": "Static", "preview": "P", "playersToWatch": []}
     monkeypatch.setattr(provider, "_agent_preview", MagicMock(side_effect=RuntimeError("no tools")))
     monkeypatch.setattr(provider, "_build_preview_context", MagicMock(return_value={}))
@@ -184,9 +186,9 @@ def _stats(points=0, rebounds=0, assists=0, minutes="PT32M10.00S"):
     )
 
 
-def _game():
+def _game(status=3):
     return GameSnapshot(
-        gameId="0022400001", gameStatus=3, gameTimeUTC="2026-01-01T00:00:00Z",
+        gameId="0022400001", gameStatus=status, gameTimeUTC="2026-01-01T00:00:00Z",
         gameCode="20260101/LALGSW",
         homeTeam=TeamSummary(
             teamId=1, teamTricode="LAL", teamCity="Los Angeles", teamName="Lakers",
@@ -263,7 +265,7 @@ def test_string_potg_flagged_not_crashed():
 
 def test_string_players_to_watch_entry_flagged_not_crashed():
     report = {"headline": "H", "preview": "P", "playersToWatch": ["Stephen Curry"]}
-    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER)
+    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER, _game())
     assert any("must be an object" in p for p in problems)
 
 
@@ -272,13 +274,13 @@ def test_preview_with_non_roster_player_caught():
         "headline": "H", "preview": "A big matchup.",
         "playersToWatch": [{"name": "Victor Wembanyama", "reason": "?"}],
     }
-    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER)
+    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER, _game())
     assert any("Victor Wembanyama" in p for p in problems)
 
 
 def test_preview_stating_a_score_caught():
     report = {"headline": "H", "preview": "Expect a repeat of the 121-113 result.", "playersToWatch": []}
-    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER)
+    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER, _game())
     assert any("has not been played" in p for p in problems)
 
 
@@ -340,3 +342,121 @@ def test_recap_agent_head_to_head_excludes_this_game(provider):
     assert log[0]["tool"] == "get_head_to_head"
     assert "LAL 1-0 GSW" in log[0]["summary"]
     assert "LAL 120" in log[0]["summary"]  # last meeting is the prior game, not this one
+
+
+def test_wrong_winner_caught():
+    report = dict(CLEAN_RECAP, recap="The Golden State Warriors beat the Los Angeles Lakers 110-104. "
+                                     "LeBron James finished with 28 points.")
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("Warriors as beating the Lakers" in p for p in problems)
+
+
+def test_negated_winner_sentence_passes():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] +
+                  " The Warriors could not beat the Lakers late.")
+    assert OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER) == []
+
+
+def test_winner_not_named_caught():
+    report = dict(CLEAN_RECAP, headline="A statement win",
+                  recap="The home side cruised to a 110-104 victory. "
+                        "LeBron James finished with 28 points.")
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("name the winning team" in p for p in problems)
+
+
+def test_quarter_scoped_stat_claim_skipped():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] +
+                  " LeBron James scored 12 points in the fourth quarter.")
+    assert OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER) == []
+
+
+def test_boards_synonym_caught():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] + " LeBron James grabbed 10 boards.")
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("10 boards" in p and "8" in p for p in problems)
+
+
+def test_threes_count_caught():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] + " Stephen Curry drained 5 threes.")
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("5 threes" in p for p in problems)
+
+
+def test_shot_split_number_not_double_counted_as_stat_claim():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] +
+                  " Stephen Curry went 0-of-0 three-pointers on the night.")
+    assert OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER) == []
+
+
+def test_preview_prose_invented_player_caught():
+    report = {"headline": "H", "preview": "Keep an eye on Jalen Green tonight.", "playersToWatch": []}
+    problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER, _game())
+    assert any("Jalen Green" in p for p in problems)
+
+
+def test_preview_other_team_mention_allowed():
+    report = {"headline": "H", "preview": "Both sides are coming off losses in Oklahoma City.",
+              "playersToWatch": []}
+    assert OpenRouterContentProvider._check_preview_facts(report, ROSTER, _game()) == []
+
+
+# --- shadow judge ------------------------------------------------------------
+
+def _recap_context():
+    return {
+        "game": _game(),
+        "home_team": "Los Angeles Lakers",
+        "away_team": "Golden State Warriors",
+        "home_team_score": 110,
+        "away_team_score": 104,
+        "cleaned_period_scores": "scores",
+        "scoring_runs": [],
+    }
+
+
+def test_shadow_judge_calls_judge_model_and_records(provider):
+    provider._call_with_fallback = MagicMock(return_value={"problems": []})
+    provider._shadow_judge_recap("g1", CLEAN_RECAP, _recap_context(), [])
+    kwargs = provider._call_with_fallback.call_args.kwargs
+    assert kwargs["label"] == "shadow judge"
+    assert "35 pts" in kwargs["prompt"]  # ground truth includes boxscore lines
+    assert CLEAN_RECAP["recap"] in kwargs["prompt"]
+
+
+def test_shadow_judge_never_raises(provider):
+    provider._call_with_fallback = MagicMock(side_effect=RuntimeError("judge down"))
+    provider._shadow_judge_recap("g1", CLEAN_RECAP, _recap_context(), [])
+    # also survives a garbage context entirely
+    provider._shadow_judge_recap("g2", CLEAN_RECAP, {}, [])
+
+
+# --- generation guards -------------------------------------------------------
+
+def test_summary_refuses_non_final_game(provider, monkeypatch):
+    provider.storage_client.get.return_value = None
+    monkeypatch.setattr(provider, "_build_game_context", lambda gid: {"game": _game(status=2)})
+    with pytest.raises(ValueError, match="not final"):
+        provider.get_game_summary("0022400001")
+
+
+def test_preview_refuses_started_game(provider):
+    provider.storage_client.get.return_value = None
+    provider.nba_stats_provider.get_boxscore.return_value = _game(status=3)
+    with pytest.raises(ValueError, match="already started"):
+        provider.get_matchup_preview("0022400001")
+
+
+def test_refresh_cooldown(monkeypatch):
+    from src.entrypoints.web import game_details
+    store = {}
+    fake = SimpleNamespace(
+        get=lambda k: store.get(k),
+        save_with_ttl=lambda k, v, ttl: store.__setitem__(k, v),
+    )
+    monkeypatch.setattr(game_details, "storage_client", fake)
+    assert game_details._refresh_allowed("g1", "summary") is True
+    assert game_details._refresh_allowed("g1", "summary") is False
+    # independent per blob and per game
+    assert game_details._refresh_allowed("g1", "matchup-preview") is True
+    assert game_details._refresh_allowed("g2", "summary") is True

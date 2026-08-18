@@ -28,11 +28,12 @@ Backend uses a `.venv` inside `basketpal-backend/`. Frontend uses npm.
 Environment variables needed in `basketpal-backend/.env`:
 - `OPENROUTER_API_KEY` — used by `OpenRouterContentProvider` (default content provider) for game summaries and model comparisons
 - `REDIS_URL` — defaults to localhost
-- `AGENT_MODELS` — optional, comma-separated model slugs for the agentic report loop (default `anthropic/claude-haiku-4.5`)
+- `AGENT_MODELS` — optional, comma-separated model slugs for the agentic report loop (default in `openrouter_content_generator.py`)
+- `JUDGE_MODEL` — optional, model slug for the shadow-mode recap judge (default in `openrouter_content_generator.py`)
 
 ### Agentic report generation
 
-Pregame previews and postgame summaries run as a tool-calling loop (`_run_agent` in `openrouter_content_generator.py`): the model researches via data-fetching tools, then submits through a terminal `submit_report` tool whose parameter schema is the output schema. Every submission passes deterministic fact-checks (`_check_recap_facts` / `_check_preview_facts` — scores, player names, stat lines vs. the boxscore); failures go back as tool results for the model to correct. The tool-call trace is attached to the cached blob as `researchLog` and rendered by `ResearchLog.jsx`. If the loop fails for every model in `AGENT_MODELS`, generation falls back to the original single-shot prompt pipeline (no `researchLog`).
+Pregame previews and postgame summaries run as a tool-calling loop (`_run_agent` in `openrouter_content_generator.py`): the model researches via data-fetching tools, then submits through a terminal `submit_report` tool whose parameter schema is the output schema. Every submission passes deterministic fact-checks (`_check_recap_facts` / `_check_preview_facts` — scores, player names, stat lines vs. the boxscore); failures go back as tool results for the model to correct. The tool-call trace is attached to the cached blob as `researchLog` and rendered by `ResearchLog.jsx`. If the loop fails for every model in `AGENT_MODELS`, generation falls back to the original single-shot prompt pipeline (no `researchLog`). After a recap is finalized, a shadow-mode LLM judge (`_shadow_judge_recap`, model `JUDGE_MODEL`) reviews it for narrative claims the deterministic checks can't reach; its findings are logged only and never block or alter the recap.
 
 ## Architecture
 

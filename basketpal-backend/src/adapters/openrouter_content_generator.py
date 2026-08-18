@@ -19,6 +19,8 @@ from src.adapters.prompts import (
     MATCHUP_PREVIEW_SYSTEM_PROMPT,
     AGENT_PREVIEW_SYSTEM_PROMPT,
     AGENT_RECAP_SYSTEM_PROMPT,
+    JUDGE_SYSTEM_PROMPT,
+    build_judge_prompt,
     build_key_moments_prompt,
     build_story_prompt,
     build_matchup_preview_prompt,
@@ -27,6 +29,7 @@ from src.adapters.prompts import (
 )
 from src.common.formatting_utils import format_team_roster, format_pbp, format_period_scores
 from src.config.logger import get_logger
+from src.core.entities.game import GameStatus
 from src.core.entities.leagues import League, current_season
 from src.core.ports import ContentProvider, InjuriesProvider, StorageClient, NBAStatsProvider
 
@@ -171,16 +174,24 @@ COMPARISON_MODEL_SPECS = [
 # Pregame previews and postgame recaps run as a tool-calling loop: the model
 # researches the game through the tools below, then submits the report via the
 # terminal submit_report tool (whose parameter schema IS the output schema).
-# If the loop fails for every model in AGENT_MODELS, the caller falls back to
-# the original single-shot pipeline. The static pipeline has its own 3-model
-# fallback chain, so the default here is a single tool-reliable model.
+# Models are tried in order; if the loop fails for every model in
+# AGENT_MODELS, the caller falls back to the original single-shot pipeline,
+# which has its own fallback chain — so this list only needs tool-reliable
+# models, not exhaustive coverage.
 AGENT_MODELS = [
     m.strip()
-    for m in os.environ.get("AGENT_MODELS", "anthropic/claude-haiku-4.5").split(",")
+    for m in os.environ.get("AGENT_MODELS", "google/gemini-3.7-flash,anthropic/claude-haiku-4.5").split(",")
     if m.strip()
 ]
 AGENT_MAX_ITERATIONS = 10
 AGENT_MAX_FACT_CHECK_RETRIES = 2
+
+# Shadow-mode LLM judge: reviews finished recaps for narrative claims the
+# deterministic checks can't reach (game arc, comebacks, causality). Findings
+# are only logged — flip to enforcing once the logged false-positive rate is
+# known. Deliberately a different model than AGENT_MODELS' default so the
+# judge doesn't share the generator's blind spots.
+JUDGE_MODEL = os.environ.get("JUDGE_MODEL", "deepseek/deepseek-v4-flash")
 
 
 def _tool_spec(name: str, description: str, per_team: bool = False) -> dict:
@@ -267,13 +278,51 @@ RECAP_TOOLS = [
 # full-game totals, so run scores ("a 10-2 run") pass through.
 _SCORE_PAIR_RE = re.compile(r"\b(\d{2,3})\s*[-–]\s*(\d{2,3})\b")
 _NAME_RUN_RE = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+")
-_STAT_CLAIM_RE = re.compile(r"(\d+)\s+(?:\w+\s+)?(points|rebounds|assists)\b", re.IGNORECASE)
+# The lookbehinds keep the trailing number of a shot split ("6-of-10
+# three-pointers") from being read as a standalone stat claim.
+_STAT_CLAIM_RE = re.compile(
+    r"(?<!of-)(?<!of )\b(\d+)\s+(?:\w+\s+)?"
+    r"(points|rebounds|boards|assists|dimes|steals|blocks|turnovers|three-pointers|3-pointers|threes)\b",
+    re.IGNORECASE,
+)
 _SHOT_SPLIT_RE = re.compile(r"\b(\d+)[-\s]of[-\s](\d+)\b", re.IGNORECASE)
+# Sentences scoped to part of the game ("12 points in the fourth quarter")
+# can't be checked against game totals — skip them rather than false-flag.
+_PARTIAL_SPAN_RE = re.compile(
+    r"\b(quarter|half|period|overtime|ot|q[1-4]|run|stretch|span|straight|unanswered"
+    r"|first|second|third|fourth)\b",
+    re.IGNORECASE,
+)
+# ponytail: conservative verb list — only verbs that unambiguously mean
+# "won the game" (not "dominated the paint"); extend if wrong-winner recaps
+# slip through with other phrasing.
+_WIN_VERBS = (
+    r"(?:beat|defeated|topped|downed|edged|routed|blew out|held off|outlasted"
+    r"|knocked off|took down|stunned|dispatched|upended|toppled|cruised past|survived)"
+)
+_NEGATION_RE = re.compile(r"n[o']t\b|\bnever\b|\bfail\w*|\bunable\b", re.IGNORECASE)
 _GENERIC_CAP_WORDS = {
     "The", "A", "An", "In", "Of", "And", "On", "At", "To", "For", "With",
     "Player", "Game", "Games", "Quarter", "Half", "Finals", "Playoff", "Playoffs",
     "MVP", "NBA", "WNBA", "All", "Star", "Conference", "Season", "Series",
     "Play", "Tournament", "Regular", "Preseason", "Jr", "Sr", "II", "III", "IV",
+}
+# City/nickname words for every league team, so mentions of other teams
+# ("a loss in Oklahoma City") don't read as invented players.
+_LEAGUE_TEAM_WORDS = {
+    "Atlanta", "Hawks", "Boston", "Celtics", "Brooklyn", "Nets", "Charlotte",
+    "Hornets", "Chicago", "Bulls", "Cleveland", "Cavaliers", "Dallas",
+    "Mavericks", "Denver", "Nuggets", "Detroit", "Pistons", "Golden", "State",
+    "Warriors", "Houston", "Rockets", "Indiana", "Pacers", "Los", "Angeles",
+    "Clippers", "Lakers", "Memphis", "Grizzlies", "Miami", "Heat", "Milwaukee",
+    "Bucks", "Minnesota", "Timberwolves", "New", "Orleans", "Pelicans", "York",
+    "Knicks", "Oklahoma", "City", "Thunder", "Orlando", "Magic", "Philadelphia",
+    "Sixers", "Phoenix", "Suns", "Portland", "Trail", "Blazers", "Sacramento",
+    "Kings", "San", "Antonio", "Spurs", "Toronto", "Raptors", "Utah", "Jazz",
+    "Washington", "Wizards",
+    "Las", "Vegas", "Aces", "Dream", "Fever", "Liberty", "Lynx", "Mercury",
+    "Mystics", "Sky", "Sparks", "Seattle", "Storm", "Connecticut", "Sun",
+    "Valkyries", "Wings", "Tempo", "Fire",
 }
 
 
@@ -281,6 +330,39 @@ def _ascii(s: str) -> str:
     # Roster names carry accents ("Dončić") that models often drop; normalize
     # both sides so that doesn't read as an invented player.
     return unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode()
+
+
+def _performers_lines(team) -> str:
+    played = [
+        p for p in team.players
+        if p.name and p.stats and re.search(r"[1-9]", p.stats.minutes or "")
+    ]
+    played.sort(key=lambda p: p.stats.points, reverse=True)
+    lines = [
+        f"{p.name}: {p.stats.minutes} min, {p.stats.points} pts, "
+        f"{p.stats.reboundsTotal} reb, {p.stats.assists} ast, "
+        f"{p.stats.fieldGoalsMade}-of-{p.stats.fieldGoalsAttempted} FG, "
+        f"{p.stats.threePointersMade}-of-{p.stats.threePointersAttempted} 3P, "
+        f"{p.stats.plusMinusPoints:+d}"
+        for p in played
+    ]
+    return "\n".join(lines) or "No boxscore data"
+
+
+def _team_stats_lines(game) -> str:
+    def line(t):
+        s = t.statistics
+        if s is None:
+            return f"{t.teamTricode}: no team stats available"
+        return (
+            f"{t.teamTricode}: {s.fieldGoalsMade}-of-{s.fieldGoalsAttempted} FG, "
+            f"{s.threePointersMade}-of-{s.threePointersAttempted} 3P, "
+            f"{s.freeThrowsMade}-of-{s.freeThrowsAttempted} FT, "
+            f"{s.reboundsTotal} reb, {s.assists} ast, {s.turnovers} TO, "
+            f"{s.pointsInThePaint} paint pts, {s.fastBreakPointsMade} fastbreak pts, "
+            f"{s.benchPoints} bench pts, biggest lead {s.biggestLead}"
+        )
+    return line(game.homeTeam) + "\n" + line(game.awayTeam)
 
 
 class OpenRouterContentProvider(ContentProvider):
@@ -295,7 +377,9 @@ class OpenRouterContentProvider(ContentProvider):
         if not api_key:
             raise RuntimeError("Missing OPENROUTER_API_KEY environment variable")
 
-        self.client = OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+        # Explicit timeout so a hung provider can't pin a background
+        # generation slot for the library's ~10-minute default.
+        self.client = OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL, timeout=120)
         self.model = DEFAULT_MODEL
         self.storage_client = storage_client
         self.nba_stats_provider = nba_stats_provider
@@ -310,8 +394,16 @@ class OpenRouterContentProvider(ContentProvider):
                 return cached
 
         context = self._build_game_context(game_id)
+        # A recap generated from a half-finished boxscore would be cached for
+        # 24h and outlive the final buzzer — refuse until the game is FINAL.
+        if context["game"].gameStatus != GameStatus.FINAL:
+            raise ValueError(
+                f"game {game_id} is not final (status {context['game'].gameStatus}); "
+                "refusing to generate a recap"
+            )
         records = []
         memo = {}
+        static_problems = []
         try:
             recap, log = self._agent_recap(game_id, context, records, memo)
             recap["researchLog"] = log
@@ -332,17 +424,23 @@ class OpenRouterContentProvider(ContentProvider):
             )
             # Last-resort path — log fact-check problems rather than reject.
             roster_names = set(context["cleaned_home_roster"]) | set(context["cleaned_visitor_roster"])
-            problems = self._check_recap_facts(recap, context["game"], roster_names)
-            if problems:
-                content_logger.warning("static recap for %s failed fact-checks: %s", game_id, "; ".join(problems))
+            static_problems = self._check_recap_facts(recap, context["game"], roster_names)
+            if static_problems:
+                content_logger.warning("static recap for %s failed fact-checks: %s", game_id, "; ".join(static_problems))
         if "key_moments" not in memo:
             memo["key_moments"] = self._extract_key_moments(
                 context["cleaned_pbp"], context["scoring_runs"], records=records
             )
         recap["keyMoments"] = memo["key_moments"]
+        self._shadow_judge_recap(game_id, recap, context, records)
 
         _write_io_file(game_id, "summary", records)
-        self.storage_client.save(key, recap)
+        if static_problems:
+            # Short TTL so a blob that failed fact-checks self-corrects on the
+            # next poll instead of living the full 24h.
+            self.storage_client.save_with_ttl(key, recap, 600)
+        else:
+            self.storage_client.save(key, recap)
         return recap
 
     def get_matchup_preview(self, game_id, force_refresh: bool = False) -> dict:
@@ -353,7 +451,16 @@ class OpenRouterContentProvider(ContentProvider):
             if cached:
                 return cached
 
+        game = self.nba_stats_provider.get_boxscore(game_id)
+        # A "preview" of a game already underway or finished is stale on
+        # arrival — refuse unless the game is still SCHEDULED.
+        if game.gameStatus != GameStatus.SCHEDULED:
+            raise ValueError(
+                f"game {game_id} has already started (status {game.gameStatus}); "
+                "refusing to generate a preview"
+            )
         records = []
+        static_problems = []
         try:
             preview, log = self._agent_preview(game_id, records)
             preview["researchLog"] = log
@@ -369,9 +476,22 @@ class OpenRouterContentProvider(ContentProvider):
                 label="preview",
                 records=records,
             )
+            # Last-resort path — log fact-check problems rather than reject.
+            roster_names = set(
+                format_team_roster(self._fetch_roster(game.homeTeam.teamId))
+                + format_team_roster(self._fetch_roster(game.awayTeam.teamId))
+            )
+            static_problems = self._check_preview_facts(preview, roster_names, game)
+            if static_problems:
+                content_logger.warning("static preview for %s failed fact-checks: %s", game_id, "; ".join(static_problems))
 
         _write_io_file(game_id, "matchup-preview", records)
-        self.storage_client.save(key, preview)
+        if static_problems:
+            # Short TTL so a blob that failed fact-checks self-corrects on the
+            # next poll instead of living the full 24h.
+            self.storage_client.save_with_ttl(key, preview, 600)
+        else:
+            self.storage_client.save(key, preview)
         return preview
 
     def get_model_comparison(self, game_id, force_refresh: bool = False) -> list[dict]:
@@ -791,7 +911,7 @@ class OpenRouterContentProvider(ContentProvider):
             },
             models=AGENT_MODELS,
             validate=lambda r: r.get("headline") and r.get("preview") and r.get("playersToWatch") is not None,
-            fact_check=lambda r: self._check_preview_facts(r, roster_names),
+            fact_check=lambda r: self._check_preview_facts(r, roster_names, game),
             label="preview",
             records=records,
         )
@@ -821,35 +941,10 @@ class OpenRouterContentProvider(ContentProvider):
             return self._recent_form_line(teams[team].teamId, team == "home", season, league)
 
         def top_performers(team):
-            played = [
-                p for p in teams[team].players
-                if p.name and p.stats and re.search(r"[1-9]", p.stats.minutes or "")
-            ]
-            played.sort(key=lambda p: p.stats.points, reverse=True)
-            lines = [
-                f"{p.name}: {p.stats.minutes} min, {p.stats.points} pts, "
-                f"{p.stats.reboundsTotal} reb, {p.stats.assists} ast, "
-                f"{p.stats.fieldGoalsMade}-of-{p.stats.fieldGoalsAttempted} FG, "
-                f"{p.stats.threePointersMade}-of-{p.stats.threePointersAttempted} 3P, "
-                f"{p.stats.plusMinusPoints:+d}"
-                for p in played
-            ]
-            return "\n".join(lines) or "No boxscore data"
+            return _performers_lines(teams[team])
 
         def team_stats_comparison():
-            def line(t):
-                s = t.statistics
-                if s is None:
-                    return f"{t.teamTricode}: no team stats available"
-                return (
-                    f"{t.teamTricode}: {s.fieldGoalsMade}-of-{s.fieldGoalsAttempted} FG, "
-                    f"{s.threePointersMade}-of-{s.threePointersAttempted} 3P, "
-                    f"{s.freeThrowsMade}-of-{s.freeThrowsAttempted} FT, "
-                    f"{s.reboundsTotal} reb, {s.assists} ast, {s.turnovers} TO, "
-                    f"{s.pointsInThePaint} paint pts, {s.fastBreakPointsMade} fastbreak pts, "
-                    f"{s.benchPoints} bench pts, biggest lead {s.biggestLead}"
-                )
-            return line(game.homeTeam) + "\n" + line(game.awayTeam)
+            return _team_stats_lines(game)
 
         def head_to_head():
             home_gl = self._fetch_game_log(game.homeTeam.teamId, season, league)
@@ -881,6 +976,41 @@ class OpenRouterContentProvider(ContentProvider):
             records=records,
         )
 
+    def _shadow_judge_recap(self, game_id, recap: dict, context: dict, records: list) -> None:
+        """LLM judge for narrative claims the deterministic checks can't reach
+        (game arc, comebacks, causality). Shadow mode: findings are logged and
+        recorded in the I/O artifact only — never sent back to the model and
+        never block the recap. Flip to enforcing once the logged
+        false-positive rate is known."""
+        try:
+            ground_truth = "\n\n".join([
+                f"FINAL: {context['home_team']} {context['home_team_score']}, "
+                f"{context['away_team']} {context['away_team_score']}",
+                context["cleaned_period_scores"],
+                _team_stats_lines(context["game"]),
+                f"{context['home_team']}:\n{_performers_lines(context['game'].homeTeam)}",
+                f"{context['away_team']}:\n{_performers_lines(context['game'].awayTeam)}",
+                "SCORING RUNS: " + json.dumps(context["scoring_runs"]),
+            ])
+            result = self._call_with_fallback(
+                system=JUDGE_SYSTEM_PROMPT,
+                prompt=build_judge_prompt(ground_truth, recap),
+                models=[JUDGE_MODEL],
+                validate=lambda r: isinstance(r.get("problems"), list),
+                label="shadow judge",
+                max_tokens=600,
+                records=records,
+            )
+            problems = [p for p in result["problems"] if isinstance(p, str) and p.strip()]
+            if problems:
+                content_logger.warning(
+                    "shadow judge flagged recap for %s: %s", game_id, "; ".join(problems)
+                )
+            else:
+                content_logger.info("shadow judge passed recap for %s", game_id)
+        except Exception:
+            content_logger.warning("shadow judge failed for %s", game_id, exc_info=True)
+
     # --- Deterministic fact-checking ---------------------------------------
     # Pure-Python checks run on every submit_report; failures go back to the
     # model as a tool result so it can correct and resubmit.
@@ -888,10 +1018,34 @@ class OpenRouterContentProvider(ContentProvider):
     @classmethod
     def _check_recap_facts(cls, report: dict, game, roster_names: set) -> list[str]:
         problems = []
-        text = _ascii(f"{report.get('headline') or ''} {report.get('recap') or ''}")
+        # Newline join so the headline is its own "sentence" in the loops below.
+        text = _ascii(f"{report.get('headline') or ''}\n{report.get('recap') or ''}")
         home, away = game.homeTeam, game.awayTeam
         home_score = home.score if home.score is not None else sum(home.periodScores)
         away_score = away.score if away.score is not None else sum(away.periodScores)
+
+        winner, loser = (home, away) if home_score > away_score else (away, home)
+        if not any(
+            _ascii(t) in text
+            for t in (winner.teamName, winner.teamCity, winner.teamTricode) if t
+        ):
+            problems.append(
+                f"the recap must name the winning team ({winner.teamCity} {winner.teamName})"
+            )
+        wrong_winner = re.compile(
+            rf"\b{re.escape(_ascii(loser.teamName))}\b.*\b{_WIN_VERBS}\b.*"
+            rf"\b{re.escape(_ascii(winner.teamName))}\b",
+            re.IGNORECASE,
+        )
+        for sentence in re.split(r"[.!?\n]", text):
+            if _NEGATION_RE.search(sentence):
+                continue
+            if wrong_winner.search(sentence):
+                problems.append(
+                    f"the recap describes the {loser.teamName} as beating the "
+                    f"{winner.teamName}, but the {winner.teamName} won"
+                )
+                break
 
         final = {home_score, away_score}
         for a, b in _SCORE_PAIR_RE.findall(text):
@@ -925,16 +1079,27 @@ class OpenRouterContentProvider(ContentProvider):
 
         # ponytail: stat claims only checked when exactly one player is named in
         # the sentence; multi-player sentences are skipped as ambiguous.
-        stat_fields = {"points": "points", "rebounds": "reboundsTotal", "assists": "assists"}
+        stat_fields = {
+            "points": "points", "rebounds": "reboundsTotal", "boards": "reboundsTotal",
+            "assists": "assists", "dimes": "assists", "steals": "steals",
+            "blocks": "blocks", "turnovers": "turnovers",
+            "threes": "threePointersMade", "three-pointers": "threePointersMade",
+            "3-pointers": "threePointersMade",
+        }
         for sentence in re.split(r"[.\n]", text):
             named = [
                 p for name, p in players.items()
                 if p.stats and name.split()[-1] in sentence
             ]
-            if len(named) != 1:
+            if len(named) != 1 or _PARTIAL_SPAN_RE.search(sentence):
                 continue
             for value, stat in _STAT_CLAIM_RE.findall(sentence):
-                actual = getattr(named[0].stats, stat_fields[stat.lower()])
+                field = stat_fields[stat.lower()]
+                # "N threes" counts makes; a sentence about attempts or misses
+                # would compare the wrong number.
+                if field == "threePointersMade" and re.search(r"attempt|miss", sentence, re.IGNORECASE):
+                    continue
+                actual = getattr(named[0].stats, field)
                 if int(value) != actual:
                     problems.append(
                         f"the recap says {named[0].name} had {value} {stat.lower()} "
@@ -963,7 +1128,7 @@ class OpenRouterContentProvider(ContentProvider):
     def _invented_name_problems(text: str, roster_names: set, game) -> list[str]:
         if not roster_names:
             return []  # no roster data — can't judge names
-        allowed = set(_GENERIC_CAP_WORDS)
+        allowed = _GENERIC_CAP_WORDS | _LEAGUE_TEAM_WORDS
         for name in roster_names:
             allowed.update(w.strip(".,") for w in _ascii(name).split())
         for team in (game.homeTeam, game.awayTeam):
@@ -978,8 +1143,8 @@ class OpenRouterContentProvider(ContentProvider):
                 problems.append(f"'{run}' is not a player on either roster")
         return problems
 
-    @staticmethod
-    def _check_preview_facts(report: dict, roster_names: set) -> list[str]:
+    @classmethod
+    def _check_preview_facts(cls, report: dict, roster_names: set, game) -> list[str]:
         problems = []
         allowed = {_ascii(n) for n in roster_names}
         for p in report.get("playersToWatch") or []:
@@ -990,6 +1155,7 @@ class OpenRouterContentProvider(ContentProvider):
             if name and allowed and _ascii(name) not in allowed:
                 problems.append(f"playersToWatch '{name}' is not on either roster")
         text = _ascii(f"{report.get('headline') or ''} {report.get('preview') or ''}")
+        problems += cls._invented_name_problems(text, roster_names, game)
         for a, b in _SCORE_PAIR_RE.findall(text):
             if int(a) >= 50 and int(b) >= 50:
                 problems.append(

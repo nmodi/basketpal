@@ -223,3 +223,33 @@ When you call submit_report:
 - recap: {RECAP_BODY_RULE}
 - playerOfTheGame: name must appear in a roster you fetched; reason is one sentence citing only stats from get_top_performers
 """
+
+
+JUDGE_SYSTEM_PROMPT = """
+You are a fact-checker reviewing a basketball game recap against verified game data.
+
+List ONLY claims in the recap that are CONTRADICTED by the data: the wrong team
+winning, a comeback or scoring run that did not happen, a wrong game arc
+(e.g. "wire-to-wire" when the lead changed hands), wrong causality, or a wrong
+statistic. Be conservative:
+- Do NOT flag claims the data neither confirms nor denies.
+- Do NOT flag stylistic choices, tone, or subjective judgments.
+- If you are unsure whether a claim is contradicted, do not flag it.
+
+Respond with JSON: {"problems": ["one sentence per contradicted claim", ...]}.
+Return {"problems": []} if nothing is contradicted.
+"""
+
+
+def build_judge_prompt(ground_truth: str, report: dict) -> str:
+    return f"""
+VERIFIED GAME DATA:
+{ground_truth}
+
+RECAP HEADLINE: {report.get('headline') or ''}
+
+RECAP:
+{report.get('recap') or ''}
+
+List every claim in the recap that the verified data contradicts, as JSON.
+"""

@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -144,6 +145,16 @@ def test_prose_only_model_is_abandoned_after_one_nudge(provider):
         _run(provider, [_msg(content="Here is my report."), _msg(content="More prose.")])
 
 
+def test_nudge_resets_after_productive_tool_step(provider):
+    report, _ = _run(provider, [
+        _msg(content="Let me think."),
+        _msg(tool_calls=[_tc("1", "get_recent_form", '{"team": "home"}')]),
+        _msg(content="Thinking again."),
+        _msg(tool_calls=[_tc("2", "submit_report", '{"headline": "H"}')]),
+    ], impls={"get_recent_form": lambda team: "ok"})
+    assert report["headline"] == "H"
+
+
 def test_agent_failure_falls_back_to_static_path(provider, monkeypatch):
     provider.storage_client.get.return_value = None
     static_result = {"headline": "Static", "preview": "P", "playersToWatch": []}
@@ -225,6 +236,19 @@ def test_wrong_stat_line_caught():
     assert any("38 points" in p and "28" in p for p in problems)
 
 
+def test_wrong_shooting_split_caught():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] +
+                  " Stephen Curry shot 9-of-20 from three.")
+    problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
+    assert any("9-of-20 from three" in p and "0-of-0" in p for p in problems)
+
+
+def test_correct_shooting_split_passes():
+    report = dict(CLEAN_RECAP, recap=CLEAN_RECAP["recap"] +
+                  " Stephen Curry shot 0-of-0 from the field.")
+    assert OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER) == []
+
+
 def test_potg_who_did_not_play_caught():
     report = dict(CLEAN_RECAP, playerOfTheGame={"name": "Austin Reaves", "reason": "?"})
     problems = OpenRouterContentProvider._check_recap_facts(report, _game(), ROSTER)
@@ -256,3 +280,63 @@ def test_preview_stating_a_score_caught():
     report = {"headline": "H", "preview": "Expect a repeat of the 121-113 result.", "playersToWatch": []}
     problems = OpenRouterContentProvider._check_preview_facts(report, ROSTER)
     assert any("has not been played" in p for p in problems)
+
+
+def test_recap_agent_top_performers_tool(provider):
+    context = {
+        "game": _game(),
+        "game_type": "Regular Season",
+        "series_line": "",
+        "home_team": "Los Angeles Lakers",
+        "away_team": "Golden State Warriors",
+        "home_team_score": 110,
+        "away_team_score": 104,
+        "cleaned_home_roster": ["LeBron James", "Austin Reaves"],
+        "cleaned_visitor_roster": ["Stephen Curry"],
+        "cleaned_period_scores": "scores",
+        "scoring_runs": [],
+        "cleaned_pbp": [],
+    }
+    provider.client = ScriptedClient([
+        _msg(tool_calls=[
+            _tc("1", "get_top_performers", '{"team": "away"}'),
+            _tc("2", "get_team_stats_comparison", "{}"),
+        ]),
+        _msg(tool_calls=[_tc("3", "submit_report", json.dumps(CLEAN_RECAP))]),
+    ])
+    report, log = provider._agent_recap("0022400001", context, [], {})
+    assert report["headline"] == CLEAN_RECAP["headline"]
+    assert log[0]["tool"] == "get_top_performers"
+    assert "Stephen Curry" in log[0]["summary"]
+    assert "35 pts, 5 reb, 6 ast" in log[0]["summary"]
+    assert log[1]["tool"] == "get_team_stats_comparison"
+    assert "LAL" in log[1]["summary"] and "GSW" in log[1]["summary"]
+
+
+def test_recap_agent_head_to_head_excludes_this_game(provider):
+    context = {
+        "game": _game(),
+        "game_type": "Regular Season",
+        "series_line": "",
+        "home_team": "Los Angeles Lakers",
+        "away_team": "Golden State Warriors",
+        "home_team_score": 110,
+        "away_team_score": 104,
+        "cleaned_home_roster": ["LeBron James", "Austin Reaves"],
+        "cleaned_visitor_roster": ["Stephen Curry"],
+        "cleaned_period_scores": "scores",
+        "scoring_runs": [],
+        "cleaned_pbp": [],
+    }
+    provider._fetch_game_log = lambda *a: [
+        {"GAME_ID": "0022300500", "MATCHUP": "LAL vs. GSW", "WL": "W", "PTS": 120, "PLUS_MINUS": 5},
+        {"GAME_ID": "0022400001", "MATCHUP": "LAL vs. GSW", "WL": "W", "PTS": 110, "PLUS_MINUS": 6},
+    ]
+    provider.client = ScriptedClient([
+        _msg(tool_calls=[_tc("1", "get_head_to_head", "{}")]),
+        _msg(tool_calls=[_tc("2", "submit_report", json.dumps(CLEAN_RECAP))]),
+    ])
+    _, log = provider._agent_recap("0022400001", context, [], {})
+    assert log[0]["tool"] == "get_head_to_head"
+    assert "LAL 1-0 GSW" in log[0]["summary"]
+    assert "LAL 120" in log[0]["summary"]  # last meeting is the prior game, not this one

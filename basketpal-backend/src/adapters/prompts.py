@@ -215,11 +215,11 @@ Research and write a game recap for the following game.
 GAME TYPE: {context['game_type']}{context['series_line']}
 FINAL SCORE: {context['home_team']} {context['home_team_score']}, {context['away_team']} {context['away_team_score']}
 
-Use the tools to research period scores, scoring runs, key moments,
-and rosters before writing.
+Use the tools to research top performers, team stat lines, period scores,
+scoring runs, key moments, head-to-head, and rosters before writing.
 
 When you call submit_report:
 - headline: {HEADLINE_RULE}
 - recap: {RECAP_BODY_RULE}
-- playerOfTheGame: name must appear in a roster you fetched; reason is one sentence with no unverifiable stats
+- playerOfTheGame: name must appear in a roster you fetched; reason is one sentence citing only stats from get_top_performers
 """

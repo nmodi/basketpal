@@ -252,6 +252,9 @@ PREVIEW_TOOLS = [
 ]
 
 RECAP_TOOLS = [
+    _tool_spec("get_top_performers", "Boxscore stat lines (min, pts, reb, ast, FG, 3P, +/-) for every player who played, sorted by points.", per_team=True),
+    _tool_spec("get_team_stats_comparison", "Final team stat lines side by side: shooting splits, rebounds, assists, turnovers, paint/fastbreak/bench points, biggest lead."),
+    _tool_spec("get_head_to_head", "This season's series between the two teams before this game, and the last meeting's score."),
     _tool_spec("get_period_scores", "Quarter-by-quarter scoring for this game."),
     _tool_spec("get_scoring_runs", "Runs of 8+ unanswered points in this game (ground truth)."),
     _tool_spec("get_key_moments", "The most narratively significant plays of this game."),
@@ -265,6 +268,7 @@ RECAP_TOOLS = [
 _SCORE_PAIR_RE = re.compile(r"\b(\d{2,3})\s*[-–]\s*(\d{2,3})\b")
 _NAME_RUN_RE = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+")
 _STAT_CLAIM_RE = re.compile(r"(\d+)\s+(?:\w+\s+)?(points|rebounds|assists)\b", re.IGNORECASE)
+_SHOT_SPLIT_RE = re.compile(r"\b(\d+)[-\s]of[-\s](\d+)\b", re.IGNORECASE)
 _GENERIC_CAP_WORDS = {
     "The", "A", "An", "In", "Of", "And", "On", "At", "To", "For", "With",
     "Player", "Game", "Games", "Quarter", "Half", "Finals", "Playoff", "Playoffs",
@@ -326,6 +330,11 @@ class OpenRouterContentProvider(ContentProvider):
                 label="story",
                 records=records,
             )
+            # Last-resort path — log fact-check problems rather than reject.
+            roster_names = set(context["cleaned_home_roster"]) | set(context["cleaned_visitor_roster"])
+            problems = self._check_recap_facts(recap, context["game"], roster_names)
+            if problems:
+                content_logger.warning("static recap for %s failed fact-checks: %s", game_id, "; ".join(problems))
         if "key_moments" not in memo:
             memo["key_moments"] = self._extract_key_moments(
                 context["cleaned_pbp"], context["scoring_runs"], records=records
@@ -654,6 +663,7 @@ class OpenRouterContentProvider(ContentProvider):
                     "content": "Use the tools to research, then call submit_report with the final report.",
                 })
                 continue
+            nudged = False
 
             for tc in msg.tool_calls:
                 name = tc.function.name
@@ -810,12 +820,54 @@ class OpenRouterContentProvider(ContentProvider):
         def recent_form(team):
             return self._recent_form_line(teams[team].teamId, team == "home", season, league)
 
+        def top_performers(team):
+            played = [
+                p for p in teams[team].players
+                if p.name and p.stats and re.search(r"[1-9]", p.stats.minutes or "")
+            ]
+            played.sort(key=lambda p: p.stats.points, reverse=True)
+            lines = [
+                f"{p.name}: {p.stats.minutes} min, {p.stats.points} pts, "
+                f"{p.stats.reboundsTotal} reb, {p.stats.assists} ast, "
+                f"{p.stats.fieldGoalsMade}-of-{p.stats.fieldGoalsAttempted} FG, "
+                f"{p.stats.threePointersMade}-of-{p.stats.threePointersAttempted} 3P, "
+                f"{p.stats.plusMinusPoints:+d}"
+                for p in played
+            ]
+            return "\n".join(lines) or "No boxscore data"
+
+        def team_stats_comparison():
+            def line(t):
+                s = t.statistics
+                if s is None:
+                    return f"{t.teamTricode}: no team stats available"
+                return (
+                    f"{t.teamTricode}: {s.fieldGoalsMade}-of-{s.fieldGoalsAttempted} FG, "
+                    f"{s.threePointersMade}-of-{s.threePointersAttempted} 3P, "
+                    f"{s.freeThrowsMade}-of-{s.freeThrowsAttempted} FT, "
+                    f"{s.reboundsTotal} reb, {s.assists} ast, {s.turnovers} TO, "
+                    f"{s.pointsInThePaint} paint pts, {s.fastBreakPointsMade} fastbreak pts, "
+                    f"{s.benchPoints} bench pts, biggest lead {s.biggestLead}"
+                )
+            return line(game.homeTeam) + "\n" + line(game.awayTeam)
+
+        def head_to_head():
+            home_gl = self._fetch_game_log(game.homeTeam.teamId, season, league)
+            prior = [g for g in home_gl if str(g.get("GAME_ID") or "") != str(game_id)]
+            return self._h2h(
+                prior, game.awayTeam.teamTricode, game.homeTeam.teamTricode,
+                context["home_team"], context["away_team"],
+            )
+
         roster_names = set(context["cleaned_home_roster"]) | set(context["cleaned_visitor_roster"])
         return self._run_agent(
             system=AGENT_RECAP_SYSTEM_PROMPT,
             user_prompt=build_agent_recap_prompt(context),
             tools=RECAP_TOOLS,
             tool_impls={
+                "get_top_performers": top_performers,
+                "get_team_stats_comparison": team_stats_comparison,
+                "get_head_to_head": head_to_head,
                 "get_period_scores": lambda: context["cleaned_period_scores"],
                 "get_scoring_runs": lambda: json.dumps(context["scoring_runs"]),
                 "get_key_moments": key_moments,
@@ -846,7 +898,8 @@ class OpenRouterContentProvider(ContentProvider):
             a, b = int(a), int(b)
             if a >= 50 and b >= 50 and {a, b} != final:
                 problems.append(
-                    f"score {a}-{b} does not match the final score {home_score}-{away_score}"
+                    f"only the final score {home_score}-{away_score} may be cited; "
+                    f"remove or reword {a}-{b}"
                 )
         if str(home_score) not in text or str(away_score) not in text:
             problems.append(f"the recap must state the final score {home_score}-{away_score}")
@@ -886,6 +939,23 @@ class OpenRouterContentProvider(ContentProvider):
                     problems.append(
                         f"the recap says {named[0].name} had {value} {stat.lower()} "
                         f"but the boxscore shows {actual}"
+                    )
+            # ponytail: split category bucketed by whole-sentence keywords — a
+            # sentence mixing FG and 3P splits may mis-bucket; per-claim
+            # windowing if that ever shows up.
+            s = named[0].stats
+            low = sentence.lower()
+            for made, att in _SHOT_SPLIT_RE.findall(sentence):
+                if "three" in low or "3-point" in low or "deep" in low:
+                    expected, cat = (s.threePointersMade, s.threePointersAttempted), "from three"
+                elif "free throw" in low or "the line" in low:
+                    expected, cat = (s.freeThrowsMade, s.freeThrowsAttempted), "at the line"
+                else:
+                    expected, cat = (s.fieldGoalsMade, s.fieldGoalsAttempted), "from the field"
+                if (int(made), int(att)) != expected:
+                    problems.append(
+                        f"the recap says {named[0].name} went {made}-of-{att} {cat} "
+                        f"but the boxscore shows {expected[0]}-of-{expected[1]}"
                     )
         return problems
 

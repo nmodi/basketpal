@@ -29,14 +29,31 @@ export const getGameResult = (gameData) => {
 }
 
 
+// Backend TeamStats omits points/reboundsDefensive, so the PIE denominator is
+// summed from individual player lines instead of team.statistics.
+const sumPlayerStats = (players) => {
+    const totals = {
+        points: 0, fieldGoalsMade: 0, freeThrowsMade: 0,
+        fieldGoalsAttempted: 0, freeThrowsAttempted: 0,
+        reboundsOffensive: 0, reboundsDefensive: 0,
+        assists: 0, steals: 0, blocks: 0, turnovers: 0,
+    };
+    players.forEach(p => {
+        if (!p.stats) return;
+        Object.keys(totals).forEach(k => { totals[k] += p.stats[k] ?? 0; });
+    });
+    return totals;
+};
+
 export const getTopPlayers = (team, N) => {
+    const teamTotals = sumPlayerStats(team.players);
     return team.players
+        .filter(p => p.stats)
         .map(p => (
             {...p,
                 teamId: team.teamId,
                 gameScore: calculateGameScore(p.stats),
-                teamStats: team.statistics,
-                pie: calculatePIE(p, team.statistics)
+                pie: calculatePIE(p, teamTotals)
             }))
         .sort((a, b) => b.pie - a.pie)
         .slice(0, N);

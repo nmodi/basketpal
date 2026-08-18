@@ -71,7 +71,7 @@ export const calculateGameScore = (stats) => {
     return gameScore;
 }
 
-export const calculatePIE = (player, teamStats = player.teamStats) => {
+export const calculatePIE = (player, teamStats) => {
     // Destructure player stats
     const {
         points,
@@ -116,10 +116,11 @@ export const calculatePIE = (player, teamStats = player.teamStats) => {
         totalReboundsOffensive + totalReboundsDefensive + totalAssists +
         totalSteals + totalBlocks - totalTurnovers;
 
-    // Calculate PIE
-    const PIE = playerContribution / gameContribution;
+    // Guard: 0 or NaN denominator (no plays yet, missing fields) must not
+    // poison the sort that picks Player of the Game.
+    if (!Number.isFinite(gameContribution) || gameContribution === 0) return 0;
 
-    return PIE;
+    return playerContribution / gameContribution;
 }
 
 export const getBestStats = (stats, N) => {

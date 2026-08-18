@@ -1,5 +1,5 @@
 import { Trophy } from '@phosphor-icons/react';
-import { useNavigate } from "@remix-run/react";
+import { Link } from "@remix-run/react";
 import dayjs from 'dayjs';
 import { getTeamStyle } from '../util/teamColorStrategy';
 import { formatGameClock, getScoreColor } from '../util/gameUtils';
@@ -35,9 +35,9 @@ function TeamPanel({ team, align, isScheduled, isWinner, scoreColor, scoreOpacit
         <div className={`${styles.teamPanel} ${isRight ? styles.teamPanelRight : styles.teamPanelLeft}`}>
             <div className={styles.teamContent}>
                 <p className={`${styles.teamName} ${isLong ? styles.teamNameLong : ''}`} style={{ color: teamStyle.nameColor }}>
-                    {isWinner && isRight && <Trophy className={styles.trophy} weight="fill" />}
+                    {isWinner && isRight && <Trophy className={styles.trophy} weight="fill" role="img" aria-label="Winner" />}
                     <span className={styles.teamNameText}>{team.teamName}</span>
-                    {isWinner && !isRight && <Trophy className={styles.trophy} weight="fill" />}
+                    {isWinner && !isRight && <Trophy className={styles.trophy} weight="fill" role="img" aria-label="Winner" />}
                 </p>
                 {team.wins != null && team.losses != null && (
                     <p className={styles.record}>{team.wins}–{team.losses}</p>
@@ -53,7 +53,6 @@ function TeamPanel({ team, align, isScheduled, isWinner, scoreColor, scoreOpacit
 }
 
 export default function Microtron({ game }) {
-    const navigate = useNavigate();
     const isScheduled = game.gameStatus === 1;
     const isLive = game.gameStatus === 2;
     const isFinal = game.gameStatus === 3;
@@ -67,9 +66,11 @@ export default function Microtron({ game }) {
     const homeScoreOpacity = isLive || isFinal ? 1 : getScoreOpacity(game.homeTeam.score, game.awayTeam.score);
 
     return (
-        <div
+        <Link
             className={styles.card}
-            onClick={() => navigate(`/${getLeague(game.gameId).toLowerCase()}/g/${game.gameId}`)}
+            to={`/${getLeague(game.gameId).toLowerCase()}/g/${game.gameId}`}
+            prefetch="intent"
+            aria-label={`${game.awayTeam.teamCity} ${game.awayTeam.teamName} at ${game.homeTeam.teamCity} ${game.homeTeam.teamName}`}
         >
             <div className={`${styles.colorBar} ${styles.colorBarLeft}`} style={{ background: awayStyle.barColor }} />
             <div className={`${styles.colorBar} ${styles.colorBarRight}`} style={{ background: homeStyle.barColor }} />
@@ -120,6 +121,6 @@ export default function Microtron({ game }) {
                     teamStyle={homeStyle}
                 />
             </div>
-        </div>
+        </Link>
     );
 }

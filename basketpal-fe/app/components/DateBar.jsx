@@ -29,7 +29,7 @@ export default function DateBar({ gameDates, selectedDate, onSelectDate }) {
 
     return (
         <div className={styles.dateBar}>
-            <button className={styles.dateArrow} onClick={() => setWeekOffset(w => w - 1)}>
+            <button className={styles.dateArrow} onClick={() => setWeekOffset(w => w - 1)} aria-label="Earlier dates">
                 <CaretLeft size={18} weight="bold" />
             </button>
             <div className={styles.dateInner}>
@@ -40,10 +40,11 @@ export default function DateBar({ gameDates, selectedDate, onSelectDate }) {
                     const hasGames = datesWithGames.has(dateStr);
 
                     return (
-                        <div
+                        <button
                             key={dateStr}
                             onClick={() => handleSelectDate(dateStr)}
                             className={`${styles.dateItem} ${isSelected ? styles.dateItemSelected : ''}`}
+                            aria-pressed={isSelected}
                         >
                             <span className={`${styles.dateDow} ${isSelected ? styles.dateDowSelected : ''} ${isToday && !isSelected ? styles.dateDowToday : ''}`}>
                                 {d.format('ddd').toUpperCase()}
@@ -54,11 +55,11 @@ export default function DateBar({ gameDates, selectedDate, onSelectDate }) {
                             <div className={styles.dateDot}>
                                 {hasGames && <div className={`${styles.dot} ${isSelected ? styles.dotSelected : ''}`} />}
                             </div>
-                        </div>
+                        </button>
                     );
                 })}
             </div>
-            <button className={styles.dateArrow} onClick={() => setWeekOffset(w => w + 1)}>
+            <button className={styles.dateArrow} onClick={() => setWeekOffset(w => w + 1)} aria-label="Later dates">
                 <CaretRight size={18} weight="bold" />
             </button>
         </div>

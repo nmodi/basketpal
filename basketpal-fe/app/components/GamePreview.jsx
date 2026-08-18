@@ -1,11 +1,8 @@
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import styles from './GamePreview.module.css';
 import { getTeamStyle } from '../util/teamColorStrategy';
 import { getTeamByTricode } from '../util/settings';
+import { getLeague } from '../util/league';
 import ReportCard from './ReportCard';
-
-dayjs.extend(relativeTime);
 
 function statusBadge(status) {
     if (!status) return { label: '—', cls: styles.badgeProbable };
@@ -17,9 +14,9 @@ function statusBadge(status) {
     return { label: status.toUpperCase(), cls: styles.badgeProbable };
 }
 
-function InjuryTeamSection({ tricode, players }) {
+function InjuryTeamSection({ tricode, players, league }) {
     const dotColor = getTeamStyle(tricode).barColor;
-    const team = getTeamByTricode(tricode);
+    const team = getTeamByTricode(tricode, league);
     const teamLabel = team ? team.name.split(' ').pop() : tricode;
     return (
         <div className={styles.teamSection}>
@@ -44,10 +41,7 @@ function InjuryTeamSection({ tricode, players }) {
 }
 
 export default function GamePreview({ gameData, preview, injuries }) {
-    const gameTime = dayjs().isAfter(dayjs(gameData.gameTimeUTC))
-        ? 'any minute now...'
-        : dayjs(gameData.gameTimeUTC).fromNow();
-
+    const league = getLeague(gameData.gameId);
     const showInjuries = injuries && (injuries.home?.players?.length > 0 || injuries.away?.players?.length > 0);
 
     return (
@@ -68,10 +62,10 @@ export default function GamePreview({ gameData, preview, injuries }) {
                         <div className={styles.injuryPanel}>
                             <p className={styles.injuryTitle}>Injury Report</p>
                             {injuries.away?.players?.length > 0 && (
-                                <InjuryTeamSection tricode={injuries.away.tricode} players={injuries.away.players} />
+                                <InjuryTeamSection tricode={injuries.away.tricode} players={injuries.away.players} league={league} />
                             )}
                             {injuries.home?.players?.length > 0 && (
-                                <InjuryTeamSection tricode={injuries.home.tricode} players={injuries.home.players} />
+                                <InjuryTeamSection tricode={injuries.home.tricode} players={injuries.home.players} league={league} />
                             )}
                         </div>
                     </div>

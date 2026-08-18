@@ -44,28 +44,45 @@ export const NBA_TEAMS = [
     { id: 1610612764, name: 'Washington Wizards', abbr: 'WAS', c1: '#002B5C', c2: '#E31837' },
 ];
 
+// Ids and tricodes verified against the live nba_api schedule feed.
 export const WNBA_TEAMS = [
-    { id: 1611661317, name: 'Atlanta Dream', abbr: 'DRM', c1: '#C8102E', c2: '#FFCD00' },
-    { id: 1611661319, name: 'Chicago Sky', abbr: 'CHI', c1: '#418FDE', c2: '#FFCD00' },
+    { id: 1611661330, name: 'Atlanta Dream', abbr: 'ATL', c1: '#C8102E', c2: '#FFCD00' },
+    { id: 1611661329, name: 'Chicago Sky', abbr: 'CHI', c1: '#418FDE', c2: '#FFCD00' },
     { id: 1611661323, name: 'Connecticut Sun', abbr: 'CON', c1: '#DC4405', c2: '#041E42' },
-    { id: 1611661320, name: 'Dallas Wings', abbr: 'DAL', c1: '#002B5C', c2: '#C4D600' },
-    { id: 1611661332, name: 'Golden State Valkyries', abbr: 'GSV', c1: '#7E3FBE', c2: '#FFFFFF' },
-    { id: 1611661321, name: 'Indiana Fever', abbr: 'IND', c1: '#002D62', c2: '#FFCD00' },
-    { id: 1611661325, name: 'Las Vegas Aces', abbr: 'LVA', c1: '#000000', c2: '#BA0C2F' },
-    { id: 1611661322, name: 'Los Angeles Sparks', abbr: 'LAS', c1: '#552583', c2: '#FFC72C' },
-    { id: 1611661313, name: 'Minnesota Lynx', abbr: 'MIN', c1: '#0C2340', c2: '#78BE20' },
-    { id: 1611661324, name: 'New York Liberty', abbr: 'NYL', c1: '#6ECEB2', c2: '#000000' },
-    { id: 1611661328, name: 'Phoenix Mercury', abbr: 'PHX', c1: '#201747', c2: '#CB6015' },
-    { id: 1611661329, name: 'Seattle Storm', abbr: 'SEA', c1: '#2C5234', c2: '#FBE122' },
-    { id: 1611661330, name: 'Washington Mystics', abbr: 'WAS', c1: '#002B5C', c2: '#C8102E' },
+    { id: 1611661321, name: 'Dallas Wings', abbr: 'DAL', c1: '#002B5C', c2: '#C4D600' },
+    { id: 1611661331, name: 'Golden State Valkyries', abbr: 'GSV', c1: '#7E3FBE', c2: '#FFFFFF' },
+    { id: 1611661325, name: 'Indiana Fever', abbr: 'IND', c1: '#002D62', c2: '#FFCD00' },
+    { id: 1611661319, name: 'Las Vegas Aces', abbr: 'LVA', c1: '#000000', c2: '#BA0C2F' },
+    { id: 1611661320, name: 'Los Angeles Sparks', abbr: 'LAS', c1: '#552583', c2: '#FFC72C' },
+    { id: 1611661324, name: 'Minnesota Lynx', abbr: 'MIN', c1: '#0C2340', c2: '#78BE20' },
+    { id: 1611661313, name: 'New York Liberty', abbr: 'NYL', c1: '#6ECEB2', c2: '#000000' },
+    { id: 1611661317, name: 'Phoenix Mercury', abbr: 'PHX', c1: '#201747', c2: '#CB6015' },
+    { id: 1611661327, name: 'Portland Fire', abbr: 'PDX', c1: '#E91E8C', c2: '#FFFFFF' },
+    { id: 1611661328, name: 'Seattle Storm', abbr: 'SEA', c1: '#2C5234', c2: '#FBE122' },
+    { id: 1611661332, name: 'Toronto Tempo', abbr: 'TOR', c1: '#612C51', c2: '#B8CCEA' },
+    { id: 1611661322, name: 'Washington Mystics', abbr: 'WAS', c1: '#002B5C', c2: '#C8102E' },
 ];
 
 export function getTeamById(league, teamId) {
     return (league === League.WNBA ? WNBA_TEAMS : NBA_TEAMS).find(t => t.id === teamId);
 }
 
-export function getTeamByTricode(tricode) {
-    return [...NBA_TEAMS, ...WNBA_TEAMS].find(t => t.abbr === tricode);
+// League is required: ATL/CHI/DAL/IND/MIN/PHX/WAS exist in both leagues.
+export function getTeamByTricode(tricode, league) {
+    return (league === League.WNBA ? WNBA_TEAMS : NBA_TEAMS).find(t => t.abbr === tricode);
+}
+
+// Broadcast delay lives in a cookie (not localStorage) so the Remix loader can
+// honor it server-side — the first rendered frame must already be delayed.
+const DELAY_COOKIE = 'basketpal_delay';
+
+export function saveStoredDelayMs(ms) {
+    document.cookie = `${DELAY_COOKIE}=${ms};path=/;max-age=31536000;samesite=lax`;
+}
+
+export function parseDelayCookie(cookieHeader) {
+    const m = new RegExp(`(?:^|;\\s*)${DELAY_COOKIE}=(\\d+)`).exec(cookieHeader ?? '');
+    return m ? Number(m[1]) : 0;
 }
 
 export function getSettings() {

@@ -2,7 +2,7 @@ import { useLoaderData, useParams, useRouteError, isRouteErrorResponse } from '@
 import ErrorPage from '../components/ErrorPage';
 import { GameHeader } from '../components/Header';
 import { json } from '@remix-run/node';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 import OnCourtPlayers from '../components/OnCourtPlayers';
 import Scoreboard from '../components/Scoreboard/Scoreboard';
@@ -12,6 +12,7 @@ import Postgame from '../components/Postgame';
 import axios from '../util/axios';
 import { toRouteError } from '../util/loaderError';
 import { getLeague, League } from '../util/league';
+import { parseDelayCookie, saveStoredDelayMs } from '../util/settings';
 import styles from '../styles/GamePage.module.css';
 
 export const meta = ({ data }) => {
@@ -25,31 +26,40 @@ export const meta = ({ data }) => {
     ];
 };
 
-export const loader = async ({ params }) => {
+export const loader = async ({ params, request }) => {
     const gameId = params.gameId;
+    const delayMs = parseDelayCookie(request.headers.get('Cookie'));
     try {
         const scoreboardResponse = await axios.get(`/games/${gameId}`);
         const scoreboard = scoreboardResponse.data;
 
         if (scoreboard && scoreboard.gameStatus === 1) {
-            return json({ boxscore: scoreboard });
+            return json({ boxscore: scoreboard, delayMs });
         }
 
-        const boxscoreResponse = await axios.get(`/games/${gameId}/boxscore`);
-        return json({ boxscore: boxscoreResponse.data });
+        // A live game must never flash the live score: the first fetch is
+        // already delayed by the viewer's stored broadcast delay.
+        const isLive = scoreboard?.gameStatus === 2;
+        const boxscoreResponse = await axios.get(`/games/${gameId}/boxscore`, {
+            params: isLive && delayMs > 0 ? { delay: Math.round(delayMs / 1000) } : {},
+        });
+        return json({ boxscore: boxscoreResponse.data, delayMs });
     } catch (error) {
         throw toRouteError(error);
     }
 };
 
 const Minitron = () => {
-    const {boxscore} = useLoaderData();
+    const {boxscore, delayMs} = useLoaderData();
 
     const [gameData, setGameData] = useState(boxscore);
-    const queueRef = useRef([boxscore]);
     const params = useParams();
     const league = getLeague(params.gameId);
-    const [uiDelay, setUiDelay] = useState(0);
+    const [uiDelay, setUiDelayState] = useState(delayMs ?? 0);
+    const setUiDelay = (ms) => {
+        setUiDelayState(ms);
+        saveStoredDelayMs(ms);
+    };
     const [summary, setSummary] = useState(undefined);
     const [preview, setPreview] = useState(undefined);
     const [injuries, setInjuries] = useState(undefined);
@@ -79,32 +89,26 @@ const Minitron = () => {
 
     useEffect(() => {
         if (isGameOver) return;
+        // The backend replays the snapshot from N seconds ago (?delay=N), so
+        // the delayed feed is server truth — no client-side queue to drain,
+        // and moving the slider genuinely rewinds instead of freezing.
         const fetchData = async () => {
             try {
                 let response;
                 if (!isGameStarted) {
                     response = await axios.get(`/games/${params.gameId}`);
                 } else {
-                    response = await axios.get(`/games/${params.gameId}/boxscore`);
+                    response = await axios.get(`/games/${params.gameId}/boxscore`, {
+                        params: isGameInProgress && uiDelay > 0 ? { delay: Math.round(uiDelay / 1000) } : {},
+                    });
                 }
-
-                const newData = response.data;
-                if (isGameInProgress) {
-                    queueRef.current.push(newData);
-                    const queueLength = Math.max(0, uiDelay / fetchInterval - 1);
-                    let nextData;
-                    while (queueRef.current.length > queueLength) {
-                        nextData = queueRef.current.shift();
-                    }
-                    if (nextData) setGameData(nextData);
-                } else {
-                    setGameData(newData);
-                }
+                setGameData(response.data);
             } catch (error) {
                 console.error('Failed to poll game data', error);
             }
         };
 
+        fetchData();
         const interval = setInterval(fetchData, isGameStarted ? fetchInterval : 30000);
         return () => clearInterval(interval);
     }, [uiDelay, isGameStarted, isGameInProgress, isGameOver, params.gameId]);

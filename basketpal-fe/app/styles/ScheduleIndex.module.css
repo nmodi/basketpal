@@ -47,11 +47,14 @@
   cursor: pointer;
   flex: 1;
   padding: 8px 4px;
+  border: none;
   border-radius: 6px;
   text-align: center;
   user-select: none;
   transition: background 0.12s;
   background: transparent;
+  font: inherit;
+  color: inherit;
 }
 
 .dateItem:hover {

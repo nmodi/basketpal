@@ -70,6 +70,19 @@
   text-transform: uppercase;
 }
 
+.behindBadge {
+  margin-top: 8px;
+  padding: 3px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.16em;
+  color: var(--highlight);
+  font-family: tt-autonomous-mono, monospace;
+  white-space: nowrap;
+}
+
 .finalBox {
   padding: 6px 16px;
   border: 1px solid var(--line-strong);
@@ -138,6 +151,18 @@
   background: var(--fg);
   cursor: pointer;
   border: none;
+}
+
+.slider:focus-visible {
+  outline: none;
+}
+
+.slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--highlight);
+}
+
+.slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--highlight);
 }
 
 .slider::-webkit-slider-runnable-track {

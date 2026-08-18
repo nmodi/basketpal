@@ -15,6 +15,7 @@ function getPeriodLabel(period) {
 }
 
 export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
+    const isScheduled = gameData.gameStatus === 1;
     const isLive = gameData.gameStatus === 2;
     const isFinal = gameData.gameStatus === 3;
     const formattedClock = formatGameClock(gameData.gameClock);
@@ -30,6 +31,10 @@ export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
 
     return (
         <div className={styles.card}>
+            <p className="visuallyHidden" aria-live="polite">
+                {gameData.awayTeam.teamName} {gameData.awayTeam.score}, {gameData.homeTeam.teamName} {gameData.homeTeam.score}
+                {isFinal ? ', final' : ''}
+            </p>
             <div className={styles.teams}>
                 <div className={styles.colorBarLeft} style={{ background: awayMainColor }} />
                 <div className={styles.colorBarRight} style={{ background: homeMainColor }} />
@@ -48,6 +53,9 @@ export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
                             <span className={styles.liveBadge}>LIVE</span>
                             <p className={styles.gameClock}>{formattedClock ?? '—'}</p>
                             <p className={styles.period}>{getPeriodLabel(gameData.period) ?? '—'}</p>
+                            {idx > 0 && (
+                                <span className={styles.behindBadge}>{DELAY_LABELS[idx]} BEHIND</span>
+                            )}
                         </>
                     )}
                     {isFinal && (
@@ -69,7 +77,7 @@ export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
 
             <ScoreBreakdown gameData={gameData} />
 
-            {isLive && (
+            {(isLive || isScheduled) && (
                 <div className={styles.delayBar}>
                     <span className={styles.delayLabel}>Broadcast Delay</span>
                     <div className={styles.sliderWrap}>
@@ -80,6 +88,8 @@ export default function Scoreboard({ gameData, uiDelay, setUiDelay }) {
                             max={DELAY_STEPS.length - 1}
                             step={1}
                             value={idx}
+                            aria-label="Broadcast delay"
+                            aria-valuetext={DELAY_DISPLAY[idx]}
                             onChange={(e) => setUiDelay(DELAY_STEPS[Number(e.target.value)])}
                         />
                         <div className={styles.sliderMarks}>

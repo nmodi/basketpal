@@ -11,7 +11,7 @@ colors:
   hairline-strong: "#474d5c"
   fg: "#f2f4f8"
   fg-muted: "#a1a7b5"
-  fg-dim: "#6c7384"
+  fg-dim: "#858ca0"
   fg-inverse: "#ffffff"
   bulb-warm-white: "#fff2d6"
   jumbotron-amber: "#facc15"
@@ -214,7 +214,7 @@ An almost fully achromatic dark system with three signal colors, holding space f
 - **Surface High** (`#2e3340`): total columns, selected options, team chips — the top tonal step.
 - **Hairline** (`#2e3340`): every 1px divider and card border. Shares a value with Surface High, which is why a divider reads as an edge of the next tonal step rather than as a drawn line.
 - **Hairline Strong** (`#474d5c`): borders that must be seen — score box outlines, dropdown edges, card hover state, badge outlines.
-- **Foreground** (`#f2f4f8`) / **Muted** (`#a1a7b5`) / **Dim** (`#6c7384`): the three-step text ramp. Primary values, secondary prose and inactive controls, then labels and metadata.
+- **Foreground** (`#f2f4f8`) / **Muted** (`#a1a7b5`) / **Dim** (`#858ca0`): the three-step text ramp. Primary values, secondary prose and inactive controls, then labels and metadata. Dim is pinned to the lightest value that still clears WCAG AA (4.5:1) on every ground it sits on — do not darken it.
 
 ### Team Color
 
@@ -269,7 +269,7 @@ At 768px and up, only these change: display type `24→30px`, scores `50→60px`
 
 ### Named Rules
 
-**The No-Reflow Rule.** The 768px breakpoint scales; it does not rearrange. A layout that only works on one side of it is a defect.
+**The No-Reflow Rule.** The 768px breakpoint scales; it does not rearrange — with one sanctioned exception: a multi-column grid whose columns physically cannot fit a phone viewport (the postgame `3fr 2fr` top row and `repeat(4, 1fr)` keys row, the pregame summary/injury split, the two-table On Court row) stacks to a single column below 768px. Scaling still handles everything else; a layout that only works on one side of the breakpoint is a defect.
 
 **The Stacked Chrome Rule.** The header and date bar are a fixed pair. Any new page-level chrome joins the stack and increases page top padding to match — never overlaps the first card.
 
@@ -374,6 +374,6 @@ A collapsed `<details>` disclosure under an AI report, separated by a hairline. 
 - **Don't** draw a border thicker than 1px unless it is team color or an active tab.
 - **Don't** add a shadow to interior structure. Inside a card, separation is hairlines and tonal steps only.
 - **Don't** set a fourth typeface, or use soleil for anything but multi-sentence AI report prose.
-- **Don't** reorganize layout at the 768px breakpoint. It scales type and padding; it does not rewrap.
+- **Don't** reorganize layout at the 768px breakpoint beyond the sanctioned stacking exception. It scales type and padding; multi-column grids that cannot fit a phone stack to one column, and nothing else rewraps.
 - **Don't** animate a control's size, scale, or shadow on press. State change is color and opacity over 0.12–0.18s.
 - **Don't** overlay the fixed header/date-bar stack. New page chrome joins the stack and increases page top padding to match.

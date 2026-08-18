@@ -43,7 +43,12 @@
 
 .onCourtGrid {
   display: flex;
+  flex-direction: column;
   gap: 16px;
   width: 100%;
   align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .onCourtGrid { flex-direction: row; }
 }

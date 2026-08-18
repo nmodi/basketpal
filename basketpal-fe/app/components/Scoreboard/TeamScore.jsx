@@ -25,9 +25,9 @@ export default function TeamScore({ team, align, isHome, isLive, isWinner, score
         >
             <p className={styles.city}>{team.teamCity}</p>
             <p className={styles.teamName} style={{ color: teamStyle.nameColor }}>
-                {isWinner && isHome && <Trophy className={styles.trophy} weight="fill" />}
+                {isWinner && isHome && <Trophy className={styles.trophy} weight="fill" role="img" aria-label="Winner" />}
                 {team.teamName}
-                {isWinner && !isHome && <Trophy className={styles.trophy} weight="fill" />}
+                {isWinner && !isHome && <Trophy className={styles.trophy} weight="fill" role="img" aria-label="Winner" />}
             </p>
 
             <div className={`${styles.scoreRow} ${isRight ? styles.scoreRowReverse : ''}`}>

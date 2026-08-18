@@ -26,7 +26,7 @@ const fmtPct = (frac) => `${Number((frac * 100).toFixed(1))}%`;
 export default function Postgame({ gameData, summary, league }) {
     const { winningTeam, losingTeam } = getGameResult(gameData);
     const potg = getTopPlayers(winningTeam, 1)[0];
-    const s = potg.stats;
+    const s = potg?.stats;
     const keys = evaluateKeysToTheWin(winningTeam, losingTeam, 4);
 
     const teamColors = getTeamById(league, winningTeam.teamId);
@@ -34,13 +34,13 @@ export default function Postgame({ gameData, summary, league }) {
     const maxPoints = Math.max(
         ...[...gameData.homeTeam.players, ...gameData.awayTeam.players].map(p => p.stats?.points ?? 0)
     );
-    const secondStat = getBestStats(s, 4).find(b => b.name !== 'PTS');
+    const secondStat = s && getBestStats(s, 4).find(b => b.name !== 'PTS');
 
-    const shooting = [
+    const shooting = s ? [
         { label: 'Field Goals', made: s.fieldGoalsMade, att: s.fieldGoalsAttempted },
         { label: '3-Point', made: s.threePointersMade, att: s.threePointersAttempted },
         { label: 'Free Throws', made: s.freeThrowsMade, att: s.freeThrowsAttempted },
-    ];
+    ] : [];
 
     return (
         <div className={styles.grid}>
@@ -65,6 +65,7 @@ export default function Postgame({ gameData, summary, league }) {
                 </ReportCard>
 
                 {/* right: potg */}
+                {potg && (
                 <div
                     className={styles.potgCard}
                     style={teamColors && { '--team-c1': teamColors.c1, '--team-c2': teamColors.c2 }}
@@ -144,6 +145,7 @@ export default function Postgame({ gameData, summary, league }) {
                         })}
                     </div>
                 </div>
+                )}
             </div>
 
             {/* keys to the win - horizontal */}

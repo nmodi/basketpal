@@ -91,7 +91,7 @@ export default function OnCourtPlayers({ gameData, isHome }) {
                                             {emojis.length > 0 && (
                                                 <div className={styles.emojis}>
                                                     {emojis.map(({ key, emoji, label }) => (
-                                                        <span key={key} title={label}>{emoji}</span>
+                                                        <span key={key} title={label} role="img" aria-label={label}>{emoji}</span>
                                                     ))}
                                                 </div>
                                             )}

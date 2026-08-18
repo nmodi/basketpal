@@ -7,15 +7,20 @@
 
 .topRow {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 1fr;
   gap: 20px;
   align-items: stretch;
 }
 
 .keysRow {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .topRow { grid-template-columns: 3fr 2fr; }
+  .keysRow { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* --- player of the game --- */

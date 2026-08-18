@@ -1,0 +1,314 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-17T00:00:00Z",
+  "title": "Design System: Basketpal",
+  "extensions": {
+    "colorMeta": {
+      "arena-dark": {
+        "role": "neutral",
+        "displayName": "Arena Dark",
+        "canonical": "#14171f",
+        "cssVar": "--bg",
+        "tonalRamp": ["#0a0c10", "#14171f", "#1f2430", "#2b3140", "#3a4152", "#5b6376", "#8b93a5", "#c9cfdb"]
+      },
+      "panel-raised": {
+        "role": "neutral",
+        "displayName": "Panel Raised",
+        "canonical": "#1a1e27",
+        "cssVar": "--bg-raised",
+        "tonalRamp": ["#0d0f14", "#1a1e27", "#252b38", "#323949", "#414a5d", "#636d84", "#939cb0", "#ced4e0"]
+      },
+      "well-sunken": {
+        "role": "neutral",
+        "displayName": "Well Sunken",
+        "canonical": "#0b0d13",
+        "cssVar": "--bg-sunken",
+        "tonalRamp": ["#05060a", "#0b0d13", "#151922", "#212734", "#2f3646", "#4d566b", "#7d8699", "#bcc3d1"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#1e222c",
+        "cssVar": "--surface",
+        "tonalRamp": ["#0f1116", "#1e222c", "#2a2f3c", "#373e4e", "#464f62", "#68728a", "#98a1b4", "#d1d7e2"]
+      },
+      "surface-high": {
+        "role": "neutral",
+        "displayName": "Surface High",
+        "canonical": "#2e3340",
+        "cssVar": "--surface2",
+        "tonalRamp": ["#12141a", "#1e222b", "#2e3340", "#3d4454", "#4d5568", "#6f7890", "#9ea6b8", "#d5dae4"]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#2e3340",
+        "cssVar": "--line",
+        "tonalRamp": ["#12141a", "#1e222b", "#2e3340", "#3d4454", "#4d5568", "#6f7890", "#9ea6b8", "#d5dae4"]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "#474d5c",
+        "cssVar": "--line-strong",
+        "tonalRamp": ["#1a1d24", "#282d37", "#373d4a", "#474d5c", "#5a6172", "#7c8494", "#a6acba", "#d9dde4"]
+      },
+      "fg": {
+        "role": "neutral",
+        "displayName": "Foreground",
+        "canonical": "#f2f4f8",
+        "cssVar": "--fg",
+        "tonalRamp": ["#22242a", "#3b3e46", "#565a64", "#757a86", "#969ba7", "#b8bcc7", "#d6d9e1", "#f2f4f8"]
+      },
+      "fg-muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#a1a7b5",
+        "cssVar": "--fg-muted",
+        "tonalRamp": ["#1c1e24", "#31353e", "#484d59", "#616773", "#7c828f", "#a1a7b5", "#c4c9d3", "#e6e9ef"]
+      },
+      "fg-dim": {
+        "role": "neutral",
+        "displayName": "Dim",
+        "canonical": "#6c7384",
+        "cssVar": "--fg-dim",
+        "tonalRamp": ["#15171c", "#25282f", "#373b45", "#4b505c", "#6c7384", "#8e95a4", "#b2b8c4", "#d9dde4"]
+      },
+      "fg-inverse": {
+        "role": "neutral",
+        "displayName": "Pure White",
+        "canonical": "#ffffff",
+        "cssVar": "--fg-inverse",
+        "tonalRamp": ["#262626", "#404040", "#5c5c5c", "#7a7a7a", "#9c9c9c", "#c0c0c0", "#e0e0e0", "#ffffff"]
+      },
+      "bulb-warm-white": {
+        "role": "tertiary",
+        "displayName": "Bulb Warm White",
+        "canonical": "#fff2d6",
+        "cssVar": "--chyron-fg",
+        "tonalRamp": ["#33291a", "#4d3e26", "#6b5735", "#8d7449", "#b09364", "#d1b58c", "#eed6b5", "#fff2d6"]
+      },
+      "jumbotron-amber": {
+        "role": "primary",
+        "displayName": "Jumbotron Amber",
+        "canonical": "#facc15",
+        "cssVar": "--highlight",
+        "tonalRamp": ["#2b2203", "#453706", "#674f08", "#8a690a", "#b1870c", "#d9a70f", "#facc15", "#fde36e"]
+      },
+      "buzzer-red": {
+        "role": "secondary",
+        "displayName": "Buzzer Red",
+        "canonical": "#df3a3e",
+        "cssVar": "--live-500",
+        "tonalRamp": ["#2a0b0c", "#440f11", "#631618", "#851e21", "#a9282b", "#c93135", "#df3a3e", "#ef8083"]
+      },
+      "buzzer-red-soft": {
+        "role": "secondary",
+        "displayName": "Buzzer Red Soft",
+        "canonical": "#e76568",
+        "cssVar": "--live-400",
+        "tonalRamp": ["#2d1112", "#48191b", "#682326", "#8c2f33", "#b04044", "#cd5155", "#e76568", "#f39ea0"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Team names on game cards and the scoreboard. monte-stella 900, uppercase, tight leading. Drops one step (24→20px phone / 30→24px desktop) when a team name exceeds 8 characters."
+      },
+      "numeric": {
+        "displayName": "Numeric",
+        "purpose": "Scores and the game clock. Monospace is functional — these values update every 5s during a live poll and must not reflow."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "AI report headlines. The only large non-numeric value set in the mono face."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Container header rows — team headers, Player of the Game."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "AI report prose only. The single place a proportional face (soleil) appears in the system."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Table headers, stat labels, tabs, nav, badges, the delay bar. Uppercase mono with tracking scaled inversely to size (0.25em at 10px down to 0.10em at 14px)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "panel-lift",
+        "value": "0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03)",
+        "purpose": "Resting state for floating containers — game cards, scoreboard, on-court table. Ambient only; the tonal ramp carries the actual hierarchy."
+      },
+      {
+        "name": "panel-lift-hover",
+        "value": "0 24px 48px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04)",
+        "purpose": "Paired with translateY(-2px) and a border shift to Hairline Strong when a card is hovered."
+      },
+      {
+        "name": "panel-seam",
+        "value": "inset 0 1px 0 rgba(255,255,255,0.03)",
+        "purpose": "Applied alone to team panels inside a card, so interior divisions catch the same overhead light without implying a second floating object."
+      },
+      {
+        "name": "scrim",
+        "value": "rgba(0,0,0,0.6)",
+        "purpose": "Dialog backdrop fill (::backdrop), not a box-shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "card-transition",
+        "value": "all 0.18s ease",
+        "purpose": "Game card hover — lift, shadow, and border shift together."
+      },
+      {
+        "name": "state-transition",
+        "value": "color 0.15s",
+        "purpose": "Default for recessive controls resolving on hover: nav links, icon buttons, tabs."
+      },
+      {
+        "name": "surface-transition",
+        "value": "background 0.12s",
+        "purpose": "Fast fill change on list and date items."
+      },
+      {
+        "name": "caret-rotate",
+        "value": "transform 0.15s ease",
+        "purpose": "Research log disclosure caret, rotating 180° on [open]."
+      },
+      {
+        "name": "skeleton-shimmer",
+        "value": "skeleton-shimmer 1.5s infinite",
+        "purpose": "Loading placeholders: an 800px-wide gradient sweeping -400px to 400px. The permanent answer to free-tier cold starts."
+      }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Game Card (Microtron)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The system's signature object: a three-panel split with team color bars pinned to the outer edges and a sunken center column that swaps contents by game state.",
+      "html": "<div class=\"ds-game-card\"><span class=\"ds-game-card__bar ds-game-card__bar--l\"></span><span class=\"ds-game-card__bar ds-game-card__bar--r\"></span><div class=\"ds-game-card__body\"><div class=\"ds-game-card__team\"><p class=\"ds-game-card__name\">CELTICS</p><p class=\"ds-game-card__record\">41–18</p><div class=\"ds-game-card__well\"><p class=\"ds-game-card__score\">112</p></div></div><div class=\"ds-game-card__center\"><p class=\"ds-game-card__matchup\">BOS @ LAL</p><span class=\"ds-live-badge\">LIVE</span><div class=\"ds-game-card__clock\"><span>Q3</span><span>•</span><span>07:42</span></div></div><div class=\"ds-game-card__team ds-game-card__team--r\"><p class=\"ds-game-card__name\">LAKERS</p><p class=\"ds-game-card__record\">33–26</p><div class=\"ds-game-card__well\"><p class=\"ds-game-card__score\">104</p></div></div></div></div>",
+      "css": ".ds-game-card { position: relative; background: var(--bg-raised, #1a1e27); border: 1px solid var(--line, #2e3340); border-radius: 8px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.03); cursor: pointer; transition: all 0.18s ease; } .ds-game-card:hover { border-color: var(--line-strong, #474d5c); transform: translateY(-2px); box-shadow: 0 24px 48px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04); } .ds-game-card__bar { position: absolute; top: 0; bottom: 0; width: 5px; z-index: 1; } .ds-game-card__bar--l { left: 0; background: #007A33; } .ds-game-card__bar--r { right: 0; background: #FDB927; } .ds-game-card__body { display: flex; min-height: 138px; } .ds-game-card__team { display: flex; flex-direction: column; flex: 1; min-width: 0; padding: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); } .ds-game-card__team--r { align-items: flex-end; text-align: right; } .ds-game-card__name { margin: 0; font-family: monte-stella, sans-serif; font-weight: 900; font-size: 24px; line-height: 0.95; letter-spacing: 0.07em; text-transform: uppercase; color: #f2f4f8; } .ds-game-card__record { margin: 4px 0 0; font-size: 14px; letter-spacing: 0.04em; color: var(--fg-dim, #6c7384); } .ds-game-card__well { margin-top: 12px; background: var(--bg-sunken, #0b0d13); border: 1px solid var(--line-strong, #474d5c); border-radius: 6px; padding: 6px 12px; width: fit-content; } .ds-game-card__score { margin: 0; font-family: tt-autonomous-mono, monospace; font-size: 50px; line-height: 0.9; color: var(--chyron-fg, #fff2d6); } .ds-game-card__center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; flex: 0 0 28%; padding: 16px 12px; background: var(--bg-sunken, #0b0d13); border-left: 1px solid var(--line, #2e3340); border-right: 1px solid var(--line, #2e3340); } .ds-game-card__matchup { margin: 0; font-family: tt-autonomous-mono, monospace; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-dim, #6c7384); } .ds-game-card__clock { display: flex; align-items: center; gap: 8px; font-family: tt-autonomous-mono, monospace; font-size: 20px; line-height: 1; color: var(--live-400, #e76568); } .ds-live-badge { background: var(--live-500, #df3a3e); color: #fff; padding: 4px 16px; border-radius: 4px; font-size: 14px; font-weight: bold; letter-spacing: 0.16em; }"
+    },
+    {
+      "name": "Live Badge",
+      "kind": "chip",
+      "refersTo": "live-badge",
+      "description": "The only full-strength use of Buzzer Red in the system. Marks in-progress state and nothing else.",
+      "html": "<span class=\"ds-badge-live\">LIVE</span>",
+      "css": ".ds-badge-live { display: inline-block; background: var(--live-500, #df3a3e); color: #fff; padding: 4px 16px; border-radius: 4px; font-size: 14px; font-weight: bold; letter-spacing: 0.16em; font-family: tt-autonomous-mono, monospace; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single committing action on a surface — inverted fill, mono label. One per surface, maximum.",
+      "html": "<button class=\"ds-btn-primary\">SAVE</button>",
+      "css": ".ds-btn-primary { background: var(--fg, #f2f4f8); color: var(--bg, #14171f); border: none; border-radius: 4px; padding: 12px 32px; font-family: tt-autonomous-mono, monospace; font-size: 13px; font-weight: bold; letter-spacing: 0.15em; cursor: pointer; transition: background 0.15s; } .ds-btn-primary:hover { background: #ffffff; } .ds-btn-primary:focus-visible { outline: 2px solid var(--highlight, #facc15); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Recessive at rest — hairline border, muted text — resolving to full contrast on hover.",
+      "html": "<button class=\"ds-btn-secondary\">GO BACK</button>",
+      "css": ".ds-btn-secondary { background: transparent; color: var(--fg-muted, #a1a7b5); border: 1px solid var(--line, #2e3340); border-radius: 6px; padding: 12px 20px; font-family: tt-autonomous-mono, monospace; font-size: 12px; font-weight: bold; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: color 0.15s, border-color 0.15s; } .ds-btn-secondary:hover { color: var(--fg, #f2f4f8); border-color: var(--line-strong, #474d5c); } .ds-btn-secondary:focus-visible { outline: none; color: var(--fg, #f2f4f8); border-color: var(--line-strong, #474d5c); }"
+    },
+    {
+      "name": "Tab",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Secondary navigation. Active state is foreground text plus a Jumbotron Amber underline pulled onto the container's own border line.",
+      "html": "<div class=\"ds-tablist\"><button class=\"ds-tab ds-tab--active\">ON COURT</button><button class=\"ds-tab\">TEAM COMPARISON</button><button class=\"ds-tab\">SHOT CHART</button></div>",
+      "css": ".ds-tablist { display: flex; border-bottom: 1px solid var(--line, #2e3340); } .ds-tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; margin-right: 24px; padding: 0 0 12px; font-family: tt-autonomous-mono, monospace; font-size: 14px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-muted, #a1a7b5); cursor: pointer; transition: color 0.15s; } .ds-tab:hover, .ds-tab:focus-visible { color: var(--fg, #f2f4f8); outline: none; } .ds-tab--active { color: var(--fg, #f2f4f8); border-bottom-color: var(--highlight, #facc15); }"
+    },
+    {
+      "name": "Select Field",
+      "kind": "input",
+      "refersTo": "select-button",
+      "description": "Custom select built on a button plus an absolutely positioned options panel. Focus shifts the border rather than drawing a ring.",
+      "html": "<div class=\"ds-select\"><button class=\"ds-select__btn\"><span class=\"ds-select__chip\">BOS</span><span class=\"ds-select__name\">Boston Celtics</span><svg class=\"ds-select__caret\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M6 9l6 6 6-6\"/></svg></button></div>",
+      "css": ".ds-select { position: relative; } .ds-select__btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface, #1e222c); border: 1px solid var(--line, #2e3340); border-radius: 6px; color: var(--fg, #f2f4f8); font: inherit; text-align: left; cursor: pointer; } .ds-select__btn:hover { border-color: var(--line-strong, #474d5c); } .ds-select__btn:focus-visible { outline: none; border-color: var(--line-strong, #474d5c); } .ds-select__chip { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 6px; background: #007A33; color: #fff; font-family: tt-autonomous-mono, monospace; font-size: 12px; font-weight: bold; flex-shrink: 0; } .ds-select__name { font-size: 16px; } .ds-select__caret { margin-left: auto; color: var(--fg-dim, #6c7384); flex-shrink: 0; }"
+    },
+    {
+      "name": "Checkbox",
+      "kind": "input",
+      "refersTo": "checkbox-checked",
+      "description": "A 26px appearance:none square. Checked fills Jumbotron Amber and draws the mark from a rotated CSS border — no icon asset.",
+      "html": "<input type=\"checkbox\" class=\"ds-checkbox\" checked aria-label=\"Spoiler Shield\">",
+      "css": ".ds-checkbox { appearance: none; -webkit-appearance: none; width: 26px; height: 26px; border: 1px solid var(--line-strong, #474d5c); border-radius: 6px; background: transparent; cursor: pointer; flex-shrink: 0; margin: 0; } .ds-checkbox:checked { background: var(--highlight, #facc15); border-color: var(--highlight, #facc15); } .ds-checkbox:checked::after { content: ''; display: block; width: 6px; height: 11px; border: solid var(--bg, #14171f); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); margin: 4px auto 0; } .ds-checkbox:focus-visible { outline: 2px solid var(--highlight, #facc15); outline-offset: 2px; }"
+    },
+    {
+      "name": "Delay Slider",
+      "kind": "custom",
+      "refersTo": "card-well",
+      "description": "The product's signature control. A hairline-thin sunken track with a foreground thumb and mono tick labels — the interface for deliberately falling behind the live feed.",
+      "html": "<div class=\"ds-delay\"><span class=\"ds-delay__label\">Broadcast Delay</span><div class=\"ds-delay__wrap\"><input type=\"range\" class=\"ds-delay__slider\" min=\"0\" max=\"6\" value=\"3\" aria-label=\"Broadcast delay\"><div class=\"ds-delay__marks\"><span>NONE</span><span>10S</span><span>30S</span><span>45S</span><span>60S</span><span>90S</span><span>2MIN</span></div></div><span class=\"ds-delay__value\">45s</span></div>",
+      "css": ".ds-delay { display: flex; align-items: center; gap: 20px; padding: 16px 24px; border-top: 1px solid var(--line, #2e3340); background: var(--bg-raised, #1a1e27); } .ds-delay__label { font-family: tt-autonomous-mono, monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-muted, #a1a7b5); white-space: nowrap; } .ds-delay__wrap { flex: 1; position: relative; margin-bottom: 20px; } .ds-delay__slider { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--bg-sunken, #0b0d13); border-radius: 9999px; outline: none; cursor: pointer; } .ds-delay__slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--fg, #f2f4f8); cursor: pointer; } .ds-delay__slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--fg, #f2f4f8); border: none; cursor: pointer; } .ds-delay__marks { position: absolute; top: 12px; left: 0; right: 0; display: flex; justify-content: space-between; pointer-events: none; } .ds-delay__marks span { font-family: tt-autonomous-mono, monospace; font-size: 10px; color: var(--fg-dim, #6c7384); transform: translateX(-50%); } .ds-delay__marks span:first-child { transform: none; } .ds-delay__marks span:last-child { transform: translateX(-100%); } .ds-delay__value { font-size: 14px; color: var(--fg, #f2f4f8); min-width: 40px; text-align: right; white-space: nowrap; }"
+    },
+    {
+      "name": "Research Log Row",
+      "kind": "custom",
+      "refersTo": "table-header",
+      "description": "One tool call in the AI report's disclosure trace. Amber tool name, outlined status badge, truncating result, right-aligned duration.",
+      "html": "<div class=\"ds-log\"><div class=\"ds-log__row\"><span class=\"ds-log__tool\">GET_BOXSCORE</span><span class=\"ds-log__badge\">OK</span><span class=\"ds-log__result\">Retrieved final boxscore for 0022400512</span><span class=\"ds-log__ms\">412ms</span></div><div class=\"ds-log__row\"><span class=\"ds-log__tool\">SUBMIT_REPORT</span><span class=\"ds-log__badge\">PASS</span><span class=\"ds-log__result\">Fact-checks passed: scores, player names, stat lines</span><span class=\"ds-log__ms\">88ms</span></div></div>",
+      "css": ".ds-log { display: flex; flex-direction: column; gap: 6px; } .ds-log__row { display: flex; align-items: baseline; gap: 8px; font-size: 12px; min-width: 0; } .ds-log__tool { font-family: tt-autonomous-mono, monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--highlight, #facc15); white-space: nowrap; flex-shrink: 0; } .ds-log__badge { font-family: tt-autonomous-mono, monospace; font-size: 10px; text-transform: uppercase; border: 1px solid var(--line-strong, #474d5c); border-radius: 4px; padding: 1px 5px; color: var(--fg-dim, #6c7384); flex-shrink: 0; } .ds-log__result { color: var(--fg-dim, #6c7384); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; } .ds-log__ms { margin-left: auto; font-family: tt-autonomous-mono, monospace; font-size: 10px; color: var(--fg-dim, #6c7384); flex-shrink: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Arena Scoreboard",
+    "overview": "Basketpal is not a website about basketball; it is a piece of arena hardware rendered in a browser. The reference is the physical scoreboard hanging over the floor: a dark housing, score digits recessed into wells, team colors running down the edges of each side, and warm bulb-white numerals that read from across the building. Every surface decision answers to that object.\n\nDepth comes from tonal layering, not from ornament. Four greys stack from the room (#14171f) up to a raised panel (#1a1e27) and back down into a sunken well (#0b0d13) where the numbers live. That ramp is the structural system; the drop shadows on cards are ambient lift on top of it, not the mechanism. Type does the rest of the work: a heavy condensed display face shouting team names in uppercase, and a monospace face holding every number, clock, label and tricode in fixed columns so nothing shifts as the score changes during a live poll.\n\nThe palette is almost entirely achromatic on purpose, because color belongs to the teams. Thirty NBA and fifteen WNBA palettes flow through the interface via a strategy engine, and the system's own chrome stays out of their way. Restraint here isn't minimalism — it's deference.",
+    "keyCharacteristics": [
+      "Dark-only, four-step tonal ground; no light theme exists",
+      "Two typefaces carrying two jobs: identity (display) and data (mono)",
+      "Uppercase, wide-tracked labels everywhere — broadcast convention, not decoration",
+      "Team color is the loudest thing on screen; app chrome never competes",
+      "Numbers sit in recessed wells with hairline borders, like inset scoreboard panels",
+      "Controls recede at rest and resolve on hover and focus"
+    ],
+    "rules": [
+      { "name": "The Deference Rule", "body": "Team color is the only saturated color allowed to carry identity. If a team owns the region, the app's own accents stand down. Jumbotron Amber appears only where no team has a claim.", "section": "colors" },
+      { "name": "The Warm Numeral Rule", "body": "Live and scheduled scores are Bulb Warm White (#fff2d6), never interface white (#f2f4f8). The warmth is the difference between a scoreboard and a spreadsheet, and it is worth the extra token.", "section": "colors" },
+      { "name": "The Luminance Gate", "body": "No team color reaches text without passing getLuminance() > 0.12. Failing colors fall back to Foreground. Never hand-place a team color as text without the gate.", "section": "colors" },
+      { "name": "The Fixed-Column Rule", "body": "Any value that updates during a live poll is set in tt-autonomous-mono. Scores, clocks, period numbers, stat cells. A proportional face would make the whole card twitch on every fetch.", "section": "typography" },
+      { "name": "The Tracking Ladder", "body": "Label tracking scales inversely with size: 10–12px labels take 0.16–0.25em, 14px labels take 0.10–0.14em, and 24px+ display takes 0.07em. Small and wide, large and tight — never the reverse.", "section": "typography" },
+      { "name": "The One Prose Face", "body": "soleil appears only in AI-generated report body copy. If a block is not multi-sentence narrative, it is mono or display.", "section": "typography" },
+      { "name": "The No-Reflow Rule", "body": "The 768px breakpoint scales; it does not rearrange. A layout that only works on one side of it is a defect.", "section": "layout" },
+      { "name": "The Stacked Chrome Rule", "body": "The header and date bar are a fixed pair. Any new page-level chrome joins the stack and increases page top padding to match — never overlaps the first card.", "section": "layout" },
+      { "name": "The Tonal-First Rule", "body": "Depth is expressed by moving a surface along the tonal ramp. Reach for shadow only when an element genuinely floats above the page — a card, a dropdown, a modal. Interior structure is flat and separated by hairlines.", "section": "elevation" },
+      { "name": "The Single Light Source Rule", "body": "Light comes from directly above. Every lifted surface carries the same inset 0 1px 0 rgba(255,255,255,0.03) top highlight and casts downward. No side shadows, no glow, no inner shadow on the bottom edge.", "section": "elevation" },
+      { "name": "The Radius Ladder Rule", "body": "Radius scales with how much the element floats: 4px sits in a surface, 6px is a control, 8px floats above the page. A 12px or 16px radius does not exist in this system.", "section": "shapes" },
+      { "name": "The Hairline Default Rule", "body": "Borders are 1px. A thicker line is a signal — team identity or active state — and must mean one of those two things.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do express depth by moving a surface along the tonal ramp — Arena Dark, Panel Raised, Well Sunken, Surface, Surface High — before reaching for a shadow.",
+      "Do set every value that updates during a live poll in tt-autonomous-mono, so the layout cannot twitch on a fetch.",
+      "Do route all team color through getTeamStyle(tricode) in util/teamColorStrategy.js. It carries the luminance gate and the per-team strategy overrides.",
+      "Do give every new surface a complete answer for all three game states — scheduled, live, and final.",
+      "Do keep label type uppercase, mono, and wide-tracked, scaling tracking inversely with size (0.25em at 12px down to 0.07em at 24px).",
+      "Do use #fff2d6 for score numerals and #f2f4f8 for interface text. They are not interchangeable.",
+      "Do let controls recede at rest — transparent or hairline — and resolve on hover and :focus-visible, which are always styled together.",
+      "Do seat numbers in an inset well: Well Sunken fill, Hairline Strong border, 4–6px radius, width: fit-content."
+    ],
+    "donts": [
+      "Don't introduce a light theme or a prefers-color-scheme branch. The dark ground is the product, not a mode.",
+      "Don't put Jumbotron Amber anywhere a team already owns the region. Amber is the neutral UI accent; team color carries identity.",
+      "Don't place a raw team color as text without the getLuminance() > 0.12 gate — many official palettes are unreadable on #14171f.",
+      "Don't use a radius outside 4 / 6 / 8 / 9999px. There is no 12px or 16px corner in this system.",
+      "Don't draw a border thicker than 1px unless it is team color or an active tab.",
+      "Don't add a shadow to interior structure. Inside a card, separation is hairlines and tonal steps only.",
+      "Don't set a fourth typeface, or use soleil for anything but multi-sentence AI report prose.",
+      "Don't reorganize layout at the 768px breakpoint. It scales type and padding; it does not rewrap.",
+      "Don't animate a control's size, scale, or shadow on press. State change is color and opacity over 0.12–0.18s.",
+      "Don't overlay the fixed header/date-bar stack. New page chrome joins the stack and increases page top padding to match."
+    ]
+  }
+}

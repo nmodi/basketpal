@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const baseURL = process.env.NODE_ENV === "production" ? 
-    "https://basketpal-be.onrender.com" : 
+    "https://api.basketpal.nilaymodi.com" :
     "http://localhost:8001";
 
 const api = axios.create({

@@ -36,7 +36,11 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://basketpal.nilaymodi.com",
+        "https://basketpal.onrender.com",
+        "http://localhost:5317",
+    ],
     allow_methods=["GET"],
     allow_headers=["*"],
 )

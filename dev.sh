@@ -39,7 +39,7 @@ npm run dev &
 FE_PID=$!
 
 echo "Backend  → http://localhost:8001"
-echo "Frontend → http://localhost:5173"
+echo "Frontend → http://localhost:5317"
 echo "Press Ctrl-C to stop both."
 
 wait "$BE_PID" "$FE_PID"

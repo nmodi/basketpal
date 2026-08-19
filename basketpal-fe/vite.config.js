@@ -6,4 +6,8 @@ installGlobals();
 
 export default defineConfig({
   plugins: [remix()],
+  server: {
+    port: 5317,
+    strictPort: true,
+  },
 });

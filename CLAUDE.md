@@ -19,7 +19,7 @@ basketpal/
 ## Development
 
 ```bash
-# Start everything (Redis, backend on :8001, frontend on :5173)
+# Start everything (Redis, backend on :8001, frontend on :5317)
 ./dev.sh
 ```
 

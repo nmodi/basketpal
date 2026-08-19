@@ -19,9 +19,13 @@ if os.environ.get("MOCK_DATA", "").lower() in ("1", "true", "yes"):
     content_provider: ContentProvider = MockContentProvider(storage_client)
 else:
     from src.adapters import RedisClient, OpenRouterContentProvider, NBAAPIStatsProvider, ESPNInjuriesProvider
+    from src.adapters import nba_api_adapter
 
     storage_client: StorageClient = RedisClient()
     nba_stats_provider: NBAStatsProvider = NBAAPIStatsProvider()
+    # Lets the schedule loader keep a last-good copy in Redis, served when the
+    # NBA CDN blocks us (it 403s all datacenter IPs).
+    nba_api_adapter.set_schedule_store(storage_client)
     injuries_provider: InjuriesProvider = ESPNInjuriesProvider()
     content_provider: ContentProvider = OpenRouterContentProvider(storage_client, nba_stats_provider, injuries_provider)
 

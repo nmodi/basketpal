@@ -35,8 +35,11 @@ class LeaguePoller:
                 await self.poll_league()
                 await asyncio.sleep(self._interval_seconds)
             except Exception as e:
+                # A dead poller means no snapshots (and no delay feature) until
+                # the next restart; upstream flakiness must not be fatal.
+                # ponytail: flat 60s backoff, no retry budget.
                 logger.exception(f"Error in polling loop: {e}")
-                break
+                await asyncio.sleep(60)
 
     async def stop(self):
         self._running = False

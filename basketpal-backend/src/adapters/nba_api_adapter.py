@@ -1,5 +1,8 @@
+import base64
+import json
 import logging
 import time
+import zlib
 from datetime import datetime
 from functools import lru_cache
 
@@ -375,20 +378,76 @@ def _get_schedule_url(league: League):
 _SCHEDULE_CACHE_TTL = 60
 _schedule_cache: dict = {}  # league -> (fetched_at, game_dates)
 
+# NBA's edge (Akamai) blocks datacenter IPs outright — in prod every schedule
+# fetch can 403 indefinitely. A last-good copy persisted in Redis keeps the
+# schedule-dependent endpoints serving instead of 500ing. Set at wiring time
+# (dependencies.py); module-level because _load_schedule is shared by module
+# functions, not just the provider class.
+_schedule_store = None
+
+# Stale beyond this is useless for a live tracker (game statuses drift), so
+# let it expire rather than serving a months-old schedule forever.
+_STALE_SCHEDULE_TTL = 14 * 86400
+
+
+def set_schedule_store(store) -> None:
+    global _schedule_store
+    _schedule_store = store
+
+
+def _stale_schedule_key(league: League) -> str:
+    return f"schedule:{league.code}:stale"
+
+
+def _save_stale_schedule(league: League, game_dates: list) -> None:
+    if _schedule_store is None:
+        return
+    try:
+        # ~2.6MB of JSON zlib-compresses to ~0.1MB; b64 keeps it a plain string
+        # so the existing StorageClient JSON round-trip works unchanged.
+        blob = base64.b64encode(zlib.compress(json.dumps(game_dates).encode())).decode()
+        _schedule_store.save_with_ttl(_stale_schedule_key(league), blob, _STALE_SCHEDULE_TTL)
+    except Exception as exc:
+        logger.warning(f"Failed to persist stale schedule for {league}: {exc}")
+
+
+def _load_stale_schedule(league: League) -> list | None:
+    if _schedule_store is None:
+        return None
+    try:
+        blob = _schedule_store.get(_stale_schedule_key(league))
+        if not blob:
+            return None
+        return json.loads(zlib.decompress(base64.b64decode(blob)))
+    except Exception as exc:
+        logger.warning(f"Failed to read stale schedule for {league}: {exc}")
+        return None
+
 
 def _load_schedule(league: League) -> list:
     cached = _schedule_cache.get(league)
     if cached and time.time() - cached[0] < _SCHEDULE_CACHE_TTL:
         return cached[1]
 
-    response = requests.get(_get_schedule_url(league), timeout=10, headers=_CDN_HEADERS)
-    if response.status_code != 200:
-        raise RequestException(
-            f"Failed to fetch schedule for {league}: HTTP {response.status_code}"
-        )
+    try:
+        response = requests.get(_get_schedule_url(league), timeout=10, headers=_CDN_HEADERS)
+        if response.status_code != 200:
+            raise RequestException(
+                f"Failed to fetch schedule for {league}: HTTP {response.status_code}"
+            )
+        game_dates = response.json()["leagueSchedule"]["gameDates"]
+    except (RequestException, ValueError, KeyError) as exc:
+        stale = _load_stale_schedule(league)
+        if stale is None:
+            raise
+        logger.warning(f"Schedule fetch failed for {league} ({exc}); serving stale copy")
+        # Cache the stale copy under the normal TTL too, so a blocked CDN is
+        # retried at most once per TTL instead of on every call.
+        _schedule_cache[league] = (time.time(), stale)
+        return stale
 
-    game_dates = response.json()["leagueSchedule"]["gameDates"]
     _schedule_cache[league] = (time.time(), game_dates)
+    _save_stale_schedule(league, game_dates)
     return game_dates
 
 
